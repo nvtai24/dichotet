@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/constants/app_theme.dart';
-import 'views/main_screen.dart';
+import 'views/splash/splash_screen.dart';
 
 void main() {
   runApp(const DichotetApp());
@@ -15,7 +15,7 @@ class DichotetApp extends StatelessWidget {
       title: 'Đi chợ Tết',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const MainScreen(),
+      home: const SplashScreen(),
     );
   }
 }
