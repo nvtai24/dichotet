@@ -7,133 +7,433 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
-        title: const Text('Cài đặt'),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        title: const Text(
+          'Cài đặt',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: ListView(
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
-          _SettingsHeader(label: 'Tổng quan'),
-          _SettingsTile(
-            icon: Icons.person_outline,
-            title: 'Hồ sơ',
-            subtitle: 'Tên, thông tin cá nhân',
-            onTap: () {},
+          // ── Profile Card ──────────────────────────────────────────
+          _buildProfileCard(context),
+          const SizedBox(height: 8),
+
+          // ── Tài khoản ─────────────────────────────────────────────
+          _SectionHeader(label: 'Tài khoản'),
+          _SettingsGroup(
+            children: [
+              _SettingsTile(
+                icon: Icons.person_outline,
+                label: 'Hồ sơ cá nhân',
+                subtitle: 'Tên, ảnh đại diện',
+                onTap: () {},
+              ),
+              _SettingsTile(
+                icon: Icons.lock_outline,
+                label: 'Đổi mật khẩu',
+                subtitle: 'Bảo mật tài khoản',
+                onTap: () {},
+              ),
+              _SettingsTile(
+                icon: Icons.notifications_outlined,
+                label: 'Thông báo',
+                subtitle: 'Nhắc nhở mua sắm, cảnh báo ngân sách',
+                onTap: () {},
+              ),
+            ],
           ),
-          _SettingsTile(
-            icon: Icons.notifications_outlined,
-            title: 'Thông báo',
-            subtitle: 'Nhắc nhở, cảnh báo ngân sách',
-            onTap: () {},
+
+          // ── Dữ liệu ───────────────────────────────────────────────
+          // _SectionHeader(label: 'Dữ liệu'),
+          // _SettingsGroup(
+          //   children: [
+          //     _SettingsTile(
+          //       icon: Icons.download_outlined,
+          //       label: 'Xuất danh sách',
+          //       subtitle: 'Export sang PDF hoặc Excel',
+          //       onTap: () {},
+          //     ),
+          //     _SettingsTile(
+          //       icon: Icons.group_outlined,
+          //       label: 'Chia sẻ gia đình',
+          //       subtitle: 'Đồng bộ danh sách với thành viên',
+          //       trailing: const _ComingSoonBadge(),
+          //       onTap: () {},
+          //     ),
+          //     _SettingsTile(
+          //       icon: Icons.delete_outline,
+          //       label: 'Xóa tất cả dữ liệu',
+          //       subtitle: 'Xóa danh sách và lịch sử chi tiêu',
+          //       iconColor: AppColors.error,
+          //       labelColor: AppColors.error,
+          //       onTap: () => _confirmDeleteData(context),
+          //     ),
+          //   ],
+          // ),
+
+          // ── Ứng dụng ──────────────────────────────────────────────
+          _SectionHeader(label: 'Ứng dụng'),
+          _SettingsGroup(
+            children: [
+              _SettingsTile(
+                icon: Icons.language_outlined,
+                label: 'Ngôn ngữ',
+                subtitle: 'Tiếng Việt',
+                onTap: () {},
+              ),
+              _SettingsTile(
+                icon: Icons.info_outline,
+                label: 'Về ứng dụng',
+                subtitle: 'Phiên bản 1.0.0',
+                onTap: () {},
+              ),
+            ],
           ),
-          const Divider(height: 1),
-          _SettingsHeader(label: 'Dữ liệu'),
-          _SettingsTile(
-            icon: Icons.download_outlined,
-            title: 'Xuất danh sách',
-            subtitle: 'Export sang PDF, Excel',
-            onTap: () {},
+
+          // ── Logout ────────────────────────────────────────────────
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _LogoutButton(onTap: () => _confirmLogout(context)),
           ),
-          _SettingsTile(
-            icon: Icons.share_outlined,
-            title: 'Chia sẻ gia đình',
-            subtitle: 'Đồng bộ danh sách với thành viên',
-            trailing: _ComingSoonBadge(),
-            onTap: () {},
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileCard(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          _SettingsTile(
-            icon: Icons.delete_outline,
-            title: 'Xóa dữ liệu',
-            subtitle: 'Xóa tất cả danh sách và chi tiêu',
-            titleColor: AppColors.error,
-            onTap: () {},
-          ),
-          const Divider(height: 1),
-          _SettingsHeader(label: 'Ứng dụng'),
-          _SettingsTile(
-            icon: Icons.info_outline,
-            title: 'Về ứng dụng',
-            subtitle: 'Phiên bản 1.0.0',
-            onTap: () {},
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: Text(
-              '🏮 Chúc mừng năm mới 🏮',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary.withValues(alpha: 0.12),
+            ),
+            child: const Icon(
+              Icons.person_rounded,
+              size: 30,
+              color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(width: 14),
+          // Info
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Nguyễn Văn A',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'nguyenvana@email.com',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Edit
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.edit_outlined,
+              size: 16,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Đăng xuất',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: const Text('Bạn có chắc muốn đăng xuất khỏi tài khoản?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Huỷ'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: perform logout
+            },
+            child: const Text(
+              'Đăng xuất',
+              style: TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteData(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Xóa tất cả dữ liệu',
+          style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.error),
+        ),
+        content: const Text(
+          'Hành động này không thể hoàn tác. Toàn bộ danh sách và lịch sử chi tiêu sẽ bị xóa vĩnh viễn.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Huỷ'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: delete all data
+            },
+            child: const Text(
+              'Xóa',
+              style: TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _SettingsHeader extends StatelessWidget {
+// ─── Section Header ───────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
   final String label;
-  const _SettingsHeader({required this.label});
+  const _SectionHeader({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
       child: Text(
         label.toUpperCase(),
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.0,
-            ),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primary,
+          letterSpacing: 1.0,
+        ),
       ),
     );
   }
 }
 
+// ─── Settings Group ───────────────────────────────────────────────────────────
+
+class _SettingsGroup extends StatelessWidget {
+  final List<Widget> children;
+  const _SettingsGroup({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: children.asMap().entries.map((e) {
+          final isLast = e.key == children.length - 1;
+          return Column(
+            children: [
+              e.value,
+              if (!isLast) const Divider(height: 1, indent: 52, endIndent: 0),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ─── Settings Tile ────────────────────────────────────────────────────────────
+
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
-  final String title;
+  final String label;
   final String subtitle;
-  final Color? titleColor;
+  final Color? iconColor;
+  final Color? labelColor;
   final Widget? trailing;
   final VoidCallback onTap;
 
   const _SettingsTile({
     required this.icon,
-    required this.title,
+    required this.label,
     required this.subtitle,
-    this.titleColor,
+    this.iconColor,
+    this.labelColor,
     this.trailing,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (titleColor ?? AppColors.primary).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, size: 20, color: titleColor ?? AppColors.primary),
-      ),
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: titleColor,
-            ),
-      ),
-      subtitle: Text(subtitle),
-      trailing: trailing ?? const Icon(Icons.chevron_right, color: AppColors.textHint),
+    final color = iconColor ?? AppColors.primary;
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: labelColor ?? AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            trailing ??
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: AppColors.textHint,
+                ),
+          ],
+        ),
+      ),
     );
   }
 }
 
+// ─── Logout Button ────────────────────────────────────────────────────────────
+
+class _LogoutButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _LogoutButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.logout_rounded, size: 18, color: AppColors.error),
+            SizedBox(width: 8),
+            Text(
+              'Đăng xuất',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.error,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Coming Soon Badge ────────────────────────────────────────────────────────
+
 class _ComingSoonBadge extends StatelessWidget {
+  const _ComingSoonBadge();
+
   @override
   Widget build(BuildContext context) {
     return Container(

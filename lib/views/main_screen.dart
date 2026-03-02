@@ -4,7 +4,7 @@ import 'home/dashboard_screen.dart';
 import 'shopping_list/shopping_list_screen.dart';
 import 'shopping_list/add_item_screen.dart';
 import 'budget/budget_screen.dart';
-import 'market/market_screen.dart';
+import 'settings/settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -20,7 +20,7 @@ class _MainScreenState extends State<MainScreen> {
     DashboardScreen(),
     ShoppingListScreen(),
     BudgetScreen(),
-    MarketScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -61,7 +61,7 @@ class _BottomNavBar extends StatelessWidget {
       Icons.account_balance_wallet,
       'Budget',
     ),
-    (Icons.map_outlined, Icons.map, 'Map'),
+    (Icons.settings_outlined, Icons.settings_rounded, 'Settings'),
   ];
 
   @override
