@@ -69,11 +69,86 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     super.dispose();
   }
 
-  List<_Item> _getFilteredItems(_Category cat) {
-    if (_searchQuery.isEmpty) return cat.items;
-    return cat.items
-        .where((i) => i.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-        .toList();
+  List<({_Item item, String categoryName})> _searchResults() {
+    final q = _searchQuery.toLowerCase();
+    return [
+      for (final cat in _categories)
+        for (final item in cat.items)
+          if (item.name.toLowerCase().contains(q))
+            (item: item, categoryName: cat.name),
+    ];
+  }
+
+  Widget _buildCategoryList() {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+      itemCount: _categories.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, i) => _CategorySection(
+        category: _categories[i],
+        onToggleExpand: () =>
+            setState(() => _categories[i].isExpanded = !_categories[i].isExpanded),
+        onToggleItem: (itemIndex) => setState(() {
+          _categories[i].items[itemIndex].isChecked =
+              !_categories[i].items[itemIndex].isChecked;
+        }),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    final results = _searchResults();
+    if (results.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search_off_rounded, size: 48, color: AppColors.textHint),
+            SizedBox(height: 8),
+            Text(
+              'Không tìm thấy kết quả',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+      itemCount: results.length,
+      itemBuilder: (_, i) {
+        final r = results[i];
+        final globalIndex = _categories
+            .firstWhere((c) => c.name == r.categoryName)
+            .items
+            .indexOf(r.item);
+        final catIndex =
+            _categories.indexWhere((c) => c.name == r.categoryName);
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: _ItemTile(
+            item: r.item,
+            isLast: true,
+            categoryLabel: r.categoryName,
+            onToggle: () => setState(() {
+              _categories[catIndex].items[globalIndex].isChecked =
+                  !_categories[catIndex].items[globalIndex].isChecked;
+            }),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -122,23 +197,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             ),
           ),
 
-          // Category list
+          // Search results or category list
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-              itemCount: _categories.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => _CategorySection(
-                category: _categories[i],
-                filteredItems: _getFilteredItems(_categories[i]),
-                onToggleExpand: () =>
-                    setState(() => _categories[i].isExpanded = !_categories[i].isExpanded),
-                onToggleItem: (itemIndex) => setState(() {
-                  _categories[i].items[itemIndex].isChecked =
-                      !_categories[i].items[itemIndex].isChecked;
-                }),
-              ),
-            ),
+            child: _searchQuery.isNotEmpty
+                ? _buildSearchResults()
+                : _buildCategoryList(),
           ),
         ],
       ),
@@ -181,13 +244,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
 class _CategorySection extends StatelessWidget {
   final _Category category;
-  final List<_Item> filteredItems;
   final VoidCallback onToggleExpand;
   final ValueChanged<int> onToggleItem;
 
   const _CategorySection({
     required this.category,
-    required this.filteredItems,
     required this.onToggleExpand,
     required this.onToggleItem,
   });
@@ -273,16 +334,13 @@ class _CategorySection extends StatelessWidget {
           ),
 
           // Items
-          if (category.isExpanded && filteredItems.isNotEmpty) ...[
+          if (category.isExpanded && category.items.isNotEmpty) ...[
             const Divider(height: 1, indent: 14, endIndent: 14),
-            ...filteredItems.asMap().entries.map((entry) {
-              final globalIndex = category.items.indexOf(entry.value);
-              return _ItemTile(
-                item: entry.value,
-                isLast: entry.key == filteredItems.length - 1,
-                onToggle: () => onToggleItem(globalIndex),
-              );
-            }),
+            ...category.items.asMap().entries.map((entry) => _ItemTile(
+                  item: entry.value,
+                  isLast: entry.key == category.items.length - 1,
+                  onToggle: () => onToggleItem(entry.key),
+                )),
           ],
         ],
       ),
@@ -296,11 +354,13 @@ class _ItemTile extends StatelessWidget {
   final _Item item;
   final bool isLast;
   final VoidCallback onToggle;
+  final String? categoryLabel;
 
   const _ItemTile({
     required this.item,
     required this.isLast,
     required this.onToggle,
+    this.categoryLabel,
   });
 
   @override
@@ -353,7 +413,9 @@ class _ItemTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Qty: ${item.qty}${item.unit.isNotEmpty ? ' ${item.unit}' : ''}',
+                    categoryLabel != null
+                        ? '$categoryLabel · Qty: ${item.qty}${item.unit.isNotEmpty ? ' ${item.unit}' : ''}'
+                        : 'Qty: ${item.qty}${item.unit.isNotEmpty ? ' ${item.unit}' : ''}',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
