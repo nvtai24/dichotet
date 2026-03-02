@@ -29,6 +29,8 @@ class ShoppingItem {
   final String? imageUrl;
   final List<StorePrice> storePrices;
   bool isChecked;
+  int? actualPrice;
+  int? actualQuantity;
 
   ShoppingItem({
     required this.name,
@@ -43,6 +45,8 @@ class ShoppingItem {
     this.imageUrl,
     List<StorePrice>? storePrices,
     this.isChecked = false,
+    this.actualPrice,
+    this.actualQuantity,
   }) : storePrices = storePrices ?? [];
 }
 

@@ -65,8 +65,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: _buildBottomBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 40),
+        padding: const EdgeInsets.only(bottom: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -122,6 +123,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   _buildStatsRow(),
                   const SizedBox(height: 16),
 
+                  // Purchase info card (if purchased)
+                  if (_item.isChecked) ...[
+                    _buildPurchaseInfoCard(),
+                    const SizedBox(height: 16),
+                  ],
+
                   // Notes
                   if (_item.note != null && _item.note!.isNotEmpty) ...[
                     _buildNotesCard(),
@@ -135,6 +142,122 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: _item.isChecked
+          ? OutlinedButton.icon(
+              onPressed: _showPurchaseSheet,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              label: const Text(
+                'Chỉnh sửa thông tin đã mua',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            )
+          : ElevatedButton.icon(
+              onPressed: _showPurchaseSheet,
+              icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+              label: const Text(
+                'Thêm thông tin đã mua',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+            ),
+    );
+  }
+
+  Widget _buildPurchaseInfoCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF43A047).withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF43A047).withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF43A047).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.check_circle_outline,
+                  size: 16,
+                  color: Color(0xFF43A047),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Thông tin đã mua',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: Color(0xFF43A047),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _PurchaseStatBox(
+                  label: 'Số lượng đã mua',
+                  value: _item.actualQuantity != null
+                      ? '${_item.actualQuantity} ${_item.unit}'
+                      : '—',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _PurchaseStatBox(
+                  label: 'Số tiền đã dùng',
+                  value: _item.actualPrice != null
+                      ? _formatPriceShort(_item.actualPrice!)
+                      : '—',
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -396,6 +519,24 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       builder: (_) => _AddPriceSheet(
         onAdd: (store) => setState(() => _item.storePrices.add(store)),
+      ),
+    );
+  }
+
+  void _showPurchaseSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _ConfirmPurchaseSheet(
+        item: _item,
+        onConfirm: (qty, price) => setState(() {
+          _item.actualQuantity = qty;
+          _item.actualPrice = price;
+          _item.isChecked = true;
+        }),
       ),
     );
   }
@@ -692,6 +833,213 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
               onPressed: _onAdd,
               child: const Text(
                 'Thêm giá',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Purchase Stat Box ────────────────────────────────────────────────────────
+
+class _PurchaseStatBox extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _PurchaseStatBox({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: const Color(0xFF43A047).withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF43A047),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Confirm Purchase Sheet ───────────────────────────────────────────────────
+
+class _ConfirmPurchaseSheet extends StatefulWidget {
+  final ShoppingItem item;
+  final void Function(int quantity, int price) onConfirm;
+
+  const _ConfirmPurchaseSheet({
+    required this.item,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_ConfirmPurchaseSheet> createState() => _ConfirmPurchaseSheetState();
+}
+
+class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
+  late final TextEditingController _qtyController;
+  late final TextEditingController _priceController;
+
+  @override
+  void initState() {
+    super.initState();
+    _qtyController = TextEditingController(
+      text: widget.item.actualQuantity?.toString() ?? '',
+    );
+    _priceController = TextEditingController(
+      text: widget.item.actualPrice?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
+  void _onConfirm() {
+    final qty = int.tryParse(_qtyController.text.trim());
+    final price = int.tryParse(_priceController.text.trim());
+    if (qty == null || qty <= 0 || price == null || price < 0) return;
+    widget.onConfirm(qty, price);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+          16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Title
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.shopping_bag_outlined,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Thông tin đã mua',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      widget.item.name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Quantity input
+          TextField(
+            controller: _qtyController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: 'Số lượng đã mua',
+              hintText: 'Ví dụ: 2',
+              prefixIcon: const Icon(Icons.inventory_2_outlined, size: 20),
+              suffixText: widget.item.unit,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Price input
+          TextField(
+            controller: _priceController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              labelText: 'Số tiền đã dùng (VND)',
+              hintText: '0',
+              prefixIcon: Icon(Icons.payments_outlined, size: 20),
+              suffixText: '₫',
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Confirm button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _onConfirm,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Xác nhận',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
             ),

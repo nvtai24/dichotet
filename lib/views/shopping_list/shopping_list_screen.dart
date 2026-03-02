@@ -267,8 +267,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   visibleItems: visible,
                   onToggleExpand: () =>
                       setState(() => cat.isExpanded = !cat.isExpanded),
-                  onToggleCheck: (item) =>
-                      setState(() => item.isChecked = !item.isChecked),
                   onTapItem: (item) => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -404,14 +402,12 @@ class _CategoryAccordion extends StatelessWidget {
   final ShoppingCategory category;
   final List<ShoppingItem> visibleItems;
   final VoidCallback onToggleExpand;
-  final ValueChanged<ShoppingItem> onToggleCheck;
   final ValueChanged<ShoppingItem> onTapItem;
 
   const _CategoryAccordion({
     required this.category,
     required this.visibleItems,
     required this.onToggleExpand,
-    required this.onToggleCheck,
     required this.onTapItem,
   });
 
@@ -511,7 +507,6 @@ class _CategoryAccordion extends StatelessWidget {
                     _ItemTile(
                       item: item,
                       isLast: isLast,
-                      onToggleCheck: () => onToggleCheck(item),
                       onTap: () => onTapItem(item),
                     ),
                     if (!isLast)
@@ -537,13 +532,11 @@ class _CategoryAccordion extends StatelessWidget {
 class _ItemTile extends StatelessWidget {
   final ShoppingItem item;
   final bool isLast;
-  final VoidCallback onToggleCheck;
   final VoidCallback onTap;
 
   const _ItemTile({
     required this.item,
     required this.isLast,
-    required this.onToggleCheck,
     required this.onTap,
   });
 
@@ -559,31 +552,6 @@ class _ItemTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Circle checkbox
-            GestureDetector(
-              onTap: onToggleCheck,
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: item.isChecked ? AppColors.primary : Colors.transparent,
-                  border: Border.all(
-                    color: item.isChecked
-                        ? AppColors.primary
-                        : AppColors.textSecondary.withValues(alpha: 0.35),
-                    width: 1.5,
-                  ),
-                ),
-                child: item.isChecked
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-
             // Name + qty
             Expanded(
               child: Column(
