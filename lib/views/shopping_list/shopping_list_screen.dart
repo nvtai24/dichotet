@@ -56,11 +56,6 @@ class ShoppingListScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        tooltip: 'Thêm món',
-        child: const Icon(Icons.add, size: 28),
-      ),
     );
   }
 }

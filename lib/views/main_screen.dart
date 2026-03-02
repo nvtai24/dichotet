@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import 'home/dashboard_screen.dart';
 import 'shopping_list/shopping_list_screen.dart';
+import 'shopping_list/add_item_screen.dart';
 import 'budget/budget_screen.dart';
 import 'market/market_screen.dart';
 
@@ -27,7 +28,10 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddItemScreen()),
+        ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 4,
@@ -52,7 +56,11 @@ class _BottomNavBar extends StatelessWidget {
   static const _items = [
     (Icons.home_outlined, Icons.home_rounded, 'Home'),
     (Icons.list_alt_outlined, Icons.list_alt_rounded, 'Lists'),
-    (Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Budget'),
+    (
+      Icons.account_balance_wallet_outlined,
+      Icons.account_balance_wallet,
+      'Budget',
+    ),
     (Icons.map_outlined, Icons.map, 'Map'),
   ];
 
@@ -71,13 +79,17 @@ class _BottomNavBar extends StatelessWidget {
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [0, 1].map((i) => _NavItem(
-                    icon: _items[i].$1,
-                    activeIcon: _items[i].$2,
-                    label: _items[i].$3,
-                    isActive: currentIndex == i,
-                    onTap: () => onTap(i),
-                  )).toList(),
+              children: [0, 1]
+                  .map(
+                    (i) => _NavItem(
+                      icon: _items[i].$1,
+                      activeIcon: _items[i].$2,
+                      label: _items[i].$3,
+                      isActive: currentIndex == i,
+                      onTap: () => onTap(i),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
           // Center gap for FAB
@@ -86,13 +98,17 @@ class _BottomNavBar extends StatelessWidget {
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [2, 3].map((i) => _NavItem(
-                    icon: _items[i].$1,
-                    activeIcon: _items[i].$2,
-                    label: _items[i].$3,
-                    isActive: currentIndex == i,
-                    onTap: () => onTap(i),
-                  )).toList(),
+              children: [2, 3]
+                  .map(
+                    (i) => _NavItem(
+                      icon: _items[i].$1,
+                      activeIcon: _items[i].$2,
+                      label: _items[i].$3,
+                      isActive: currentIndex == i,
+                      onTap: () => onTap(i),
+                    ),
+                  )
+                  .toList(),
             ),
           ),
         ],

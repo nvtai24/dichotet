@@ -29,22 +29,24 @@ class BudgetScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            ..._categories.map((c) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _CategoryBudgetCard(
-                    label: c['label'] as String,
-                    icon: c['icon'] as IconData,
-                    color: c['color'] as Color,
-                  ),
-                )),
+            ..._categories.map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _CategoryBudgetCard(
+                  label: c['label'] as String,
+                  icon: c['icon'] as IconData,
+                  color: c['color'] as Color,
+                ),
+              ),
+            ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        tooltip: 'Thêm chi tiêu',
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {},
+      //   tooltip: 'Thêm chi tiêu',
+      //   child: const Icon(Icons.add),
+      // ),
     );
   }
 }
@@ -55,13 +57,9 @@ final _categories = [
   {
     'label': 'Trang trí - Hoa',
     'icon': Icons.local_florist,
-    'color': Color(0xFF2E7D32)
+    'color': Color(0xFF2E7D32),
   },
-  {
-    'label': 'Quà cáp',
-    'icon': Icons.card_giftcard,
-    'color': Color(0xFF6A1B9A)
-  },
+  {'label': 'Quà cáp', 'icon': Icons.card_giftcard, 'color': Color(0xFF6A1B9A)},
 ];
 
 class _BudgetSummaryCard extends StatelessWidget {
@@ -108,8 +106,9 @@ class _BudgetSummaryCard extends StatelessWidget {
               value: 0,
               minHeight: 6,
               backgroundColor: Colors.white.withValues(alpha: 0.3),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.goldLight),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.goldLight,
+              ),
             ),
           ),
           const SizedBox(height: 10),
