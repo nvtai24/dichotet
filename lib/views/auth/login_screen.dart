@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../main_screen.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,14 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 _WelcomeHeader(),
                 const SizedBox(height: 28),
-                Text(
-                  'Log In',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 20),
 
                 // Phone / Email
                 _FormLabel(label: 'Phone Number or Email'),
@@ -140,7 +133,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                      ),
                       child: const Text(
                         'Sign Up',
                         style: TextStyle(
