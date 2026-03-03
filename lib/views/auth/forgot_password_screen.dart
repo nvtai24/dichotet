@@ -1,5 +1,5 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -25,25 +25,41 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        title: const Text(
+          'Recover Password',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
+        top: false,
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Title & description ───────────────────────────────
-                const Text(
-                  'Recover Password',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 10),
+                // ── Description ───────────────────────────────────────
                 const Text(
                   'Enter your registered email or phone\nnumber to receive a secure reset link\nfor your account.',
                   textAlign: TextAlign.center,
@@ -81,31 +97,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: const Text(
                     'Send Reset Link',
                     style: TextStyle(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ── Back to Login ─────────────────────────────────────
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(
-                        Icons.login_rounded,
-                        size: 16,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Back to Login',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(height: 32),

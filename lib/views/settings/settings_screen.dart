@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -7,10 +8,14 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
         title: const Text(
           'Cài đặt',
           style: TextStyle(
@@ -219,41 +224,6 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
-
-  void _confirmDeleteData(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Xóa tất cả dữ liệu',
-          style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.error),
-        ),
-        content: const Text(
-          'Hành động này không thể hoàn tác. Toàn bộ danh sách và lịch sử chi tiêu sẽ bị xóa vĩnh viễn.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Huỷ'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: delete all data
-            },
-            child: const Text(
-              'Xóa',
-              style: TextStyle(
-                color: AppColors.error,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ─── Section Header ───────────────────────────────────────────────────────────
@@ -423,32 +393,6 @@ class _LogoutButton extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Coming Soon Badge ────────────────────────────────────────────────────────
-
-class _ComingSoonBadge extends StatelessWidget {
-  const _ComingSoonBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.gold.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
-      ),
-      child: const Text(
-        'Sắp có',
-        style: TextStyle(
-          fontSize: 11,
-          color: AppColors.goldDark,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );

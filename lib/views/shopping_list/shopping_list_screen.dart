@@ -32,11 +32,27 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           unit: 'cái',
           estimatedPrice: 120000,
           isChecked: true,
-          note: 'Mua ở chợ Bến Thành, chọn loại hút chân không để giữ được lâu hơn.',
+          note:
+              'Mua ở chợ Bến Thành, chọn loại hút chân không để giữ được lâu hơn.',
           storePrices: [
-            StorePrice(storeName: 'Chợ Bến Thành', type: StoreType.market, pricePerUnit: 150000, lastUpdated: '2 ngày trước'),
-            StorePrice(storeName: 'Co.op Mart', type: StoreType.supermarket, pricePerUnit: 135000, lastUpdated: '5 ngày trước'),
-            StorePrice(storeName: 'Chợ địa phương', type: StoreType.vendor, pricePerUnit: 120000, lastUpdated: '1 tuần trước'),
+            StorePrice(
+              storeName: 'Chợ Bến Thành',
+              type: StoreType.market,
+              pricePerUnit: 150000,
+              lastUpdated: '2 ngày trước',
+            ),
+            StorePrice(
+              storeName: 'Co.op Mart',
+              type: StoreType.supermarket,
+              pricePerUnit: 135000,
+              lastUpdated: '5 ngày trước',
+            ),
+            StorePrice(
+              storeName: 'Chợ địa phương',
+              type: StoreType.vendor,
+              pricePerUnit: 120000,
+              lastUpdated: '1 tuần trước',
+            ),
           ],
         ),
         ShoppingItem(
@@ -60,7 +76,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           estimatedPrice: 250000,
           isChecked: true,
           storePrices: [
-            StorePrice(storeName: 'Chợ Bến Thành', type: StoreType.market, pricePerUnit: 260000, lastUpdated: '3 ngày trước'),
+            StorePrice(
+              storeName: 'Chợ Bến Thành',
+              type: StoreType.market,
+              pricePerUnit: 260000,
+              lastUpdated: '3 ngày trước',
+            ),
           ],
         ),
         ShoppingItem(
@@ -98,7 +119,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           unit: 'kg',
           estimatedPrice: 180000,
           storePrices: [
-            StorePrice(storeName: 'Chợ Bến Thành', type: StoreType.market, pricePerUnit: 185000, lastUpdated: '1 ngày trước'),
+            StorePrice(
+              storeName: 'Chợ Bến Thành',
+              type: StoreType.market,
+              pricePerUnit: 185000,
+              lastUpdated: '1 ngày trước',
+            ),
           ],
         ),
         ShoppingItem(
@@ -156,7 +182,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           unit: 'bộ',
           estimatedPrice: 180000,
           storePrices: [
-            StorePrice(storeName: 'Chợ Bến Thành', type: StoreType.market, pricePerUnit: 200000, lastUpdated: '3 ngày trước'),
+            StorePrice(
+              storeName: 'Chợ Bến Thành',
+              type: StoreType.market,
+              pricePerUnit: 200000,
+              lastUpdated: '3 ngày trước',
+            ),
           ],
         ),
         ShoppingItem(
@@ -195,7 +226,12 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           unit: 'chai',
           estimatedPrice: 320000,
           storePrices: [
-            StorePrice(storeName: 'Vinmart', type: StoreType.supermarket, pricePerUnit: 350000, lastUpdated: '4 ngày trước'),
+            StorePrice(
+              storeName: 'Vinmart',
+              type: StoreType.supermarket,
+              pricePerUnit: 350000,
+              lastUpdated: '4 ngày trước',
+            ),
           ],
         ),
         ShoppingItem(
@@ -270,7 +306,8 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                   onTapItem: (item) => Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => ItemDetailScreen(item: item)),
+                      builder: (_) => ItemDetailScreen(item: item),
+                    ),
                   ).then((_) => setState(() {})),
                 );
               },
@@ -288,8 +325,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       leadingWidth: 48,
       leading: const Padding(
         padding: EdgeInsets.only(left: 16),
-        child: Icon(Icons.calendar_today_outlined,
-            size: 20, color: AppColors.primary),
+        child: Icon(
+          Icons.calendar_today_outlined,
+          size: 20,
+          color: AppColors.primary,
+        ),
       ),
       title: const Text(
         'Tet Shopping List',
@@ -304,8 +344,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: IconButton(
-            icon: const Icon(Icons.tune_outlined,
-                size: 22, color: AppColors.primary),
+            icon: const Icon(
+              Icons.tune_outlined,
+              size: 22,
+              color: AppColors.primary,
+            ),
             onPressed: () {},
           ),
         ),
@@ -343,8 +386,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide:
-                BorderSide(color: AppColors.primary.withValues(alpha: 0.4)),
+            borderSide: BorderSide(
+              color: AppColors.primary.withValues(alpha: 0.4),
+            ),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
         ),
@@ -370,8 +414,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     labels[i],
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          active ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                       color: active
                           ? AppColors.primary
                           : AppColors.textSecondary,
@@ -438,7 +481,9 @@ class _CategoryAccordion extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 13),
+                  horizontal: 14,
+                  vertical: 13,
+                ),
                 child: Row(
                   children: [
                     Container(
@@ -447,8 +492,11 @@ class _CategoryAccordion extends StatelessWidget {
                         color: category.color.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(9),
                       ),
-                      child: Icon(category.icon,
-                          size: 18, color: category.color),
+                      child: Icon(
+                        category.icon,
+                        size: 18,
+                        color: category.color,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -464,7 +512,9 @@ class _CategoryAccordion extends StatelessWidget {
                     // Checked/total badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: checkedCount == totalCount
                             ? AppColors.primary.withValues(alpha: 0.1)
@@ -486,8 +536,11 @@ class _CategoryAccordion extends StatelessWidget {
                     AnimatedRotation(
                       turns: category.isExpanded ? 0 : -0.25,
                       duration: const Duration(milliseconds: 200),
-                      child: const Icon(Icons.keyboard_arrow_down_rounded,
-                          size: 22, color: AppColors.textSecondary),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 22,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -497,8 +550,9 @@ class _CategoryAccordion extends StatelessWidget {
             // Items
             if (category.isExpanded) ...[
               Divider(
-                  height: 1,
-                  color: AppColors.divider.withValues(alpha: 0.5)),
+                height: 1,
+                color: AppColors.divider.withValues(alpha: 0.5),
+              ),
               ...visibleItems.asMap().entries.map((e) {
                 final item = e.value;
                 final isLast = e.key == visibleItems.length - 1;
@@ -542,8 +596,9 @@ class _ItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priceColor =
-        item.isHighPriority && !item.isChecked ? AppColors.error : AppColors.textPrimary;
+    final priceColor = item.isHighPriority && !item.isChecked
+        ? AppColors.error
+        : AppColors.textPrimary;
 
     return InkWell(
       onTap: onTap,
@@ -592,7 +647,9 @@ class _ItemTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: item.isChecked ? AppColors.textSecondary : priceColor,
+                    color: item.isChecked
+                        ? AppColors.textSecondary
+                        : priceColor,
                     decoration: item.isChecked
                         ? TextDecoration.lineThrough
                         : null,
@@ -602,8 +659,10 @@ class _ItemTile extends StatelessWidget {
                 if (item.isHighPriority && !item.isChecked) ...[
                   const SizedBox(height: 3),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(3),
