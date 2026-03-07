@@ -20,6 +20,9 @@ abstract class IAuthService {
   /// Gửi email reset password.
   Future<void> sendPasswordReset({required String email});
 
+  /// Cập nhật password (sau khi user click link reset).
+  Future<void> updatePassword({required String newPassword});
+
   /// Trả về profile của user hiện tại (nếu đã đăng nhập), hoặc `null`.
   Future<Profile?> getCurrentUser();
 

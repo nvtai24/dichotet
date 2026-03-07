@@ -117,6 +117,27 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── Update Password ──────────────────────────────────────────────
+
+  Future<bool> updatePassword({required String newPassword}) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      await _repository.updatePassword(newPassword: newPassword);
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _error = 'Đã xảy ra lỗi. Vui lòng thử lại.';
+      _setLoading(false);
+      return false;
+    }
+  }
+
   // ─── Clear error ──────────────────────────────────────────────────
 
   void clearError() {

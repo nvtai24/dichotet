@@ -34,6 +34,10 @@ class AuthRepositoryImpl implements IAuthRepository {
       _service.sendPasswordReset(email: email);
 
   @override
+  Future<void> updatePassword({required String newPassword}) =>
+      _service.updatePassword(newPassword: newPassword);
+
+  @override
   Future<Profile?> getCurrentUser() => _service.getCurrentUser();
 
   @override

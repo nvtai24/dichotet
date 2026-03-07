@@ -7,6 +7,8 @@ class SupabaseAuthService implements IAuthService {
 
   SupabaseAuthService(this._client);
 
+  static const _redirectUrl = 'com.example.dichotet://login-callback';
+
   // ─── Sign Up ──────────────────────────────────────────────────────
 
   @override
@@ -20,6 +22,7 @@ class SupabaseAuthService implements IAuthService {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
+      emailRedirectTo: _redirectUrl,
       data: {
         if (firstName != null) 'first_name': firstName,
         if (lastName != null) 'last_name': lastName,
@@ -66,7 +69,14 @@ class SupabaseAuthService implements IAuthService {
 
   @override
   Future<void> sendPasswordReset({required String email}) async {
-    await _client.auth.resetPasswordForEmail(email);
+    await _client.auth.resetPasswordForEmail(email, redirectTo: _redirectUrl);
+  }
+
+  // ─── Update Password ──────────────────────────────────────────────
+
+  @override
+  Future<void> updatePassword({required String newPassword}) async {
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
   }
 
   // ─── Current User ─────────────────────────────────────────────────

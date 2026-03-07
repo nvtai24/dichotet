@@ -15,6 +15,8 @@ abstract class IAuthRepository {
 
   Future<void> sendPasswordReset({required String email});
 
+  Future<void> updatePassword({required String newPassword});
+
   Future<Profile?> getCurrentUser();
 
   bool get isLoggedIn;

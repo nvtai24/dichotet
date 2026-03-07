@@ -9,6 +9,7 @@ import 'viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'viewmodels/home/dashboard_viewmodel.dart';
 import 'viewmodels/budget/budget_viewmodel.dart';
 import 'viewmodels/settings/settings_viewmodel.dart';
+import 'views/auth/reset_password_screen.dart';
 import 'views/splash/splash_screen.dart';
 
 Future<void> main() async {
@@ -22,8 +23,29 @@ Future<void> main() async {
   runApp(const DichotetApp());
 }
 
-class DichotetApp extends StatelessWidget {
+class DichotetApp extends StatefulWidget {
   const DichotetApp({super.key});
+
+  @override
+  State<DichotetApp> createState() => _DichotetAppState();
+}
+
+class _DichotetAppState extends State<DichotetApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Lắng nghe auth event từ Supabase deep link
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        // User click link reset password → mở màn hình đặt mật khẩu mới
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +70,7 @@ class DichotetApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: _navigatorKey,
         title: 'Đi chợ Tết',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
