@@ -1,0 +1,21 @@
+import '../../../domain/entities/profile.dart';
+
+abstract class IAuthRepository {
+  Future<Profile> signUp({
+    required String email,
+    required String password,
+    String? firstName,
+    String? lastName,
+    String? phone,
+  });
+
+  Future<Profile> signIn({required String email, required String password});
+
+  Future<void> signOut();
+
+  Future<void> sendPasswordReset({required String email});
+
+  Future<Profile?> getCurrentUser();
+
+  bool get isLoggedIn;
+}

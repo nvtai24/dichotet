@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
 
@@ -210,8 +211,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              final vm = context.read<SettingsViewModel>();
-              await vm.logout();
+              final authVM = context.read<AuthViewModel>();
+              await authVM.signOut();
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,

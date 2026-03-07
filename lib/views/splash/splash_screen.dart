@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../auth/login_screen.dart';
+import '../main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,21 +43,12 @@ class _SplashScreenState extends State<SplashScreen>
     _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
     );
-    _logoFade = CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.easeIn,
-    );
-    _textFade = CurvedAnimation(
-      parent: _textController,
-      curve: Curves.easeIn,
-    );
-    _textSlide = Tween<Offset>(
-      begin: const Offset(0, 0.25),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: Curves.easeOutCubic,
-    ));
+    _logoFade = CurvedAnimation(parent: _logoController, curve: Curves.easeIn);
+    _textFade = CurvedAnimation(parent: _textController, curve: Curves.easeIn);
+    _textSlide = Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
+        );
 
     _runSequence();
   }
@@ -71,11 +65,20 @@ class _SplashScreenState extends State<SplashScreen>
 
     await Future.delayed(const Duration(milliseconds: 2000));
     if (!mounted) return;
+
+    // Kiểm tra session hiện tại → route sang Main hoặc Login
+    final authVM = context.read<AuthViewModel>();
+    await authVM.checkCurrentUser();
+    if (!mounted) return;
+
+    final destination = authVM.isLoggedIn
+        ? const MainScreen()
+        : const LoginScreen();
+
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const LoginScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => destination,
         transitionsBuilder: (context, animation, secondaryAnimation, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 400),
@@ -191,14 +194,14 @@ class _LogoWidget extends StatelessWidget {
   }
 
   static const _decorations = [
-    Offset(6, 76),   // left
+    Offset(6, 76), // left
     Offset(148, 76), // right
-    Offset(76, 4),   // top
+    Offset(76, 4), // top
     Offset(76, 148), // bottom
-    Offset(28, 26),  // top-left
+    Offset(28, 26), // top-left
     Offset(124, 26), // top-right
     Offset(28, 124), // bottom-left
-    Offset(124, 124),// bottom-right
+    Offset(124, 124), // bottom-right
   ];
 }
 
@@ -258,8 +261,7 @@ class _LoadingSection extends StatelessWidget {
             child: LinearProgressIndicator(
               minHeight: 3,
               backgroundColor: Colors.white.withValues(alpha: 0.15),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.gold),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
             ),
           ),
         ],

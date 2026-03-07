@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/app_theme.dart';
 import 'core/constants/supabase_constants.dart';
 import 'di.dart';
+import 'viewmodels/auth/auth_viewmodel.dart';
 import 'viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'viewmodels/home/dashboard_viewmodel.dart';
 import 'viewmodels/budget/budget_viewmodel.dart';
@@ -28,6 +29,7 @@ class DichotetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthViewModel(authRepository)),
         ChangeNotifierProvider(
           create: (_) => ShoppingListViewModel(shoppingRepository)..loadData(),
         ),

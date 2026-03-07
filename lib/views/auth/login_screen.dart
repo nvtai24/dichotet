@@ -1,7 +1,8 @@
 import 'dart:math';
-import 'package:dichotet/core/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../main_screen.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
@@ -14,23 +15,43 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _onLogin() {
-    // TODO: auth logic
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainScreen()),
-    );
+  void _onLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập email và mật khẩu')),
+      );
+      return;
+    }
+
+    final authVM = context.read<AuthViewModel>();
+    final success = await authVM.signIn(email: email, password: password);
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authVM.error ?? 'Đăng nhập thất bại')),
+      );
+    }
   }
 
   @override
@@ -48,15 +69,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 28),
 
-                // Phone / Email
-                _FormLabel(label: 'Phone Number or Email'),
+                // Email
+                _FormLabel(label: 'Email'),
                 const SizedBox(height: 6),
                 TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    hintText: '09xx xxx xxx',
-                    prefixIcon: Icon(Icons.person_outline, size: 20),
+                    hintText: 'hello@tetapp.com',
+                    prefixIcon: Icon(Icons.mail_outline, size: 20),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -111,15 +132,26 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
 
                 // Login button
-                ElevatedButton(
-                  onPressed: _onLogin,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text('Log In', style: TextStyle(fontSize: 16)),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 18),
-                    ],
+                Consumer<AuthViewModel>(
+                  builder: (_, authVM, _) => ElevatedButton(
+                    onPressed: authVM.isLoading ? null : _onLogin,
+                    child: authVM.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text('Log In', style: TextStyle(fontSize: 16)),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward, size: 18),
+                            ],
+                          ),
                   ),
                 ),
                 const SizedBox(height: 20),

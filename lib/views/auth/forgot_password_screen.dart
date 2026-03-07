@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,8 +20,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _onSend() {
-    // TODO: send reset link logic
+  void _onSend() async {
+    final email = _controller.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng nhập email')));
+      return;
+    }
+
+    final authVM = context.read<AuthViewModel>();
+    final success = await authVM.sendPasswordReset(email: email);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã gửi link reset password. Vui lòng kiểm tra email.'),
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(authVM.error ?? 'Gửi thất bại')));
+    }
   }
 
   @override
@@ -92,11 +118,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 24),
 
                 // ── Send button ───────────────────────────────────────
-                ElevatedButton(
-                  onPressed: _onSend,
-                  child: const Text(
-                    'Send Reset Link',
-                    style: TextStyle(fontSize: 16),
+                Consumer<AuthViewModel>(
+                  builder: (_, authVM, _) => ElevatedButton(
+                    onPressed: authVM.isLoading ? null : _onSend,
+                    child: authVM.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Send Reset Link',
+                            style: TextStyle(fontSize: 16),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 32),

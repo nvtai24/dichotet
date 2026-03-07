@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../main_screen.dart';
+import '../../viewmodels/auth/auth_viewmodel.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -31,17 +32,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _onCreateAccount() {
+  void _onCreateAccount() async {
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() => _passwordMatchError = 'Mật khẩu không khớp');
       return;
     }
     setState(() => _passwordMatchError = null);
-    // TODO: register logic
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainScreen()),
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập email và mật khẩu')),
+      );
+      return;
+    }
+
+    final authVM = context.read<AuthViewModel>();
+    final success = await authVM.signUp(
+      email: email,
+      password: password,
+      firstName: firstName.isNotEmpty ? firstName : null,
+      lastName: lastName.isNotEmpty ? lastName : null,
+      phone: phone.isNotEmpty ? phone : null,
     );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.',
+          ),
+        ),
+      );
+      Navigator.pop(context); // Quay về Login
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authVM.error ?? 'Đăng ký thất bại')),
+      );
+    }
   }
 
   @override
@@ -105,9 +140,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       TextField(
                         controller: _lastNameController,
                         textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(
-                          hintText: 'Van A',
-                        ),
+                        decoration: const InputDecoration(hintText: 'Van A'),
                       ),
                     ],
                   ),
@@ -184,7 +217,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     color: AppColors.textSecondary,
                   ),
                   onPressed: () => setState(
-                      () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                  ),
                 ),
                 errorText: _passwordMatchError,
                 errorStyle: const TextStyle(
@@ -196,11 +230,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 24),
 
             // Create Account button
-            ElevatedButton(
-              onPressed: _onCreateAccount,
-              child: const Text(
-                'Create Account',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Consumer<AuthViewModel>(
+              builder: (_, authVM, _) => ElevatedButton(
+                onPressed: authVM.isLoading ? null : _onCreateAccount,
+                child: authVM.isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 16),
