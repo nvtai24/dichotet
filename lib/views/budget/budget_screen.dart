@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/budget/budget_viewmodel.dart';
 
 class BudgetScreen extends StatelessWidget {
   const BudgetScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<BudgetViewModel>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ngân sách'),
@@ -22,47 +25,62 @@ class BudgetScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _BudgetSummaryCard(),
+            _BudgetSummaryCard(
+              totalEstimated: vm.totalEstimated,
+              totalSpent: vm.totalSpent,
+              remaining: vm.remaining,
+              progress: vm.progress,
+            ),
             const SizedBox(height: 20),
             Text(
               'Theo danh mục',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            ..._categories.map(
+            ...vm.categoryBudgets.map(
               (c) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _CategoryBudgetCard(
-                  label: c['label'] as String,
-                  icon: c['icon'] as IconData,
-                  color: c['color'] as Color,
+                  label: c.label,
+                  icon: c.icon,
+                  color: c.color,
+                  estimated: c.estimated,
+                  spent: c.spent,
+                  progress: c.progress,
                 ),
               ),
             ),
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {},
-      //   tooltip: 'Thêm chi tiêu',
-      //   child: const Icon(Icons.add),
-      // ),
     );
   }
 }
 
-final _categories = [
-  {'label': 'Thực phẩm', 'icon': Icons.restaurant, 'color': AppColors.primary},
-  {'label': 'Bánh kẹo - Mứt', 'icon': Icons.cake, 'color': AppColors.gold},
-  {
-    'label': 'Trang trí - Hoa',
-    'icon': Icons.local_florist,
-    'color': Color(0xFF2E7D32),
-  },
-  {'label': 'Quà cáp', 'icon': Icons.card_giftcard, 'color': Color(0xFF6A1B9A)},
-];
+String _formatPrice(int price) {
+  if (price == 0) return '0 ₫';
+  final s = price.toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+    buf.write(s[i]);
+  }
+  return '${buf.toString()} ₫';
+}
 
 class _BudgetSummaryCard extends StatelessWidget {
+  final int totalEstimated;
+  final int totalSpent;
+  final int remaining;
+  final double progress;
+
+  const _BudgetSummaryCard({
+    required this.totalEstimated,
+    required this.totalSpent,
+    required this.remaining,
+    required this.progress,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -91,9 +109,9 @@ class _BudgetSummaryCard extends StatelessWidget {
             style: TextStyle(color: AppColors.goldLight, fontSize: 13),
           ),
           const SizedBox(height: 6),
-          const Text(
-            '0 ₫',
-            style: TextStyle(
+          Text(
+            _formatPrice(totalEstimated),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 32,
               fontWeight: FontWeight.w800,
@@ -103,7 +121,7 @@ class _BudgetSummaryCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: 0,
+              value: progress.clamp(0.0, 1.0),
               minHeight: 6,
               backgroundColor: Colors.white.withValues(alpha: 0.3),
               valueColor: const AlwaysStoppedAnimation<Color>(
@@ -112,16 +130,16 @@ class _BudgetSummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Đã chi: 0 ₫',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
+                'Đã chi: ${_formatPrice(totalSpent)}',
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
               Text(
-                'Còn lại: 0 ₫',
-                style: TextStyle(
+                'Còn lại: ${_formatPrice(remaining)}',
+                style: const TextStyle(
                   color: AppColors.goldLight,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -139,11 +157,17 @@ class _CategoryBudgetCard extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
+  final int estimated;
+  final int spent;
+  final double progress;
 
   const _CategoryBudgetCard({
     required this.label,
     required this.icon,
     required this.color,
+    required this.estimated,
+    required this.spent,
+    required this.progress,
   });
 
   @override
@@ -181,7 +205,7 @@ class _CategoryBudgetCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(3),
                   child: LinearProgressIndicator(
-                    value: 0,
+                    value: progress.clamp(0.0, 1.0),
                     minHeight: 4,
                     backgroundColor: AppColors.divider,
                     valueColor: AlwaysStoppedAnimation<Color>(color),
@@ -191,9 +215,9 @@ class _CategoryBudgetCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
-            '0 ₫',
-            style: TextStyle(
+          Text(
+            _formatPrice(spent),
+            style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 14,
               color: AppColors.textPrimary,

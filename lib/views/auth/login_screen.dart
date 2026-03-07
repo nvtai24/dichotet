@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:dichotet/core/widgets/app_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../main_screen.dart';
@@ -44,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _WelcomeHeader(),
+
                 const SizedBox(height: 28),
 
                 // Phone / Email

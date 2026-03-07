@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -18,24 +20,19 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   String? _selectedCategory;
   int _quantity = 1;
+  String _selectedStore = '';
 
-  static const _categories = [
-    'Thực phẩm',
-    'Bánh kẹo - Mứt',
-    'Trang trí - Hoa',
-    'Quà cáp',
-    'Đồ uống',
-    'Khác',
-  ];
+  List<String> _categories = [];
+  List<String> _stores = [];
 
-  static const _stores = [
-    'Chợ Bến Thành',
-    'Lotte Mart',
-    'Vinmart',
-    'Chợ địa phương',
-  ];
-
-  String _selectedStore = 'Chợ Bến Thành';
+  @override
+  void initState() {
+    super.initState();
+    final vm = context.read<ShoppingListViewModel>();
+    _categories = vm.categoryNames;
+    _stores = vm.storeNames;
+    if (_stores.isNotEmpty) _selectedStore = _stores.first;
+  }
 
   @override
   void dispose() {

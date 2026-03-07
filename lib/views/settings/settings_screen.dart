@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -120,6 +122,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildProfileCard(BuildContext context) {
+    final vm = context.watch<SettingsViewModel>();
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
@@ -136,7 +139,6 @@ class SettingsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar
           Container(
             width: 56,
             height: 56,
@@ -151,23 +153,22 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          // Info
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Nguyễn Văn A',
-                  style: TextStyle(
+                  vm.userName,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  'nguyenvana@email.com',
-                  style: TextStyle(
+                  vm.userEmail,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
@@ -175,7 +176,6 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Edit
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -209,12 +209,16 @@ class SettingsScreen extends StatelessWidget {
             child: const Text('Huỷ'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (_) => false,
-              );
+            onPressed: () async {
+              final vm = context.read<SettingsViewModel>();
+              await vm.logout();
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (_) => false,
+                );
+              }
             },
             child: const Text(
               'Đăng xuất',

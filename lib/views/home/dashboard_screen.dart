@@ -1,21 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../viewmodels/home/dashboard_viewmodel.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
-  // Tết 2027: January 26, 2027
-  static final _tetDate = DateTime(2027, 1, 26);
-
-  static int get _daysToTet {
-    final today = DateTime.now();
-    final todayOnly = DateTime(today.year, today.month, today.day);
-    return _tetDate.difference(todayOnly).inDays.clamp(0, 9999);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<DashboardViewModel>();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -29,22 +23,26 @@ class DashboardScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              // Hero card — full width, no horizontal padding
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 0),
-                child: _HeroCountdownCard(daysToTet: _daysToTet),
+                child: _HeroCountdownCard(daysToTet: vm.daysToTet),
               ),
-              // Remaining sections — with horizontal padding
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    _ShoppingCompletionSection(),
-                    SizedBox(height: 20),
-                    _BudgetSummarySection(),
-                    SizedBox(height: 20),
-                    _ShoppingDestinationsSection(),
+                  children: [
+                    _ShoppingCompletionSection(
+                      progress: vm.shoppingProgress,
+                      message: vm.progressMessage,
+                    ),
+                    const SizedBox(height: 20),
+                    _BudgetSummarySection(
+                      estimated: vm.estimatedBudget,
+                      spent: vm.spentBudget,
+                    ),
+                    const SizedBox(height: 20),
+                    _ShoppingDestinationsSection(destinations: vm.destinations),
                   ],
                 ),
               ),
@@ -234,13 +232,16 @@ class _DecorativeShape extends StatelessWidget {
 // ─── Shopping Completion ───────────────────────────────────────────────────
 
 class _ShoppingCompletionSection extends StatelessWidget {
-  const _ShoppingCompletionSection();
-
-  static const double _progress = 0.0;
+  final double progress;
+  final String message;
+  const _ShoppingCompletionSection({
+    required this.progress,
+    required this.message,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final percent = (_progress * 100).toStringAsFixed(0);
+    final percent = (progress * 100).toStringAsFixed(0);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -268,12 +269,7 @@ class _ShoppingCompletionSection extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      _progress == 0
-                          ? 'Chưa có món nào được mua'
-                          : 'Sắp xong rồi, cố lên!',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    Text(message, style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),
@@ -291,7 +287,7 @@ class _ShoppingCompletionSection extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: _progress,
+              value: progress,
               minHeight: 8,
               backgroundColor: AppColors.border,
               valueColor: const AlwaysStoppedAnimation<Color>(
@@ -308,17 +304,31 @@ class _ShoppingCompletionSection extends StatelessWidget {
 // ─── Budget Summary ────────────────────────────────────────────────────────
 
 class _BudgetSummarySection extends StatelessWidget {
-  const _BudgetSummarySection();
+  final int estimated;
+  final int spent;
+  const _BudgetSummarySection({required this.estimated, required this.spent});
+
+  String _formatPrice(int price) {
+    if (price == 0) return '0 ₫';
+    final s = price.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return '${buf.toString()} ₫';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final pct = estimated == 0 ? 0 : (spent * 100 ~/ estimated);
     return Row(
       children: [
         Expanded(
           child: _BudgetCard(
-            label: 'DỰ TÍNH',
-            amount: '0 ₫',
-            note: 'Chưa có chi tiêu nào',
+            label: 'NGÂN SÁCH',
+            amount: _formatPrice(estimated),
+            note: estimated == 0 ? 'Chưa có chi tiêu nào' : 'Tổng dự tính',
             isPrimary: false,
             icon: Icons.savings_outlined,
           ),
@@ -327,8 +337,8 @@ class _BudgetSummarySection extends StatelessWidget {
         Expanded(
           child: _BudgetCard(
             label: 'ĐÃ CHI',
-            amount: '0 ₫',
-            note: '0% đã dùng',
+            amount: _formatPrice(spent),
+            note: '$pct% đã dùng',
             isPrimary: true,
             icon: Icons.shopping_bag_outlined,
           ),
@@ -413,24 +423,8 @@ class _BudgetCard extends StatelessWidget {
 // ─── Shopping Destinations ─────────────────────────────────────────────────
 
 class _ShoppingDestinationsSection extends StatelessWidget {
-  const _ShoppingDestinationsSection();
-
-  static const _destinations = [
-    (
-      Icons.storefront_outlined,
-      'Chợ Bến Thành',
-      'Hoa & Trang trí',
-      '0.8km',
-      true,
-    ),
-    (
-      Icons.shopping_basket_outlined,
-      'Lotte Mart',
-      'Thực phẩm & Đồ uống',
-      '2.4km',
-      false,
-    ),
-  ];
+  final List<Destination> destinations;
+  const _ShoppingDestinationsSection({required this.destinations});
 
   @override
   Widget build(BuildContext context) {
@@ -460,15 +454,17 @@ class _ShoppingDestinationsSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        ..._destinations.map(
+        ...destinations.map(
           (d) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: _DestinationTile(
-              icon: d.$1,
-              name: d.$2,
-              category: d.$3,
-              distance: d.$4,
-              isWalking: d.$5,
+              icon: d.isWalking
+                  ? Icons.storefront_outlined
+                  : Icons.shopping_basket_outlined,
+              name: d.name,
+              category: d.category,
+              distance: d.distance,
+              isWalking: d.isWalking,
             ),
           ),
         ),

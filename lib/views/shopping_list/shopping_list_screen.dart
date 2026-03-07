@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
-import 'shopping_item_model.dart';
+import '../../models/shopping_models.dart';
+import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'item_detail_screen.dart';
 
 class ShoppingListScreen extends StatefulWidget {
@@ -12,250 +14,6 @@ class ShoppingListScreen extends StatefulWidget {
 
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   final _searchController = TextEditingController();
-  String _searchQuery = '';
-  int _activeTab = 0; // 0: All, 1: Pending, 2: Purchased
-
-  final List<ShoppingCategory> _categories = [
-    ShoppingCategory(
-      name: 'Đặc sản Tết',
-      color: AppColors.primary,
-      tag: 'TRUYỀN THỐNG',
-      icon: Icons.card_giftcard_outlined,
-      isExpanded: true,
-      items: [
-        ShoppingItem(
-          name: 'Bánh Chưng',
-          categoryName: 'Đặc sản Tết',
-          categoryTag: 'TRUYỀN THỐNG',
-          categoryColor: AppColors.primary,
-          quantity: 4,
-          unit: 'cái',
-          estimatedPrice: 120000,
-          isChecked: true,
-          note:
-              'Mua ở chợ Bến Thành, chọn loại hút chân không để giữ được lâu hơn.',
-          storePrices: [
-            StorePrice(
-              storeName: 'Chợ Bến Thành',
-              type: StoreType.market,
-              pricePerUnit: 150000,
-              lastUpdated: '2 ngày trước',
-            ),
-            StorePrice(
-              storeName: 'Co.op Mart',
-              type: StoreType.supermarket,
-              pricePerUnit: 135000,
-              lastUpdated: '5 ngày trước',
-            ),
-            StorePrice(
-              storeName: 'Chợ địa phương',
-              type: StoreType.vendor,
-              pricePerUnit: 120000,
-              lastUpdated: '1 tuần trước',
-            ),
-          ],
-        ),
-        ShoppingItem(
-          name: 'Phong bao lì xì',
-          categoryName: 'Đặc sản Tết',
-          categoryTag: 'TRUYỀN THỐNG',
-          categoryColor: AppColors.primary,
-          quantity: 2,
-          unit: 'bộ',
-          estimatedPrice: 55000,
-          isHighPriority: true,
-          note: 'Chọn loại có in hình rồng vàng.',
-        ),
-        ShoppingItem(
-          name: 'Mâm ngũ quả',
-          categoryName: 'Đặc sản Tết',
-          categoryTag: 'TRUYỀN THỐNG',
-          categoryColor: AppColors.primary,
-          quantity: 1,
-          unit: 'mâm',
-          estimatedPrice: 250000,
-          isChecked: true,
-          storePrices: [
-            StorePrice(
-              storeName: 'Chợ Bến Thành',
-              type: StoreType.market,
-              pricePerUnit: 260000,
-              lastUpdated: '3 ngày trước',
-            ),
-          ],
-        ),
-        ShoppingItem(
-          name: 'Mứt Tết',
-          categoryName: 'Đặc sản Tết',
-          categoryTag: 'TRUYỀN THỐNG',
-          categoryColor: AppColors.primary,
-          quantity: 3,
-          unit: 'hộp',
-          estimatedPrice: 80000,
-        ),
-        ShoppingItem(
-          name: 'Bánh Tét',
-          categoryName: 'Đặc sản Tết',
-          categoryTag: 'TRUYỀN THỐNG',
-          categoryColor: AppColors.primary,
-          quantity: 2,
-          unit: 'cái',
-          estimatedPrice: 70000,
-        ),
-      ],
-    ),
-    ShoppingCategory(
-      name: 'Thực phẩm & Đồ uống',
-      color: const Color(0xFF43A047),
-      tag: 'THỰC PHẨM',
-      icon: Icons.restaurant_outlined,
-      items: [
-        ShoppingItem(
-          name: 'Thịt Heo',
-          categoryName: 'Thực phẩm & Đồ uống',
-          categoryTag: 'THỰC PHẨM',
-          categoryColor: const Color(0xFF43A047),
-          quantity: 3,
-          unit: 'kg',
-          estimatedPrice: 180000,
-          storePrices: [
-            StorePrice(
-              storeName: 'Chợ Bến Thành',
-              type: StoreType.market,
-              pricePerUnit: 185000,
-              lastUpdated: '1 ngày trước',
-            ),
-          ],
-        ),
-        ShoppingItem(
-          name: 'Tôm tươi',
-          categoryName: 'Thực phẩm & Đồ uống',
-          categoryTag: 'THỰC PHẨM',
-          categoryColor: const Color(0xFF43A047),
-          quantity: 1,
-          unit: 'kg',
-          estimatedPrice: 250000,
-          isHighPriority: true,
-        ),
-        ShoppingItem(
-          name: 'Nước ngọt',
-          categoryName: 'Thực phẩm & Đồ uống',
-          categoryTag: 'THỰC PHẨM',
-          categoryColor: const Color(0xFF43A047),
-          quantity: 2,
-          unit: 'thùng',
-          estimatedPrice: 140000,
-        ),
-        ShoppingItem(
-          name: 'Bia',
-          categoryName: 'Thực phẩm & Đồ uống',
-          categoryTag: 'THỰC PHẨM',
-          categoryColor: const Color(0xFF43A047),
-          quantity: 1,
-          unit: 'thùng',
-          estimatedPrice: 180000,
-        ),
-      ],
-    ),
-    ShoppingCategory(
-      name: 'Trang trí - Hoa',
-      color: const Color(0xFFE91E8A),
-      tag: 'TRANG TRÍ',
-      icon: Icons.local_florist_outlined,
-      items: [
-        ShoppingItem(
-          name: 'Hoa mai',
-          categoryName: 'Trang trí - Hoa',
-          categoryTag: 'TRANG TRÍ',
-          categoryColor: const Color(0xFFE91E8A),
-          quantity: 1,
-          unit: 'cành',
-          estimatedPrice: 350000,
-          isChecked: true,
-        ),
-        ShoppingItem(
-          name: 'Đèn lồng đỏ',
-          categoryName: 'Trang trí - Hoa',
-          categoryTag: 'TRANG TRÍ',
-          categoryColor: const Color(0xFFE91E8A),
-          quantity: 2,
-          unit: 'bộ',
-          estimatedPrice: 180000,
-          storePrices: [
-            StorePrice(
-              storeName: 'Chợ Bến Thành',
-              type: StoreType.market,
-              pricePerUnit: 200000,
-              lastUpdated: '3 ngày trước',
-            ),
-          ],
-        ),
-        ShoppingItem(
-          name: 'Câu đối Tết',
-          categoryName: 'Trang trí - Hoa',
-          categoryTag: 'TRANG TRÍ',
-          categoryColor: const Color(0xFFE91E8A),
-          quantity: 1,
-          unit: 'bộ',
-          estimatedPrice: 45000,
-        ),
-      ],
-    ),
-    ShoppingCategory(
-      name: 'Quà cáp',
-      color: const Color(0xFFFF6F00),
-      tag: 'QUÀ CÁP',
-      icon: Icons.redeem_outlined,
-      items: [
-        ShoppingItem(
-          name: 'Giỏ quà Tết',
-          categoryName: 'Quà cáp',
-          categoryTag: 'QUÀ CÁP',
-          categoryColor: const Color(0xFFFF6F00),
-          quantity: 3,
-          unit: 'giỏ',
-          estimatedPrice: 450000,
-          isChecked: true,
-        ),
-        ShoppingItem(
-          name: 'Rượu vang',
-          categoryName: 'Quà cáp',
-          categoryTag: 'QUÀ CÁP',
-          categoryColor: const Color(0xFFFF6F00),
-          quantity: 1,
-          unit: 'chai',
-          estimatedPrice: 320000,
-          storePrices: [
-            StorePrice(
-              storeName: 'Vinmart',
-              type: StoreType.supermarket,
-              pricePerUnit: 350000,
-              lastUpdated: '4 ngày trước',
-            ),
-          ],
-        ),
-        ShoppingItem(
-          name: 'Kẹo socola',
-          categoryName: 'Quà cáp',
-          categoryTag: 'QUÀ CÁP',
-          categoryColor: const Color(0xFFFF6F00),
-          quantity: 2,
-          unit: 'hộp',
-          estimatedPrice: 120000,
-          isHighPriority: true,
-        ),
-        ShoppingItem(
-          name: 'Trà Oolong hộp',
-          categoryName: 'Quà cáp',
-          categoryTag: 'QUÀ CÁP',
-          categoryColor: const Color(0xFFFF6F00),
-          quantity: 2,
-          unit: 'hộp',
-          estimatedPrice: 180000,
-        ),
-      ],
-    ),
-  ];
 
   @override
   void dispose() {
@@ -263,25 +21,14 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     super.dispose();
   }
 
-  bool _itemMatchesTab(ShoppingItem item) {
-    if (_activeTab == 1) return !item.isChecked;
-    if (_activeTab == 2) return item.isChecked;
-    return true;
-  }
-
-  bool _itemMatchesSearch(ShoppingItem item) {
-    if (_searchQuery.isEmpty) return true;
-    return item.name.toLowerCase().contains(_searchQuery.toLowerCase());
-  }
-
-  List<ShoppingItem> _visibleItems(ShoppingCategory cat) {
-    return cat.items
-        .where((i) => _itemMatchesTab(i) && _itemMatchesSearch(i))
-        .toList();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<ShoppingListViewModel>();
+
+    if (vm.isLoading && vm.categories.isEmpty) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       appBar: _buildAppBar(),
@@ -293,22 +40,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-              itemCount: _categories.length,
+              itemCount: vm.categories.length,
               itemBuilder: (_, i) {
-                final cat = _categories[i];
-                final visible = _visibleItems(cat);
+                final cat = vm.categories[i];
+                final visible = vm.visibleItems(cat);
                 if (visible.isEmpty) return const SizedBox.shrink();
                 return _CategoryAccordion(
                   category: cat,
                   visibleItems: visible,
-                  onToggleExpand: () =>
-                      setState(() => cat.isExpanded = !cat.isExpanded),
+                  onToggleExpand: () => vm.toggleCategoryExpand(cat),
                   onTapItem: (item) => Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => ItemDetailScreen(item: item),
                     ),
-                  ).then((_) => setState(() {})),
+                  ),
                 );
               },
             ),
@@ -357,20 +103,21 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _buildSearchBar() {
+    final vm = context.read<ShoppingListViewModel>();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: TextField(
         controller: _searchController,
-        onChanged: (v) => setState(() => _searchQuery = v),
+        onChanged: (v) => vm.setSearchQuery(v),
         decoration: InputDecoration(
           hintText: 'Search items...',
           prefixIcon: const Icon(Icons.search, size: 20),
-          suffixIcon: _searchQuery.isNotEmpty
+          suffixIcon: vm.searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear, size: 18),
                   onPressed: () {
                     _searchController.clear();
-                    setState(() => _searchQuery = '');
+                    vm.setSearchQuery('');
                   },
                 )
               : null,
@@ -397,16 +144,17 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Widget _buildTabs() {
+    final vm = context.read<ShoppingListViewModel>();
     const labels = ['All', 'Pending', 'Purchased'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(
         children: List.generate(labels.length, (i) {
-          final active = _activeTab == i;
+          final active = vm.activeTab == i;
           return Padding(
             padding: const EdgeInsets.only(right: 20),
             child: GestureDetector(
-              onTap: () => setState(() => _activeTab = i),
+              onTap: () => vm.setActiveTab(i),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

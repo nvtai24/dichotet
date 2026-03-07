@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
-import 'shopping_item_model.dart';
+import '../../models/shopping_models.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final ShoppingItem item;
@@ -96,13 +96,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       const SizedBox(width: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: _item.categoryColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color:
-                                _item.categoryColor.withValues(alpha: 0.3),
+                            color: _item.categoryColor.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(
@@ -149,7 +150,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget _buildBottomBar() {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+        16,
+        12,
+        16,
+        MediaQuery.of(context).padding.bottom + 12,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -317,11 +322,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           sub: 'per ${_item.unit}',
         ),
         const SizedBox(width: 10),
-        _StatBox(
-          label: 'Unit',
-          value: _item.unit,
-          sub: '',
-        ),
+        _StatBox(label: 'Unit', value: _item.unit, sub: ''),
       ],
     );
   }
@@ -589,10 +590,7 @@ class _StatBox extends StatelessWidget {
             if (sub.isNotEmpty)
               Text(
                 sub,
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textHint,
-                ),
+                style: const TextStyle(fontSize: 10, color: AppColors.textHint),
               ),
           ],
         ),
@@ -610,16 +608,16 @@ class _StorePriceRow extends StatelessWidget {
   const _StorePriceRow({required this.store, required this.unit});
 
   IconData get _icon => switch (store.type) {
-        StoreType.market => Icons.place_outlined,
-        StoreType.supermarket => Icons.shopping_cart_outlined,
-        StoreType.vendor => Icons.store_outlined,
-      };
+    StoreType.market => Icons.place_outlined,
+    StoreType.supermarket => Icons.shopping_cart_outlined,
+    StoreType.vendor => Icons.store_outlined,
+  };
 
   Color get _iconColor => switch (store.type) {
-        StoreType.market => AppColors.primary,
-        StoreType.supermarket => const Color(0xFF43A047),
-        StoreType.vendor => const Color(0xFFFF6F00),
-      };
+    StoreType.market => AppColors.primary,
+    StoreType.supermarket => const Color(0xFF43A047),
+    StoreType.vendor => const Color(0xFFFF6F00),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -721,12 +719,14 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
         _priceController.text.trim().isEmpty) {
       return;
     }
-    widget.onAdd(StorePrice(
-      storeName: _storeController.text.trim(),
-      type: _storeType,
-      pricePerUnit: int.tryParse(_priceController.text.trim()) ?? 0,
-      lastUpdated: 'Vừa xong',
-    ));
+    widget.onAdd(
+      StorePrice(
+        storeName: _storeController.text.trim(),
+        type: _storeType,
+        pricePerUnit: int.tryParse(_priceController.text.trim()) ?? 0,
+        lastUpdated: 'Vừa xong',
+      ),
+    );
     Navigator.pop(context);
   }
 
@@ -740,7 +740,11 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 20),
+        16,
+        20,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -867,10 +871,7 @@ class _PurchaseStatBox extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF43A047),
-            ),
+            style: const TextStyle(fontSize: 11, color: Color(0xFF43A047)),
           ),
           const SizedBox(height: 4),
           Text(
@@ -893,10 +894,7 @@ class _ConfirmPurchaseSheet extends StatefulWidget {
   final ShoppingItem item;
   final void Function(int quantity, int price) onConfirm;
 
-  const _ConfirmPurchaseSheet({
-    required this.item,
-    required this.onConfirm,
-  });
+  const _ConfirmPurchaseSheet({required this.item, required this.onConfirm});
 
   @override
   State<_ConfirmPurchaseSheet> createState() => _ConfirmPurchaseSheetState();
@@ -936,7 +934,11 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          16, 20, 16, MediaQuery.of(context).viewInsets.bottom + 24),
+        16,
+        20,
+        16,
+        MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
