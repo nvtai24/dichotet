@@ -25,7 +25,7 @@ class SupabaseProfileService implements IProfileService {
       firstName: data['first_name'] as String?,
       lastName: data['last_name'] as String?,
       email: user.email,
-      phone: user.userMetadata?['phone'] as String?,
+      phone: data['phone'] as String?,
       role: data['role'] == 'admin' ? UserRole.admin : UserRole.user,
     );
   }
@@ -37,15 +37,9 @@ class SupabaseProfileService implements IProfileService {
         .update({
           'first_name': profile.firstName,
           'last_name': profile.lastName,
+          'phone': profile.phone,
         })
         .eq('id', profile.id);
-
-    // Cập nhật phone trong user metadata
-    if (profile.phone != null) {
-      await _client.auth.updateUser(
-        UserAttributes(data: {'phone': profile.phone}),
-      );
-    }
   }
 
   @override
