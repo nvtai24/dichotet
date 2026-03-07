@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
+import '../auth/reset_password_screen.dart';
 import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -55,7 +56,12 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.lock_outline,
                 label: 'Đổi mật khẩu',
                 subtitle: 'Bảo mật tài khoản',
-                onTap: () {},
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ResetPasswordScreen(),
+                  ),
+                ),
               ),
               _SettingsTile(
                 icon: Icons.notifications_outlined,
