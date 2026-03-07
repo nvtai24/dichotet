@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -45,7 +46,10 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.person_outline,
                 label: 'Hồ sơ cá nhân',
                 subtitle: 'Tên, ảnh đại diện',
-                onTap: () {},
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                ),
               ),
               _SettingsTile(
                 icon: Icons.lock_outline,

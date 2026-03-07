@@ -5,6 +5,7 @@ class Profile {
   final String? firstName;
   final String? lastName;
   final String? email;
+  final String? phone;
   final String? avatarUrl;
   final UserRole role;
 
@@ -13,6 +14,7 @@ class Profile {
     this.firstName,
     this.lastName,
     this.email,
+    this.phone,
     this.avatarUrl,
     this.role = UserRole.user,
   });

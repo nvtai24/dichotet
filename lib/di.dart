@@ -1,7 +1,7 @@
 // Dependency Injection
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/implementations/api/mock_shopping_service.dart';
-import 'data/implementations/api/mock_profile_service.dart';
+import 'data/implementations/api/supabase_profile_service.dart';
 import 'data/implementations/api/supabase_auth_service.dart';
 import 'data/implementations/repositories/shopping_repository_impl.dart';
 import 'data/implementations/repositories/profile_repository_impl.dart';
@@ -18,7 +18,7 @@ SupabaseClient get supabase => Supabase.instance.client;
 // ─── Services (API layer) ─────────────────────────────────────────────
 // Khi có API Supabase thật, thay MockXxxService bằng SupabaseXxxService.
 final IShoppingService shoppingService = MockShoppingService();
-final IProfileService profileService = MockProfileService();
+final IProfileService profileService = SupabaseProfileService(supabase);
 final IAuthService authService = SupabaseAuthService(supabase);
 
 // ─── Repositories ─────────────────────────────────────────────────────

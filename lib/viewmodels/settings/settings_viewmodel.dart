@@ -17,6 +17,7 @@ class SettingsViewModel extends ChangeNotifier {
 
   String get userName => _profile?.fullName ?? 'Người dùng';
   String get userEmail => _profile?.email ?? '';
+  String get userPhone => _profile?.phone ?? '';
 
   // ─── Actions ────────────────────────────────────────────────────────
 
@@ -36,5 +37,39 @@ class SettingsViewModel extends ChangeNotifier {
 
   Future<void> logout() async {
     await _repository.logout();
+  }
+
+  // ─── Update Profile ─────────────────────────────────────────────────
+
+  Future<bool> updateName({
+    required String firstName,
+    required String lastName,
+    String? phone,
+  }) async {
+    if (_profile == null) return false;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final updated = Profile(
+        id: _profile!.id,
+        firstName: firstName,
+        lastName: lastName,
+        email: _profile!.email,
+        phone: phone ?? _profile!.phone,
+        avatarUrl: _profile!.avatarUrl,
+        role: _profile!.role,
+      );
+      await _repository.updateProfile(updated);
+      _profile = updated;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (_) {
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }
