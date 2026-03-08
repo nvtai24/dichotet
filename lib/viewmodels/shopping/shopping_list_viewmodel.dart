@@ -114,6 +114,15 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateItem(
+    ShoppingItem oldItem,
+    ShoppingItem newItem,
+    String categoryName,
+  ) async {
+    await _repository.updateItem(oldItem, newItem, categoryName);
+    await loadData();
+  }
+
   Future<void> confirmPurchase(
     ShoppingItem item, {
     required int quantity,
@@ -133,5 +142,19 @@ class ShoppingListViewModel extends ChangeNotifier {
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
     await _repository.addStorePrice(item, storePrice);
     notifyListeners();
+  }
+
+  Future<void> updatePurchase(
+    int purchaseId,
+    int quantity,
+    int pricePerUnit,
+  ) async {
+    await _repository.updatePurchase(purchaseId, quantity, pricePerUnit);
+    await loadData();
+  }
+
+  Future<void> deletePurchase(int purchaseId) async {
+    await _repository.deletePurchase(purchaseId);
+    await loadData();
   }
 }

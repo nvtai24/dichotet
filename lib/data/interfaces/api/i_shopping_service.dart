@@ -8,6 +8,11 @@ abstract class IShoppingService {
   Future<List<String>> getCategoryNames();
   Future<List<String>> getStoreNames();
   Future<void> addItem(ShoppingItem item, String categoryName);
+  Future<void> updateItem(
+    ShoppingItem oldItem,
+    ShoppingItem newItem,
+    String categoryName,
+  );
   Future<void> updateItemPurchaseStatus(
     ShoppingItem item, {
     required bool isPurchased,
@@ -16,4 +21,6 @@ abstract class IShoppingService {
     String? locationName,
   });
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice);
+  Future<void> updatePurchase(int purchaseId, int quantity, int pricePerUnit);
+  Future<void> deletePurchase(int purchaseId);
 }

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
+import 'edit_item_screen.dart';
+import 'edit_purchases_screen.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final ShoppingItem item;
@@ -50,7 +52,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
-              onTap: () {}, // TODO: navigate to edit screen
+              onTap: () async {
+                final result = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditItemScreen(item: _item),
+                  ),
+                );
+                if (result == true && mounted) {
+                  Navigator.pop(context); // back to list to see refreshed data
+                }
+              },
               child: Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
@@ -246,6 +258,49 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   ),
                 ),
               ),
+              if (purchases.isNotEmpty)
+                GestureDetector(
+                  onTap: () async {
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditPurchasesScreen(item: _item),
+                      ),
+                    );
+                    if (result == true && mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF43A047).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 13,
+                          color: Color(0xFF43A047),
+                        ),
+                        SizedBox(width: 3),
+                        Text(
+                          'Sửa',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF43A047),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
           if (purchases.isEmpty)

@@ -56,6 +56,7 @@ class SupabaseShoppingService implements IShoppingService {
         final m = p as Map<String, dynamic>;
         final locData = m['purchase_locations'] as Map<String, dynamic>?;
         return PurchaseRecord(
+          id: (m['id'] as num?)?.toInt(),
           quantity: (m['quantity'] as num?)?.toInt() ?? 0,
           pricePerUnit: (m['price_per_unit'] as num?)?.toInt() ?? 0,
           purchasedAt:
@@ -178,6 +179,71 @@ class SupabaseShoppingService implements IShoppingService {
     }
   }
 
+  // ─── Update Item ──────────────────────────────────────────────────
+
+  @override
+  Future<void> updateItem(
+    ShoppingItem oldItem,
+    ShoppingItem newItem,
+    String categoryName,
+  ) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) throw Exception('Chưa đăng nhập');
+
+    // Tìm item id
+    final rows = await _client
+        .from('shopping_items')
+        .select('id')
+        .eq('name', oldItem.name)
+        .eq('user_id', userId)
+        .limit(1);
+    if (rows.isEmpty) throw Exception('Không tìm thấy sản phẩm');
+
+    final itemId = rows.first['id'] as int;
+
+    // Tìm category id
+    final catRows = await _client
+        .from('categories')
+        .select('id')
+        .eq('category_name', categoryName)
+        .limit(1);
+    final categoryId = catRows.isNotEmpty ? catRows.first['id'] as int : null;
+
+    // Update shopping_items
+    await _client
+        .from('shopping_items')
+        .update({
+          'name': newItem.name,
+          'category_id': categoryId,
+          'quantity': newItem.quantity,
+          'unit': newItem.unit,
+          'est_price_per_unit': newItem.estimatedPrice,
+          'note': newItem.note,
+        })
+        .eq('id', itemId);
+
+    // Xóa purchase_locations cũ và insert mới
+    await _client
+        .from('purchase_locations')
+        .delete()
+        .eq('shopping_item_id', itemId);
+
+    if (newItem.storePrices.isNotEmpty) {
+      final locations = newItem.storePrices
+          .map(
+            (sp) => {
+              'shopping_item_id': itemId,
+              'location_name': sp.storeName,
+              'lat': -1,
+              'lon': -1,
+              'price_per_unit': sp.pricePerUnit,
+            },
+          )
+          .toList();
+      await _client.from('purchase_locations').insert(locations);
+    }
+  }
+
   // ─── Update Purchase Status ───────────────────────────────────────
 
   @override
@@ -278,6 +344,27 @@ class SupabaseShoppingService implements IShoppingService {
   @override
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
     item.storePrices.add(storePrice);
+  }
+
+  // ─── Update Purchase ──────────────────────────────────────────────
+
+  @override
+  Future<void> updatePurchase(
+    int purchaseId,
+    int quantity,
+    int pricePerUnit,
+  ) async {
+    await _client
+        .from('purchases')
+        .update({'quantity': quantity, 'price_per_unit': pricePerUnit})
+        .eq('id', purchaseId);
+  }
+
+  // ─── Delete Purchase ──────────────────────────────────────────────
+
+  @override
+  Future<void> deletePurchase(int purchaseId) async {
+    await _client.from('purchases').delete().eq('id', purchaseId);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────

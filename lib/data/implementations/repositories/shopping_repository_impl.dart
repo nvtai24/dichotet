@@ -21,6 +21,13 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
       _service.addItem(item, categoryName);
 
   @override
+  Future<void> updateItem(
+    ShoppingItem oldItem,
+    ShoppingItem newItem,
+    String categoryName,
+  ) => _service.updateItem(oldItem, newItem, categoryName);
+
+  @override
   Future<void> updateItemPurchaseStatus(
     ShoppingItem item, {
     required bool isPurchased,
@@ -38,4 +45,12 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   @override
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) =>
       _service.addStorePrice(item, storePrice);
+
+  @override
+  Future<void> updatePurchase(int purchaseId, int quantity, int pricePerUnit) =>
+      _service.updatePurchase(purchaseId, quantity, pricePerUnit);
+
+  @override
+  Future<void> deletePurchase(int purchaseId) =>
+      _service.deletePurchase(purchaseId);
 }

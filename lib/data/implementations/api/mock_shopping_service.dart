@@ -50,6 +50,15 @@ class MockShoppingService implements IShoppingService {
   }
 
   @override
+  Future<void> updateItem(
+    ShoppingItem oldItem,
+    ShoppingItem newItem,
+    String categoryName,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+
+  @override
   Future<void> updateItemPurchaseStatus(
     ShoppingItem item, {
     required bool isPurchased,
@@ -77,6 +86,19 @@ class MockShoppingService implements IShoppingService {
     item.storePrices.add(storePrice);
   }
 
+  @override
+  Future<void> updatePurchase(
+    int purchaseId,
+    int quantity,
+    int pricePerUnit,
+  ) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+
+  @override
+  Future<void> deletePurchase(int purchaseId) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
   // ─── Mock Data ──────────────────────────────────────────────────────
 
   List<ShoppingCategory> _buildMockCategories() {
