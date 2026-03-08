@@ -68,17 +68,24 @@ class SupabaseShoppingService implements IShoppingService {
         );
       }).toList();
 
+      // Tính isChecked dựa trên tổng quantity purchases >= quantity item
+      final requiredQty = row['quantity'] as int? ?? 1;
+      final totalPurchased = purchases.fold<int>(
+        0,
+        (sum, p) => sum + p.quantity,
+      );
+
       final item = ShoppingItem(
         name: row['name'] as String,
         categoryName: catName,
         categoryTag: catName.toUpperCase(),
         categoryColor: CategoryStyle.colorFrom(catColorHex),
         categoryIcon: CategoryStyle.iconFrom(catIconName),
-        quantity: row['quantity'] as int? ?? 1,
+        quantity: requiredQty,
         unit: row['unit'] as String? ?? '',
         estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
         note: row['note'] as String?,
-        isChecked: row['is_purchased'] as bool? ?? false,
+        isChecked: totalPurchased >= requiredQty,
         storePrices: storePrices,
         purchases: purchases,
       );
@@ -167,7 +174,6 @@ class SupabaseShoppingService implements IShoppingService {
           'note': item.note,
           'user_id': userId,
           'session_id': sessionId,
-          'is_purchased': false,
         })
         .select('id');
 
@@ -270,7 +276,7 @@ class SupabaseShoppingService implements IShoppingService {
 
     final rows = await _client
         .from('shopping_items')
-        .select('id')
+        .select('id, quantity')
         .eq('name', item.name)
         .eq('user_id', userId)
         .limit(1);
@@ -278,14 +284,10 @@ class SupabaseShoppingService implements IShoppingService {
     if (rows.isEmpty) return;
 
     final itemId = rows.first['id'] as int;
-
-    await _client
-        .from('shopping_items')
-        .update({'is_purchased': isPurchased})
-        .eq('id', itemId);
+    final requiredQty = rows.first['quantity'] as int? ?? 1;
 
     // Insert vào bảng purchases
-    if (isPurchased && actualQuantity != null && actualPrice != null) {
+    if (actualQuantity != null && actualPrice != null) {
       int? locationId;
 
       // Tìm hoặc tạo purchase_location
@@ -334,10 +336,7 @@ class SupabaseShoppingService implements IShoppingService {
         purchaseData['purchase_location_id'] = locationId;
       }
       await _client.from('purchases').insert(purchaseData);
-    }
 
-    item.isChecked = isPurchased;
-    if (isPurchased && actualQuantity != null && actualPrice != null) {
       item.purchases.add(
         PurchaseRecord(
           quantity: actualQuantity,
@@ -347,6 +346,19 @@ class SupabaseShoppingService implements IShoppingService {
         ),
       );
     }
+
+    // Recalculate: tổng quantity purchases >= quantity item
+    final purchaseRows = await _client
+        .from('purchases')
+        .select('quantity')
+        .eq('shopping_item_id', itemId);
+
+    final totalPurchased = purchaseRows.fold<int>(
+      0,
+      (sum, r) => sum + ((r['quantity'] as num?)?.toInt() ?? 0),
+    );
+
+    item.isChecked = totalPurchased >= requiredQty;
   }
 
   // ─── Add Store Price ──────────────────────────────────────────────
@@ -403,11 +415,7 @@ class SupabaseShoppingService implements IShoppingService {
       (sum, r) => sum + ((r['quantity'] as num?)?.toInt() ?? 0),
     );
 
-    final shouldBeChecked = totalPurchased >= requiredQty;
-    await _client
-        .from('shopping_items')
-        .update({'is_purchased': shouldBeChecked})
-        .eq('id', itemId);
+    item.isChecked = totalPurchased >= requiredQty;
   }
 
   // ─── Delete Item ──────────────────────────────────────────────────
