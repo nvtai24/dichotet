@@ -77,7 +77,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       ),
                     );
                     if (confirm == true) {
+                      final name = item.name;
                       await vm.deleteItem(item);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Đã xóa "$name" thành công'),
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
                     }
                   },
                 );

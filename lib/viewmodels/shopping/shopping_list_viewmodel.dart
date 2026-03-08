@@ -174,6 +174,13 @@ class ShoppingListViewModel extends ChangeNotifier {
   }
 
   Future<void> deleteItem(ShoppingItem item) async {
+    // Remove locally first for smooth UI
+    for (final cat in _categories) {
+      cat.items.remove(item);
+    }
+    _categories.removeWhere((c) => c.items.isEmpty);
+    notifyListeners();
+
     await _repository.deleteItem(item);
     await loadData();
   }
