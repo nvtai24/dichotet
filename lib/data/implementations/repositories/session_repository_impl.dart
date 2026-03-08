@@ -15,6 +15,13 @@ class SessionRepositoryImpl implements ISessionRepository {
       _service.createSession(name, budget);
 
   @override
+  Future<ShoppingSession> updateSession(
+    String sessionId,
+    String name,
+    double budget,
+  ) => _service.updateSession(sessionId, name, budget);
+
+  @override
   Future<void> deleteSession(String sessionId) =>
       _service.deleteSession(sessionId);
 }

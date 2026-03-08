@@ -57,6 +57,30 @@ class SupabaseSessionService implements ISessionService {
   }
 
   @override
+  Future<ShoppingSession> updateSession(
+    String sessionId,
+    String name,
+    double budget,
+  ) async {
+    final rows = await _client
+        .from('shopping_sessions')
+        .update({'name': name, 'budget': budget})
+        .eq('id', sessionId)
+        .select();
+
+    final r = rows.first;
+    return ShoppingSession(
+      id: r['id'] as String,
+      userId: r['user_id'] as String,
+      name: r['name'] as String,
+      budget: (r['budget'] as num?)?.toDouble() ?? 0,
+      isActive: r['is_active'] as bool? ?? true,
+      createdAt:
+          DateTime.tryParse(r['created_at'] as String? ?? '') ?? DateTime.now(),
+    );
+  }
+
+  @override
   Future<void> deleteSession(String sessionId) async {
     await _client.from('shopping_sessions').delete().eq('id', sessionId);
   }

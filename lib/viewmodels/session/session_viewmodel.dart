@@ -46,6 +46,18 @@ class SessionViewModel extends ChangeNotifier {
     return session;
   }
 
+  Future<void> updateSession(
+    String sessionId,
+    String name,
+    double budget,
+  ) async {
+    final updated = await _repository.updateSession(sessionId, name, budget);
+    final idx = _sessions.indexWhere((s) => s.id == sessionId);
+    if (idx != -1) _sessions[idx] = updated;
+    if (_selectedSession?.id == sessionId) _selectedSession = updated;
+    notifyListeners();
+  }
+
   Future<void> deleteSession(String sessionId) async {
     await _repository.deleteSession(sessionId);
     _sessions.removeWhere((s) => s.id == sessionId);

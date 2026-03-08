@@ -94,6 +94,56 @@ class _SessionListScreenState extends State<SessionListScreen> {
     );
   }
 
+  void _showEditDialog(ShoppingSession session) {
+    final nameController = TextEditingController(text: session.name);
+    final budgetController = TextEditingController(
+      text: session.budget.toInt().toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Chỉnh sửa phiên'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Tên phiên'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: budgetController,
+              decoration: const InputDecoration(labelText: 'Ngân sách (VNĐ)'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              final budget = double.tryParse(budgetController.text.trim()) ?? 0;
+              if (name.isEmpty) return;
+
+              Navigator.pop(ctx);
+              await context.read<SessionViewModel>().updateSession(
+                session.id,
+                name,
+                budget,
+              );
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmDelete(ShoppingSession session) {
     showDialog(
       context: context,
@@ -214,6 +264,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
               return _SessionCard(
                 session: session,
                 onTap: () => _openSession(session),
+                onEdit: () => _showEditDialog(session),
                 onDelete: () => _confirmDelete(session),
               );
             },
@@ -231,11 +282,13 @@ String _formatDate(DateTime date) {
 class _SessionCard extends StatelessWidget {
   final ShoppingSession session;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _SessionCard({
     required this.session,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -344,13 +397,22 @@ class _SessionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Delete
+              // Edit & Delete
+              IconButton(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                color: AppColors.textHint,
+                iconSize: 20,
+                splashRadius: 20,
+                tooltip: 'Sửa',
+              ),
               IconButton(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete_outline),
                 color: AppColors.textHint,
                 iconSize: 20,
                 splashRadius: 20,
+                tooltip: 'Xóa',
               ),
             ],
           ),

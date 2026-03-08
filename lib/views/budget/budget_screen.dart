@@ -25,6 +25,45 @@ class _BudgetScreenState extends State<BudgetScreen> {
     });
   }
 
+  void _showEditBudgetDialog() {
+    final sessionVM = context.read<SessionViewModel>();
+    final session = sessionVM.selectedSession;
+    if (session == null) return;
+
+    final controller = TextEditingController(
+      text: session.budget.toInt().toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Chỉnh ngân sách'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Ngân sách (VNĐ)'),
+          keyboardType: TextInputType.number,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final budget = double.tryParse(controller.text.trim()) ?? 0;
+              Navigator.pop(ctx);
+              await sessionVM.updateSession(session.id, session.name, budget);
+              if (!mounted) return;
+              context.read<BudgetViewModel>().loadBudget(session.id);
+            },
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<BudgetViewModel>();
@@ -60,6 +99,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
               totalSpent: vm.totalSpent,
               remaining: vm.remaining,
               progress: vm.progress,
+              onEdit: _showEditBudgetDialog,
             ),
             const SizedBox(height: 20),
             Text(
@@ -86,16 +126,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ngân sách'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () {},
-            tooltip: 'Chỉnh ngân sách',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Ngân sách')),
       body: body,
     );
   }
@@ -118,6 +149,7 @@ class _BudgetSummaryCard extends StatelessWidget {
   final int totalSpent;
   final int remaining;
   final double progress;
+  final VoidCallback? onEdit;
 
   const _BudgetSummaryCard({
     required this.totalBudget,
@@ -125,6 +157,7 @@ class _BudgetSummaryCard extends StatelessWidget {
     required this.totalSpent,
     required this.remaining,
     required this.progress,
+    this.onEdit,
   });
 
   @override
@@ -155,13 +188,25 @@ class _BudgetSummaryCard extends StatelessWidget {
             style: TextStyle(color: AppColors.goldLight, fontSize: 13),
           ),
           const SizedBox(height: 6),
-          Text(
-            _formatPrice(totalBudget),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _formatPrice(totalBudget),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (onEdit != null)
+                IconButton(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, color: Colors.white70),
+                  tooltip: 'Chỉnh ngân sách',
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           ClipRRect(
