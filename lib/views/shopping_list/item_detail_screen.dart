@@ -40,7 +40,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Item Details',
+          'Chi Tiết Sản Phẩm',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -444,18 +444,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return Row(
       children: [
         _StatBox(
-          label: 'Quantity',
+          label: 'Số lượng',
           value: '${_item.quantity}',
           sub: _item.unit,
         ),
         const SizedBox(width: 10),
         _StatBox(
-          label: 'Est. Price',
+          label: 'Giá ước tính',
           value: _formatPriceShort(_item.estimatedPrice),
-          sub: 'per ${_item.unit}',
+          sub: '/${_item.unit}',
         ),
         const SizedBox(width: 10),
-        _StatBox(label: 'Unit', value: _item.unit, sub: ''),
+        _StatBox(label: 'Đơn vị', value: _item.unit, sub: ''),
       ],
     );
   }
@@ -493,7 +493,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Notes',
+                'Ghi chú',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -540,7 +540,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  'Stores & Local Prices',
+                  'Cửa hàng & Giá tại chỗ',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
@@ -560,7 +560,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   ),
                   const SizedBox(width: 4),
                   const Text(
-                    'Add Price',
+                    'Thêm giá',
                     style: TextStyle(
                       fontSize: 13,
                       color: AppColors.primary,
@@ -589,7 +589,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
                 child: const Center(
                   child: Text(
-                    'No store prices yet.\nTap "Add Price" to add one.',
+                    'Chưa có giá cửa hàng nào.\nNhấn "Thêm giá" để thêm.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -786,7 +786,7 @@ class _StorePriceRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Last updated: ${store.lastUpdated}',
+                  'Cập nhật: ${store.lastUpdated}',
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.textSecondary,
@@ -807,7 +807,7 @@ class _StorePriceRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'per $unit',
+                'trên $unit',
                 style: const TextStyle(
                   fontSize: 10,
                   color: AppColors.textSecondary,

@@ -157,7 +157,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      hintText: 'e.g., Giò lụa',
+                      hintText: 'Ví dụ: Giò lụa',
                     ),
                   ),
                   const SizedBox(height: 14),

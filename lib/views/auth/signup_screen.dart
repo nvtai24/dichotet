@@ -95,7 +95,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Sign Up',
+          'Đăng ký',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -117,7 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _FormLabel(label: 'First Name'),
+                      const _FormLabel(label: 'Họ'),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _firstNameController,
@@ -135,7 +135,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _FormLabel(label: 'Last Name'),
+                      const _FormLabel(label: 'Tên'),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _lastNameController,
@@ -150,7 +150,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 14),
 
             // Phone Number
-            const _FormLabel(label: 'Phone Number'),
+            const _FormLabel(label: 'Số điện thoại'),
             const SizedBox(height: 6),
             TextField(
               controller: _phoneController,
@@ -176,7 +176,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 14),
 
             // Password
-            const _FormLabel(label: 'Password'),
+            const _FormLabel(label: 'Mật khẩu'),
             const SizedBox(height: 6),
             TextField(
               controller: _passwordController,
@@ -200,7 +200,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 14),
 
             // Confirm Password
-            const _FormLabel(label: 'Confirm Password'),
+            const _FormLabel(label: 'Xác nhận mật khẩu'),
             const SizedBox(height: 6),
             TextField(
               controller: _confirmPasswordController,
@@ -243,7 +243,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       )
                     : const Text(
-                        'Create Account',
+                        'Tạo tài khoản',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -258,7 +258,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'Already have an account? ',
+                  'Đã có tài khoản? ',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -267,7 +267,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: const Text(
-                    'Log In',
+                    'Đăng nhập',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w700,

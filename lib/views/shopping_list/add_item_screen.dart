@@ -127,22 +127,22 @@ class _AddItemScreenState extends State<AddItemScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _FieldLabel(label: 'Name'),
+                  _FieldLabel(label: 'Tên sản phẩm'),
                   const SizedBox(height: 6),
                   TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      hintText: 'e.g., Giò lụa',
+                      hintText: 'Ví dụ: Giò lụa',
                     ),
                   ),
                   const SizedBox(height: 14),
 
                   // Category
-                  _FieldLabel(label: 'Category'),
+                  _FieldLabel(label: 'Danh mục'),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedCategory,
-                    hint: const Text('Select Category'),
+                    hint: const Text('Chọn danh mục'),
                     decoration: const InputDecoration(),
                     items: _categories
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -163,7 +163,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _FieldLabel(label: 'Quantity'),
+                            _FieldLabel(label: 'Số lượng'),
                             const SizedBox(height: 6),
                             _QuantityStepper(
                               value: _quantity,
@@ -177,12 +177,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _FieldLabel(label: 'Unit'),
+                            _FieldLabel(label: 'Đơn vị'),
                             const SizedBox(height: 6),
                             TextField(
                               controller: _unitController,
                               decoration: const InputDecoration(
-                                hintText: 'kg, box...',
+                                hintText: 'kg, hộp...',
                               ),
                             ),
                           ],
@@ -193,7 +193,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   const SizedBox(height: 14),
 
                   // Estimate Price
-                  _FieldLabel(label: 'Estimate Price / Unit (VND)'),
+                  _FieldLabel(label: 'Giá ước tính / đơn vị (VND)'),
                   const SizedBox(height: 6),
                   TextField(
                     controller: _priceController,
@@ -228,14 +228,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _FieldLabel(label: 'Note'),
+                  _FieldLabel(label: 'Ghi chú'),
                   const SizedBox(height: 6),
                   TextField(
                     controller: _noteController,
                     minLines: 3,
                     maxLines: 5,
                     decoration: const InputDecoration(
-                      hintText: 'Special requirements, brand preferences...',
+                      hintText: 'Yêu cầu đặc biệt, thương hiệu ưa thích...',
                       alignLabelWithHint: true,
                     ),
                   ),
@@ -347,7 +347,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 onPressed: _onSave,
                 icon: const Icon(Icons.shopping_cart_outlined, size: 20),
                 label: const Text(
-                  'Add to List',
+                  'Thêm vào danh sách',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -365,7 +365,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       elevation: 0.5,
       automaticallyImplyLeading: false,
       title: const Text(
-        'Add New Item',
+        'Thêm sản phẩm mới',
         style: TextStyle(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w700,
@@ -376,7 +376,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       leading: TextButton(
         onPressed: () => Navigator.pop(context),
         child: const Text(
-          'Cancel',
+          'Huỷ',
           style: TextStyle(
             color: AppColors.primary,
             fontSize: 14,
@@ -389,7 +389,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         TextButton(
           onPressed: _onSave,
           child: const Text(
-            'Save',
+            'Lưu',
             style: TextStyle(
               color: AppColors.primary,
               fontSize: 14,

@@ -103,7 +103,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
       ),
       title: const Text(
-        'Tet Shopping List',
+        'Danh Sách Mua Sắm Tết',
         style: TextStyle(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w700,
@@ -135,7 +135,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         controller: _searchController,
         onChanged: (v) => vm.setSearchQuery(v),
         decoration: InputDecoration(
-          hintText: 'Search items...',
+          hintText: 'Tìm kiếm sản phẩm...',
           prefixIcon: const Icon(Icons.search, size: 20),
           suffixIcon: vm.searchQuery.isNotEmpty
               ? IconButton(
@@ -170,7 +170,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Widget _buildTabs() {
     final vm = context.read<ShoppingListViewModel>();
-    const labels = ['All', 'Pending', 'Purchased'];
+    const labels = ['Tất cả', 'Chưa mua', 'Đã mua'];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Row(
@@ -406,7 +406,7 @@ class _ItemTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Qty: ${item.quantity} ${item.unit}',
+                    'SL: ${item.quantity} ${item.unit}',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -446,7 +446,7 @@ class _ItemTile extends StatelessWidget {
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: const Text(
-                      'HIGH',
+                      'ƯU TIÊN',
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,

@@ -54,14 +54,14 @@ class _BottomNavBar extends StatelessWidget {
   const _BottomNavBar({required this.currentIndex, required this.onTap});
 
   static const _items = [
-    (Icons.home_outlined, Icons.home_rounded, 'Home'),
-    (Icons.list_alt_outlined, Icons.list_alt_rounded, 'Lists'),
+    (Icons.home_outlined, Icons.home_rounded, 'Trang chủ'),
+    (Icons.list_alt_outlined, Icons.list_alt_rounded, 'Danh sách'),
     (
       Icons.account_balance_wallet_outlined,
       Icons.account_balance_wallet,
-      'Budget',
+      'Ngân sách',
     ),
-    (Icons.settings_outlined, Icons.settings_rounded, 'Settings'),
+    (Icons.settings_outlined, Icons.settings_rounded, 'Cài đặt'),
   ];
 
   @override

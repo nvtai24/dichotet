@@ -76,7 +76,7 @@ class DashboardScreen extends StatelessWidget {
         ),
       ),
       title: const Text(
-        'Tet Shopping',
+        'Mua Sắm Tết',
         style: TextStyle(
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w700,
@@ -154,7 +154,7 @@ class _HeroCountdownCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'Lunar New Year 2027',
+                  'Tết Nguyên Đán 2027',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -163,7 +163,7 @@ class _HeroCountdownCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Preparation is in full swing!',
+                  'Chuẩn bị đang diễn ra tốt đẹp!',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 13,

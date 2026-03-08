@@ -68,7 +68,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
         title: const Text(
-          'Recover Password',
+          'Khôi phục mật khẩu',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -87,7 +87,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               children: [
                 // ── Description ───────────────────────────────────────
                 const Text(
-                  'Enter your registered email or phone\nnumber to receive a secure reset link\nfor your account.',
+                  'Nhập email hoặc số điện thoại\nđã đăng ký để nhận liên kết\nđặt lại mật khẩu.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13.5,
@@ -99,7 +99,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                 // ── Input ─────────────────────────────────────────────
                 const Text(
-                  'Email or Phone Number',
+                  'Email hoặc số điện thoại',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             ),
                           )
                         : const Text(
-                            'Send Reset Link',
+                            'Gửi liên kết đặt lại',
                             style: TextStyle(fontSize: 16),
                           ),
                   ),

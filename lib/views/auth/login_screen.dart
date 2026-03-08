@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 14),
 
                 // Password
-                _FormLabel(label: 'Password'),
+                _FormLabel(label: 'Mật khẩu'),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _passwordController,
@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Text(
-                      'Forgot password?',
+                      'Quên mật khẩu?',
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 13,
@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Text('Log In', style: TextStyle(fontSize: 16)),
+                              Text('Đăng nhập', style: TextStyle(fontSize: 16)),
                               SizedBox(width: 8),
                               Icon(Icons.arrow_forward, size: 18),
                             ],
@@ -169,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'New to the app? ',
+                      'Bạn chưa có tài khoản? ',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     GestureDetector(
@@ -178,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(builder: (_) => const SignUpScreen()),
                       ),
                       child: const Text(
-                        'Sign Up',
+                        'Đăng ký',
                         style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w700,
@@ -229,7 +229,7 @@ class _WelcomeHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Welcome to\nTet Shopping',
+                  'Chào mừng đến\nMua Sắm Tết',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 22,
@@ -306,7 +306,7 @@ class _OrDivider extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'OR CONTINUE WITH',
+            'HOẶC TIẾP TỤC VỚI',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               letterSpacing: 0.8,
               fontWeight: FontWeight.w500,
