@@ -56,6 +56,8 @@ CREATE TABLE purchases (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   shopping_item_id INT NOT NULL
       REFERENCES shopping_items(id) ON DELETE CASCADE,
+  purchase_location_id INT
+      REFERENCES purchase_locations(id) ON DELETE SET NULL,
   quantity INT NOT NULL CHECK (quantity > 0),
   price_per_unit DECIMAL(10,2) CHECK (price_per_unit >= 0),
   purchased_at TIMESTAMP DEFAULT NOW()

@@ -13,6 +13,7 @@ abstract class IShoppingService {
     required bool isPurchased,
     int? actualQuantity,
     int? actualPrice,
+    String? locationName,
   });
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice);
 }

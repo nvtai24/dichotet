@@ -118,12 +118,14 @@ class ShoppingListViewModel extends ChangeNotifier {
     ShoppingItem item, {
     required int quantity,
     required int price,
+    String? locationName,
   }) async {
     await _repository.updateItemPurchaseStatus(
       item,
       isPurchased: true,
       actualQuantity: quantity,
       actualPrice: price,
+      locationName: locationName,
     );
     notifyListeners();
   }

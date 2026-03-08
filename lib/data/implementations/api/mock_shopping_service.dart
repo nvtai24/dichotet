@@ -55,6 +55,7 @@ class MockShoppingService implements IShoppingService {
     required bool isPurchased,
     int? actualQuantity,
     int? actualPrice,
+    String? locationName,
   }) async {
     await Future.delayed(const Duration(milliseconds: 200));
     item.isChecked = isPurchased;
@@ -64,6 +65,7 @@ class MockShoppingService implements IShoppingService {
           quantity: actualQuantity,
           pricePerUnit: actualPrice,
           purchasedAt: DateTime.now(),
+          locationName: locationName,
         ),
       );
     }

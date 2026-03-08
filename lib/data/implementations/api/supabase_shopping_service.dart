@@ -18,11 +18,11 @@ class SupabaseShoppingService implements IShoppingService {
     // Lấy tất cả categories
     final catRows = await _client.from('categories').select().order('id');
 
-    // Lấy items của user hiện tại, kèm category name, purchase locations và purchases
+    // Lấy items của user hiện tại, kèm category name, purchase locations và purchases (kèm tên địa điểm)
     final itemRows = await _client
         .from('shopping_items')
         .select(
-          '*, categories(category_name), purchase_locations(*), purchases(*)',
+          '*, categories(category_name), purchase_locations(*), purchases(*, purchase_locations(location_name))',
         )
         .eq('user_id', userId)
         .order('created_at', ascending: false);
@@ -54,12 +54,14 @@ class SupabaseShoppingService implements IShoppingService {
       final purchasesRaw = row['purchases'] as List<dynamic>? ?? [];
       final purchases = purchasesRaw.map((p) {
         final m = p as Map<String, dynamic>;
+        final locData = m['purchase_locations'] as Map<String, dynamic>?;
         return PurchaseRecord(
           quantity: (m['quantity'] as num?)?.toInt() ?? 0,
           pricePerUnit: (m['price_per_unit'] as num?)?.toInt() ?? 0,
           purchasedAt:
               DateTime.tryParse(m['purchased_at'] as String? ?? '') ??
               DateTime.now(),
+          locationName: locData?['location_name'] as String?,
         );
       }).toList();
 
@@ -184,6 +186,7 @@ class SupabaseShoppingService implements IShoppingService {
     required bool isPurchased,
     int? actualQuantity,
     int? actualPrice,
+    String? locationName,
   }) async {
     // Tìm item theo tên + user
     final userId = _client.auth.currentUser?.id;
@@ -207,11 +210,54 @@ class SupabaseShoppingService implements IShoppingService {
 
     // Insert vào bảng purchases
     if (isPurchased && actualQuantity != null && actualPrice != null) {
-      await _client.from('purchases').insert({
+      int? locationId;
+
+      // Tìm hoặc tạo purchase_location
+      if (locationName != null && locationName.isNotEmpty) {
+        final existingLoc = await _client
+            .from('purchase_locations')
+            .select('id')
+            .eq('shopping_item_id', itemId)
+            .eq('location_name', locationName)
+            .limit(1);
+
+        if (existingLoc.isNotEmpty) {
+          locationId = existingLoc.first['id'] as int;
+        } else {
+          final newLoc = await _client
+              .from('purchase_locations')
+              .insert({
+                'shopping_item_id': itemId,
+                'location_name': locationName,
+                'lat': -1,
+                'lon': -1,
+                'price_per_unit': actualPrice,
+              })
+              .select('id');
+          if (newLoc.isNotEmpty) {
+            locationId = newLoc.first['id'] as int;
+            // Cập nhật storePrices in-memory
+            item.storePrices.add(
+              StorePrice(
+                storeName: locationName,
+                type: StoreType.market,
+                pricePerUnit: actualPrice,
+                lastUpdated: 'Đã lưu',
+              ),
+            );
+          }
+        }
+      }
+
+      final purchaseData = <String, dynamic>{
         'shopping_item_id': itemId,
         'quantity': actualQuantity,
         'price_per_unit': actualPrice,
-      });
+      };
+      if (locationId != null) {
+        purchaseData['purchase_location_id'] = locationId;
+      }
+      await _client.from('purchases').insert(purchaseData);
     }
 
     item.isChecked = isPurchased;
@@ -221,6 +267,7 @@ class SupabaseShoppingService implements IShoppingService {
           quantity: actualQuantity,
           pricePerUnit: actualPrice,
           purchasedAt: DateTime.now(),
+          locationName: locationName,
         ),
       );
     }

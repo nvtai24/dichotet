@@ -26,11 +26,13 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
     required bool isPurchased,
     int? actualQuantity,
     int? actualPrice,
+    String? locationName,
   }) => _service.updateItemPurchaseStatus(
     item,
     isPurchased: isPurchased,
     actualQuantity: actualQuantity,
     actualPrice: actualPrice,
+    locationName: locationName,
   );
 
   @override

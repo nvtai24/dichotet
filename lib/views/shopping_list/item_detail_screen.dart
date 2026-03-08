@@ -331,6 +331,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                 color: AppColors.textPrimary,
                               ),
                             ),
+                            if (p.locationName != null &&
+                                p.locationName!.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on_outlined,
+                                    size: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Flexible(
+                                    child: Text(
+                                      p.locationName!,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 2),
                             Text(
                               dateStr,
@@ -587,9 +611,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       builder: (_) => _ConfirmPurchaseSheet(
         item: _item,
-        onConfirm: (qty, price) async {
+        onConfirm: (qty, price, location) async {
           final vm = context.read<ShoppingListViewModel>();
-          await vm.confirmPurchase(_item, quantity: qty, price: price);
+          await vm.confirmPurchase(
+            _item,
+            quantity: qty,
+            price: price,
+            locationName: location,
+          );
           if (!mounted) return;
           setState(() {});
         },
@@ -947,7 +976,8 @@ class _PurchaseStatBox extends StatelessWidget {
 
 class _ConfirmPurchaseSheet extends StatefulWidget {
   final ShoppingItem item;
-  final Future<void> Function(int quantity, int price) onConfirm;
+  final Future<void> Function(int quantity, int price, String? locationName)
+  onConfirm;
 
   const _ConfirmPurchaseSheet({required this.item, required this.onConfirm});
 
@@ -958,18 +988,26 @@ class _ConfirmPurchaseSheet extends StatefulWidget {
 class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   late final TextEditingController _qtyController;
   late final TextEditingController _priceController;
+  late final TextEditingController _newLocationController;
+  String? _selectedLocation;
+  bool _isAddingNew = false;
+
+  List<String> get _locationNames =>
+      widget.item.storePrices.map((s) => s.storeName).toSet().toList();
 
   @override
   void initState() {
     super.initState();
     _qtyController = TextEditingController();
     _priceController = TextEditingController();
+    _newLocationController = TextEditingController();
   }
 
   @override
   void dispose() {
     _qtyController.dispose();
     _priceController.dispose();
+    _newLocationController.dispose();
     super.dispose();
   }
 
@@ -977,7 +1015,14 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
     final qty = int.tryParse(_qtyController.text.trim());
     final price = int.tryParse(_priceController.text.trim());
     if (qty == null || qty <= 0 || price == null || price < 0) return;
-    await widget.onConfirm(qty, price);
+
+    final location = _isAddingNew
+        ? _newLocationController.text.trim()
+        : _selectedLocation;
+
+    if (location == null || location.isEmpty) return;
+
+    await widget.onConfirm(qty, price, location);
     if (!mounted) return;
     Navigator.pop(context);
   }
@@ -1049,6 +1094,74 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
             ],
           ),
           const SizedBox(height: 20),
+
+          // Location dropdown
+          if (!_isAddingNew)
+            DropdownButtonFormField<String>(
+              initialValue: _selectedLocation,
+              decoration: const InputDecoration(
+                labelText: 'Nơi mua',
+                prefixIcon: Icon(Icons.location_on_outlined, size: 20),
+              ),
+              items: [
+                ..._locationNames.map(
+                  (name) => DropdownMenuItem(value: name, child: Text(name)),
+                ),
+                const DropdownMenuItem(
+                  value: '__add_new__',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.add_circle_outline,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Thêm địa điểm mới',
+                        style: TextStyle(color: AppColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == '__add_new__') {
+                  setState(() {
+                    _isAddingNew = true;
+                    _selectedLocation = null;
+                  });
+                } else {
+                  setState(() => _selectedLocation = value);
+                }
+              },
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _newLocationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Tên địa điểm mới',
+                      prefixIcon: Icon(
+                        Icons.add_location_alt_outlined,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_locationNames.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => setState(() {
+                      _isAddingNew = false;
+                      _newLocationController.clear();
+                    }),
+                  ),
+              ],
+            ),
+          const SizedBox(height: 12),
 
           // Quantity input
           TextField(
