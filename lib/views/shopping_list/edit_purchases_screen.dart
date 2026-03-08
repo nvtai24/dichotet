@@ -82,6 +82,9 @@ class _EditPurchasesScreenState extends State<EditPurchasesScreen> {
         }
       }
 
+      // Recalculate is_purchased based on total purchased vs required quantity
+      await vm.recalculatePurchaseStatus(widget.item);
+
       if (!mounted) return;
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(

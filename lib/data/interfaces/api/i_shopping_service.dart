@@ -23,4 +23,5 @@ abstract class IShoppingService {
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice);
   Future<void> updatePurchase(int purchaseId, int quantity, int pricePerUnit);
   Future<void> deletePurchase(int purchaseId);
+  Future<void> recalculatePurchaseStatus(ShoppingItem item);
 }

@@ -99,6 +99,16 @@ class MockShoppingService implements IShoppingService {
   Future<void> deletePurchase(int purchaseId) async {
     await Future.delayed(const Duration(milliseconds: 200));
   }
+
+  @override
+  Future<void> recalculatePurchaseStatus(ShoppingItem item) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final totalPurchased = item.purchases.fold<int>(
+      0,
+      (sum, p) => sum + p.quantity,
+    );
+    item.isChecked = totalPurchased >= item.quantity;
+  }
   // ─── Mock Data ──────────────────────────────────────────────────────
 
   List<ShoppingCategory> _buildMockCategories() {

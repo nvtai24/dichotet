@@ -157,4 +157,9 @@ class ShoppingListViewModel extends ChangeNotifier {
     await _repository.deletePurchase(purchaseId);
     await loadData();
   }
+
+  Future<void> recalculatePurchaseStatus(ShoppingItem item) async {
+    await _repository.recalculatePurchaseStatus(item);
+    await loadData();
+  }
 }

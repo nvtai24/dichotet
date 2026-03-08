@@ -367,6 +367,39 @@ class SupabaseShoppingService implements IShoppingService {
     await _client.from('purchases').delete().eq('id', purchaseId);
   }
 
+  // ─── Recalculate Purchase Status ──────────────────────────────────
+
+  @override
+  Future<void> recalculatePurchaseStatus(ShoppingItem item) async {
+    final userId = _client.auth.currentUser!.id;
+    final rows = await _client
+        .from('shopping_items')
+        .select('id, quantity')
+        .eq('user_id', userId)
+        .eq('name', item.name)
+        .limit(1);
+    if (rows.isEmpty) return;
+
+    final itemId = rows.first['id'] as int;
+    final requiredQty = rows.first['quantity'] as int? ?? 1;
+
+    final purchaseRows = await _client
+        .from('purchases')
+        .select('quantity')
+        .eq('shopping_item_id', itemId);
+
+    final totalPurchased = purchaseRows.fold<int>(
+      0,
+      (sum, r) => sum + ((r['quantity'] as num?)?.toInt() ?? 0),
+    );
+
+    final shouldBeChecked = totalPurchased >= requiredQty;
+    await _client
+        .from('shopping_items')
+        .update({'is_purchased': shouldBeChecked})
+        .eq('id', itemId);
+  }
+
   // ─── Helpers ──────────────────────────────────────────────────────
 
   Color _colorForCategory(int id) {
