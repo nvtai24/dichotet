@@ -8,7 +8,8 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   ShoppingRepositoryImpl(this._service);
 
   @override
-  Future<List<ShoppingCategory>> getCategories() => _service.getCategories();
+  Future<List<ShoppingCategory>> getCategories(String sessionId) =>
+      _service.getCategories(sessionId);
 
   @override
   Future<List<String>> getCategoryNames() => _service.getCategoryNames();
@@ -17,8 +18,11 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   Future<List<String>> getStoreNames() => _service.getStoreNames();
 
   @override
-  Future<void> addItem(ShoppingItem item, String categoryName) =>
-      _service.addItem(item, categoryName);
+  Future<void> addItem(
+    ShoppingItem item,
+    String categoryName,
+    String sessionId,
+  ) => _service.addItem(item, categoryName, sessionId);
 
   @override
   Future<void> updateItem(

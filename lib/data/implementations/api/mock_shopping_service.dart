@@ -16,7 +16,7 @@ class MockShoppingService implements IShoppingService {
   }
 
   @override
-  Future<List<ShoppingCategory>> getCategories() async {
+  Future<List<ShoppingCategory>> getCategories(String sessionId) async {
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 300));
     return _categories;
@@ -40,7 +40,11 @@ class MockShoppingService implements IShoppingService {
   }
 
   @override
-  Future<void> addItem(ShoppingItem item, String categoryName) async {
+  Future<void> addItem(
+    ShoppingItem item,
+    String categoryName,
+    String sessionId,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final cat = _categories.firstWhere(
       (c) => c.name == categoryName,

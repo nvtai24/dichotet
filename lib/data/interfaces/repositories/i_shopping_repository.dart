@@ -1,10 +1,14 @@
 import '../../../models/shopping_models.dart';
 
 abstract class IShoppingRepository {
-  Future<List<ShoppingCategory>> getCategories();
+  Future<List<ShoppingCategory>> getCategories(String sessionId);
   Future<List<String>> getCategoryNames();
   Future<List<String>> getStoreNames();
-  Future<void> addItem(ShoppingItem item, String categoryName);
+  Future<void> addItem(
+    ShoppingItem item,
+    String categoryName,
+    String sessionId,
+  );
   Future<void> updateItem(
     ShoppingItem oldItem,
     ShoppingItem newItem,

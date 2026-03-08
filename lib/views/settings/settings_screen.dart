@@ -6,6 +6,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
 import '../auth/reset_password_screen.dart';
+import '../session/session_list_screen.dart';
 import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -104,6 +105,15 @@ class SettingsScreen extends StatelessWidget {
           _SectionHeader(label: 'Ứng dụng'),
           _SettingsGroup(
             children: [
+              _SettingsTile(
+                icon: Icons.swap_horiz_outlined,
+                label: 'Chọn phiên khác',
+                subtitle: 'Chuyển sang phiên mua sắm khác',
+                onTap: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SessionListScreen()),
+                ),
+              ),
               _SettingsTile(
                 icon: Icons.language_outlined,
                 label: 'Ngôn ngữ',

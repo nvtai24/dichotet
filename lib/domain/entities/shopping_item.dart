@@ -1,5 +1,6 @@
 class ShoppingItem {
   final int id;
+  final String sessionId;
   final String name;
   final int? categoryId;
   final int quantity;
@@ -12,6 +13,7 @@ class ShoppingItem {
 
   const ShoppingItem({
     required this.id,
+    required this.sessionId,
     required this.name,
     this.categoryId,
     this.quantity = 1,

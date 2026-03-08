@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
-import '../main_screen.dart';
+import '../session/session_list_screen.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => const SessionListScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -349,7 +349,7 @@ class _SocialLoginRow extends StatelessWidget {
     if (success) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => const SessionListScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

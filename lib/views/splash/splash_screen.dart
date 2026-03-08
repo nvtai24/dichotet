@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../auth/login_screen.dart';
-import '../main_screen.dart';
+import '../session/session_list_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     final destination = authVM.isLoggedIn
-        ? const MainScreen()
+        ? const SessionListScreen()
         : const LoginScreen();
 
     Navigator.pushReplacement(

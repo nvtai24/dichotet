@@ -5,6 +5,7 @@ import 'core/constants/app_theme.dart';
 import 'core/constants/supabase_constants.dart';
 import 'di.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
+import 'viewmodels/session/session_viewmodel.dart';
 import 'viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'viewmodels/home/dashboard_viewmodel.dart';
 import 'viewmodels/budget/budget_viewmodel.dart';
@@ -53,7 +54,10 @@ class _DichotetAppState extends State<DichotetApp> {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel(authRepository)),
         ChangeNotifierProvider(
-          create: (_) => ShoppingListViewModel(shoppingRepository)..loadData(),
+          create: (_) => SessionViewModel(sessionRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ShoppingListViewModel(shoppingRepository),
         ),
         ChangeNotifierProxyProvider<ShoppingListViewModel, DashboardViewModel>(
           create: (ctx) =>

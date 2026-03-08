@@ -11,20 +11,21 @@ class SupabaseShoppingService implements IShoppingService {
   // ─── Get Categories (with items) ──────────────────────────────────
 
   @override
-  Future<List<ShoppingCategory>> getCategories() async {
+  Future<List<ShoppingCategory>> getCategories(String sessionId) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return [];
 
     // Lấy tất cả categories
     final catRows = await _client.from('categories').select().order('id');
 
-    // Lấy items của user hiện tại, kèm category name, purchase locations và purchases (kèm tên địa điểm)
+    // Lấy items của user hiện tại theo session, kèm category name, purchase locations và purchases (kèm tên địa điểm)
     final itemRows = await _client
         .from('shopping_items')
         .select(
           '*, categories(category_name), purchase_locations(*), purchases(*, purchase_locations(location_name))',
         )
         .eq('user_id', userId)
+        .eq('session_id', sessionId)
         .order('created_at', ascending: false);
 
     // Nhóm items theo category
@@ -134,7 +135,11 @@ class SupabaseShoppingService implements IShoppingService {
   // ─── Add Item ─────────────────────────────────────────────────────
 
   @override
-  Future<void> addItem(ShoppingItem item, String categoryName) async {
+  Future<void> addItem(
+    ShoppingItem item,
+    String categoryName,
+    String sessionId,
+  ) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('Chưa đăng nhập');
 
@@ -157,6 +162,7 @@ class SupabaseShoppingService implements IShoppingService {
           'est_price_per_unit': item.estimatedPrice,
           'note': item.note,
           'user_id': userId,
+          'session_id': sessionId,
           'is_purchased': false,
         })
         .select('id');

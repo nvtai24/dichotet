@@ -9,6 +9,9 @@ class ShoppingListViewModel extends ChangeNotifier {
 
   // ─── State ──────────────────────────────────────────────────────────
 
+  String? _sessionId;
+  String? get sessionId => _sessionId;
+
   List<ShoppingCategory> _categories = [];
   List<ShoppingCategory> get categories => _categories;
 
@@ -55,14 +58,20 @@ class ShoppingListViewModel extends ChangeNotifier {
 
   // ─── Actions ────────────────────────────────────────────────────────
 
+  void setSessionId(String sessionId) {
+    _sessionId = sessionId;
+    notifyListeners();
+  }
+
   Future<void> loadData() async {
+    if (_sessionId == null) return;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       final results = await Future.wait([
-        _repository.getCategories(),
+        _repository.getCategories(_sessionId!),
         _repository.getCategoryNames(),
         _repository.getStoreNames(),
       ]);
@@ -110,7 +119,8 @@ class ShoppingListViewModel extends ChangeNotifier {
   }
 
   Future<void> addItem(ShoppingItem item, String categoryName) async {
-    await _repository.addItem(item, categoryName);
+    if (_sessionId == null) return;
+    await _repository.addItem(item, categoryName, _sessionId!);
     notifyListeners();
   }
 

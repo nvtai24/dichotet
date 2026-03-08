@@ -4,10 +4,14 @@ import '../../../models/shopping_models.dart';
 /// Khi phát triển API thật, tạo class mới implement interface này
 /// và gọi Supabase thay vì trả dữ liệu mock.
 abstract class IShoppingService {
-  Future<List<ShoppingCategory>> getCategories();
+  Future<List<ShoppingCategory>> getCategories(String sessionId);
   Future<List<String>> getCategoryNames();
   Future<List<String>> getStoreNames();
-  Future<void> addItem(ShoppingItem item, String categoryName);
+  Future<void> addItem(
+    ShoppingItem item,
+    String categoryName,
+    String sessionId,
+  );
   Future<void> updateItem(
     ShoppingItem oldItem,
     ShoppingItem newItem,
