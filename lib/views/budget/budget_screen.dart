@@ -2,30 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../viewmodels/budget/budget_viewmodel.dart';
+import '../../viewmodels/session/session_viewmodel.dart';
 
-class BudgetScreen extends StatelessWidget {
+class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
+
+  @override
+  State<BudgetScreen> createState() => _BudgetScreenState();
+}
+
+class _BudgetScreenState extends State<BudgetScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final budgetVM = context.read<BudgetViewModel>();
+      final sessionVM = context.read<SessionViewModel>();
+      final sid = sessionVM.selectedSession?.id;
+      if (sid != null && !budgetVM.isLoading) {
+        budgetVM.loadBudget(sid);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<BudgetViewModel>();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ngân sách'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () {},
-            tooltip: 'Chỉnh ngân sách',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
+
+    Widget body;
+    if (vm.isLoading) {
+      body = const Center(child: CircularProgressIndicator());
+    } else if (vm.error != null) {
+      body = Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(vm.error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => vm.loadBudget(
+                context.read<SessionViewModel>().selectedSession!.id,
+              ),
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      body = SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _BudgetSummaryCard(
+              totalBudget: vm.totalBudget,
               totalEstimated: vm.totalEstimated,
               totalSpent: vm.totalSpent,
               remaining: vm.remaining,
@@ -52,7 +82,21 @@ class BudgetScreen extends StatelessWidget {
             ),
           ],
         ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ngân sách'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () {},
+            tooltip: 'Chỉnh ngân sách',
+          ),
+        ],
       ),
+      body: body,
     );
   }
 }
@@ -69,12 +113,14 @@ String _formatPrice(int price) {
 }
 
 class _BudgetSummaryCard extends StatelessWidget {
+  final int totalBudget;
   final int totalEstimated;
   final int totalSpent;
   final int remaining;
   final double progress;
 
   const _BudgetSummaryCard({
+    required this.totalBudget,
     required this.totalEstimated,
     required this.totalSpent,
     required this.remaining,
@@ -110,7 +156,7 @@ class _BudgetSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            _formatPrice(totalEstimated),
+            _formatPrice(totalBudget),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 32,
@@ -129,26 +175,72 @@ class _BudgetSummaryCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Đã chi: ${_formatPrice(totalSpent)}',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              Expanded(
+                child: _SummaryItem(
+                  label: 'Dự tính',
+                  amount: _formatPrice(totalEstimated),
+                  color: Colors.white,
+                ),
               ),
-              Text(
-                'Còn lại: ${_formatPrice(remaining)}',
-                style: const TextStyle(
+              Expanded(
+                child: _SummaryItem(
+                  label: 'Đã chi',
+                  amount: _formatPrice(totalSpent),
+                  color: Colors.white70,
+                ),
+              ),
+              Expanded(
+                child: _SummaryItem(
+                  label: 'Còn lại',
+                  amount: _formatPrice(remaining),
                   color: AppColors.goldLight,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SummaryItem extends StatelessWidget {
+  final String label;
+  final String amount;
+  final Color color;
+
+  const _SummaryItem({
+    required this.label,
+    required this.amount,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: color.withValues(alpha: 0.7),
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          amount,
+          style: TextStyle(
+            color: color,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -211,16 +303,28 @@ class _CategoryBudgetCard extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
                 ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      'Dự tính: ${_formatPrice(estimated)}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Đã chi: ${_formatPrice(spent)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            _formatPrice(spent),
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              color: AppColors.textPrimary,
             ),
           ),
         ],

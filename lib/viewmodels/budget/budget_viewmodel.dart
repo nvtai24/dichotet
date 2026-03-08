@@ -1,98 +1,92 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../../models/shopping_models.dart';
-import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
+import '../../data/interfaces/api/i_budget_service.dart';
+import '../../data/interfaces/repositories/i_budget_repository.dart';
+import '../../viewmodels/session/session_viewmodel.dart';
 
-/// Budget ViewModel – tính toán ngân sách từ danh sách mua sắm.
 class BudgetViewModel extends ChangeNotifier {
-  final ShoppingListViewModel _shoppingVM;
+  final IBudgetRepository _repository;
+  final SessionViewModel _sessionVM;
 
-  BudgetViewModel(this._shoppingVM) {
-    _shoppingVM.addListener(_onShoppingChanged);
+  BudgetViewModel(this._repository, this._sessionVM) {
+    _sessionVM.addListener(_onSessionChanged);
   }
 
-  void _onShoppingChanged() => notifyListeners();
+  void _onSessionChanged() {
+    final sid = _sessionVM.selectedSession?.id;
+    if (sid != null) loadBudget(sid);
+  }
 
-  // ─── Computed ───────────────────────────────────────────────────────
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
-  int get totalEstimated => _shoppingVM.estimatedBudget;
-  int get totalSpent => _shoppingVM.spentBudget;
-  int get remaining => totalEstimated - totalSpent;
+  String? _error;
+  String? get error => _error;
 
-  double get progress =>
-      totalEstimated == 0 ? 0.0 : totalSpent / totalEstimated;
+  BudgetData? _data;
+
+  int get totalBudget => _data?.sessionBudget.toInt() ?? 0;
+  int get totalEstimated => _data?.totalEstimated ?? 0;
+  int get totalSpent => _data?.totalSpent ?? 0;
+  int get remaining => totalBudget - totalSpent;
+  double get progress => totalBudget == 0 ? 0.0 : totalSpent / totalBudget;
 
   List<BudgetCategory> get categoryBudgets {
-    final categories = _shoppingVM.categories;
-    return [
-      _buildBudgetCategory(
-        categories: categories,
-        matchNames: ['Thực phẩm & Đồ uống'],
-        label: 'Thực phẩm',
-        icon: Icons.restaurant,
-        color: AppColors.primary,
-      ),
-      _buildBudgetCategory(
-        categories: categories,
-        matchNames: ['Đặc sản Tết'],
-        label: 'Bánh kẹo - Mứt',
-        icon: Icons.cake,
-        color: AppColors.gold,
-      ),
-      _buildBudgetCategory(
-        categories: categories,
-        matchNames: ['Trang trí - Hoa'],
-        label: 'Trang trí - Hoa',
-        icon: Icons.local_florist,
-        color: const Color(0xFF2E7D32),
-      ),
-      _buildBudgetCategory(
-        categories: categories,
-        matchNames: ['Quà cáp'],
-        label: 'Quà cáp',
-        icon: Icons.card_giftcard,
-        color: const Color(0xFF6A1B9A),
-      ),
-    ];
+    if (_data == null) return [];
+    return _data!.categories
+        .map(
+          (c) => BudgetCategory(
+            label: c.name,
+            icon: _iconForCategory(c.categoryId),
+            color: _colorForCategory(c.categoryId),
+            estimated: c.estimated,
+            spent: c.spent,
+          ),
+        )
+        .toList();
   }
 
-  BudgetCategory _buildBudgetCategory({
-    required List<ShoppingCategory> categories,
-    required List<String> matchNames,
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
-    final items = categories
-        .where((c) => matchNames.contains(c.name))
-        .expand((c) => c.items)
-        .toList();
+  Future<void> loadBudget(String sessionId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
-    final estimated = items.fold(
-      0,
-      (sum, i) => sum + (i.quantity * i.estimatedPrice),
-    );
-    final spent = items
-        .where((i) => i.isChecked && i.purchases.isNotEmpty)
-        .fold(
-          0,
-          (sum, i) =>
-              sum +
-              i.purchases.fold(0, (s, p) => s + p.quantity * p.pricePerUnit),
-        );
+    try {
+      _data = await _repository.getBudgetData(sessionId);
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
-    return BudgetCategory(
-      label: label,
-      icon: icon,
-      color: color,
-      estimated: estimated,
-      spent: spent,
-    );
+  static Color _colorForCategory(int id) {
+    const colors = [
+      Color(0xFFC62828),
+      Color(0xFF43A047),
+      Color(0xFFE91E8A),
+      Color(0xFFFF6F00),
+      Color(0xFF1565C0),
+      Color(0xFF6A1B9A),
+    ];
+    return colors[id % colors.length];
+  }
+
+  static IconData _iconForCategory(int id) {
+    const icons = [
+      Icons.card_giftcard_outlined,
+      Icons.restaurant_outlined,
+      Icons.local_florist_outlined,
+      Icons.redeem_outlined,
+      Icons.local_cafe_outlined,
+      Icons.category_outlined,
+    ];
+    return icons[id % icons.length];
   }
 
   @override
   void dispose() {
-    _shoppingVM.removeListener(_onShoppingChanged);
+    _sessionVM.removeListener(_onSessionChanged);
     super.dispose();
   }
 }

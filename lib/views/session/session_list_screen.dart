@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../viewmodels/budget/budget_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import '../auth/login_screen.dart';
@@ -27,10 +28,12 @@ class _SessionListScreenState extends State<SessionListScreen> {
   void _openSession(ShoppingSession session) {
     final sessionVM = context.read<SessionViewModel>();
     final shoppingVM = context.read<ShoppingListViewModel>();
+    final budgetVM = context.read<BudgetViewModel>();
 
     sessionVM.selectSession(session);
     shoppingVM.setSessionId(session.id);
     shoppingVM.loadData();
+    budgetVM.loadBudget(session.id);
 
     Navigator.pushReplacement(
       context,
