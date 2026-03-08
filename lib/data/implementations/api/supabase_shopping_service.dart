@@ -400,6 +400,34 @@ class SupabaseShoppingService implements IShoppingService {
         .eq('id', itemId);
   }
 
+  // ─── Delete Item ──────────────────────────────────────────────────
+
+  @override
+  Future<void> deleteItem(ShoppingItem item) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) throw Exception('Chưa đăng nhập');
+
+    final rows = await _client
+        .from('shopping_items')
+        .select('id')
+        .eq('name', item.name)
+        .eq('user_id', userId)
+        .limit(1);
+    if (rows.isEmpty) return;
+
+    final itemId = rows.first['id'] as int;
+
+    // Xoá purchases liên quan
+    await _client.from('purchases').delete().eq('shopping_item_id', itemId);
+    // Xoá purchase_locations liên quan
+    await _client
+        .from('purchase_locations')
+        .delete()
+        .eq('shopping_item_id', itemId);
+    // Xoá item
+    await _client.from('shopping_items').delete().eq('id', itemId);
+  }
+
   // ─── Helpers ──────────────────────────────────────────────────────
 
   Color _colorForCategory(int id) {

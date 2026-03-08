@@ -57,4 +57,7 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   @override
   Future<void> recalculatePurchaseStatus(ShoppingItem item) =>
       _service.recalculatePurchaseStatus(item);
+
+  @override
+  Future<void> deleteItem(ShoppingItem item) => _service.deleteItem(item);
 }

@@ -109,6 +109,14 @@ class MockShoppingService implements IShoppingService {
     );
     item.isChecked = totalPurchased >= item.quantity;
   }
+
+  @override
+  Future<void> deleteItem(ShoppingItem item) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    for (final cat in _categories) {
+      cat.items.removeWhere((i) => i.name == item.name);
+    }
+  }
   // ─── Mock Data ──────────────────────────────────────────────────────
 
   List<ShoppingCategory> _buildMockCategories() {

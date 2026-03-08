@@ -55,6 +55,31 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                       builder: (_) => ItemDetailScreen(item: item),
                     ),
                   ),
+                  onDeleteItem: (item) async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Xóa sản phẩm'),
+                        content: Text('Bạn có chắc muốn xóa "${item.name}"?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Hủy'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text(
+                              'Xóa',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await vm.deleteItem(item);
+                    }
+                  },
                 );
               },
             ),
@@ -194,12 +219,14 @@ class _CategoryAccordion extends StatelessWidget {
   final List<ShoppingItem> visibleItems;
   final VoidCallback onToggleExpand;
   final ValueChanged<ShoppingItem> onTapItem;
+  final ValueChanged<ShoppingItem> onDeleteItem;
 
   const _CategoryAccordion({
     required this.category,
     required this.visibleItems,
     required this.onToggleExpand,
     required this.onTapItem,
+    required this.onDeleteItem,
   });
 
   @override
@@ -310,6 +337,7 @@ class _CategoryAccordion extends StatelessWidget {
                       item: item,
                       isLast: isLast,
                       onTap: () => onTapItem(item),
+                      onDelete: () => onDeleteItem(item),
                     ),
                     if (!isLast)
                       Divider(
@@ -335,11 +363,13 @@ class _ItemTile extends StatelessWidget {
   final ShoppingItem item;
   final bool isLast;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   const _ItemTile({
     required this.item,
     required this.isLast,
     required this.onTap,
+    required this.onDelete,
   });
 
   @override
@@ -427,6 +457,20 @@ class _ItemTile extends StatelessWidget {
                   ),
                 ],
               ],
+            ),
+            const SizedBox(width: 4),
+
+            // Delete button
+            GestureDetector(
+              onTap: onDelete,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.delete_outline,
+                  size: 20,
+                  color: AppColors.error.withValues(alpha: 0.7),
+                ),
+              ),
             ),
           ],
         ),
