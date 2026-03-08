@@ -19,11 +19,35 @@ class DashboardViewModel extends ChangeNotifier {
 
   // ─── Computed from shopping data ────────────────────────────────────
 
-  int get daysToTet {
-    final tetDate = DateTime(2027, 1, 26);
+  // Ngày mùng 1 Tết Nguyên Đán (Âm lịch → Dương lịch)
+  static final List<DateTime> _tetDates = [
+    DateTime(2025, 1, 29), // Tết Ất Tỵ 2025
+    DateTime(2026, 2, 17), // Tết Bính Ngọ 2026
+    DateTime(2027, 2, 6), // Tết Đinh Mùi 2027
+    DateTime(2028, 1, 26), // Tết Mậu Thân 2028
+    DateTime(2029, 2, 13), // Tết Kỷ Dậu 2029
+    DateTime(2030, 2, 3), // Tết Canh Tuất 2030
+    DateTime(2031, 1, 23), // Tết Tân Hợi 2031
+    DateTime(2032, 2, 11), // Tết Nhâm Tý 2032
+    DateTime(2033, 1, 31), // Tết Quý Sửu 2033
+    DateTime(2034, 2, 19), // Tết Giáp Dần 2034
+  ];
+
+  DateTime get _nextTet {
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
-    return tetDate.difference(todayOnly).inDays.clamp(0, 9999);
+    for (final tet in _tetDates) {
+      if (tet.isAfter(todayOnly)) return tet;
+    }
+    return _tetDates.last;
+  }
+
+  int get tetYear => _nextTet.year;
+
+  int get daysToTet {
+    final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    return _nextTet.difference(todayOnly).inDays.clamp(0, 9999);
   }
 
   double get shoppingProgress => _shoppingVM.shoppingProgress;

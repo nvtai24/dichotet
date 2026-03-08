@@ -28,7 +28,10 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 0),
-                child: _HeroCountdownCard(daysToTet: vm.daysToTet),
+                child: _HeroCountdownCard(
+                  daysToTet: vm.daysToTet,
+                  tetYear: vm.tetYear,
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
@@ -114,7 +117,8 @@ class DashboardScreen extends StatelessWidget {
 
 class _HeroCountdownCard extends StatelessWidget {
   final int daysToTet;
-  const _HeroCountdownCard({required this.daysToTet});
+  final int tetYear;
+  const _HeroCountdownCard({required this.daysToTet, required this.tetYear});
 
   @override
   Widget build(BuildContext context) {
@@ -157,8 +161,16 @@ class _HeroCountdownCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'Tết Nguyên Đán 2027',
+                  'Tết Nguyên Đán ',
                   style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  '$tetYear',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
