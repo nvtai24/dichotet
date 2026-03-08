@@ -71,9 +71,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
-            _buildImage(),
-
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -263,46 +260,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildImage() {
-    return SizedBox(
-      height: 200,
-      width: double.infinity,
-      child: _item.imageUrl != null
-          ? Image.network(
-              _item.imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _imagePlaceholder(),
-            )
-          : _imagePlaceholder(),
-    );
-  }
-
-  Widget _imagePlaceholder() {
-    return Container(
-      color: _item.categoryColor.withValues(alpha: 0.08),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_outlined,
-              size: 56,
-              color: _item.categoryColor.withValues(alpha: 0.35),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'No image',
-              style: TextStyle(
-                fontSize: 12,
-                color: _item.categoryColor.withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

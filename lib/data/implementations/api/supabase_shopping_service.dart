@@ -18,10 +18,10 @@ class SupabaseShoppingService implements IShoppingService {
     // Lấy tất cả categories
     final catRows = await _client.from('categories').select().order('id');
 
-    // Lấy items của user hiện tại, kèm category name
+    // Lấy items của user hiện tại, kèm category name và purchase locations
     final itemRows = await _client
         .from('shopping_items')
-        .select('*, categories(category_name)')
+        .select('*, categories(category_name), purchase_locations(*)')
         .eq('user_id', userId)
         .order('created_at', ascending: false);
 
@@ -36,6 +36,18 @@ class SupabaseShoppingService implements IShoppingService {
               as String? ??
           '';
 
+      // Parse purchase_locations thành storePrices
+      final locationsRaw = row['purchase_locations'] as List<dynamic>? ?? [];
+      final storePrices = locationsRaw.map((loc) {
+        final m = loc as Map<String, dynamic>;
+        return StorePrice(
+          storeName: m['location_name'] as String? ?? '',
+          type: StoreType.market,
+          pricePerUnit: ((m['price_per_unit'] as num?)?.toInt()) ?? 0,
+          lastUpdated: 'Đã lưu',
+        );
+      }).toList();
+
       final item = ShoppingItem(
         name: row['name'] as String,
         categoryName: catName,
@@ -46,6 +58,7 @@ class SupabaseShoppingService implements IShoppingService {
         estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
         note: row['note'] as String?,
         isChecked: row['is_purchased'] as bool? ?? false,
+        storePrices: storePrices,
       );
 
       itemsByCategory.putIfAbsent(catId, () => []).add(item);
