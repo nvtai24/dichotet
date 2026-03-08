@@ -576,14 +576,10 @@ class _RecentItemTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
+              color: item.categoryColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.shopping_bag_outlined,
-              size: 22,
-              color: AppColors.primary,
-            ),
+            child: Icon(item.categoryIcon, size: 22, color: item.categoryColor),
           ),
           const SizedBox(width: 12),
           Expanded(

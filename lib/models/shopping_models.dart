@@ -55,6 +55,7 @@ class ShoppingItem {
   final String categoryName;
   final String categoryTag;
   final Color categoryColor;
+  final IconData categoryIcon;
   final int quantity;
   final String unit;
   final int estimatedPrice;
@@ -70,6 +71,7 @@ class ShoppingItem {
     required this.categoryName,
     required this.categoryTag,
     required this.categoryColor,
+    this.categoryIcon = Icons.category_outlined,
     required this.quantity,
     required this.unit,
     required this.estimatedPrice,

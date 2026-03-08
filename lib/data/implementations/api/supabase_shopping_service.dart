@@ -38,6 +38,7 @@ class SupabaseShoppingService implements IShoppingService {
       final catData = row['categories'] as Map<String, dynamic>?;
       final catName = catData?['category_name'] as String? ?? '';
       final catColorHex = catData?['color_hex'] as String?;
+      final catIconName = catData?['icon_name'] as String?;
 
       // Parse purchase_locations thành storePrices
       final locationsRaw = row['purchase_locations'] as List<dynamic>? ?? [];
@@ -72,6 +73,7 @@ class SupabaseShoppingService implements IShoppingService {
         categoryName: catName,
         categoryTag: catName.toUpperCase(),
         categoryColor: CategoryStyle.colorFrom(catColorHex),
+        categoryIcon: CategoryStyle.iconFrom(catIconName),
         quantity: row['quantity'] as int? ?? 1,
         unit: row['unit'] as String? ?? '',
         estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
