@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/shopping_models.dart';
+import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final ShoppingItem item;
@@ -165,9 +167,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       child: _item.isChecked
           ? OutlinedButton.icon(
               onPressed: _showPurchaseSheet,
-              icon: const Icon(Icons.edit_outlined, size: 18),
+              icon: const Icon(Icons.add_shopping_cart, size: 18),
               label: const Text(
-                'Chỉnh sửa thông tin đã mua',
+                'Thêm lần mua mới',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
               style: OutlinedButton.styleFrom(
@@ -200,6 +202,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   Widget _buildPurchaseInfoCard() {
+    final purchases = _item.purchases;
+    final totalSpent = purchases.fold<int>(
+      0,
+      (sum, p) => sum + p.quantity * p.pricePerUnit,
+    );
+    final totalQty = purchases.fold<int>(0, (sum, p) => sum + p.quantity);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -227,38 +236,126 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Thông tin đã mua',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: Color(0xFF43A047),
+              Expanded(
+                child: Text(
+                  'Lịch sử mua hàng (${purchases.length} lần)',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Color(0xFF43A047),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _PurchaseStatBox(
-                  label: 'Số lượng đã mua',
-                  value: _item.actualQuantity != null
-                      ? '${_item.actualQuantity} ${_item.unit}'
-                      : '—',
-                ),
+          if (purchases.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: Text(
+                'Chưa có thông tin mua hàng',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _PurchaseStatBox(
-                  label: 'Số tiền đã dùng',
-                  value: _item.actualPrice != null
-                      ? _formatPriceShort(_item.actualPrice!)
-                      : '—',
+            )
+          else ...[
+            const SizedBox(height: 12),
+            // Summary row
+            Row(
+              children: [
+                Expanded(
+                  child: _PurchaseStatBox(
+                    label: 'Tổng số lượng',
+                    value: '$totalQty ${_item.unit}',
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _PurchaseStatBox(
+                    label: 'Tổng chi',
+                    value: _formatPriceShort(totalSpent),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Individual purchase records
+            ...purchases.asMap().entries.map((entry) {
+              final i = entry.key;
+              final p = entry.value;
+              final date = p.purchasedAt;
+              final dateStr =
+                  '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} '
+                  '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+              return Padding(
+                padding: EdgeInsets.only(top: i == 0 ? 0 : 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF43A047).withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF43A047).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '#${i + 1}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF43A047),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${p.quantity} ${_item.unit} × ${_formatPriceShort(p.pricePerUnit)}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              dateStr,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        _formatPriceShort(p.quantity * p.pricePerUnit),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF43A047),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -490,11 +587,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       builder: (_) => _ConfirmPurchaseSheet(
         item: _item,
-        onConfirm: (qty, price) => setState(() {
-          _item.actualQuantity = qty;
-          _item.actualPrice = price;
-          _item.isChecked = true;
-        }),
+        onConfirm: (qty, price) async {
+          final vm = context.read<ShoppingListViewModel>();
+          await vm.confirmPurchase(_item, quantity: qty, price: price);
+          if (!mounted) return;
+          setState(() {});
+        },
       ),
     );
   }
@@ -849,7 +947,7 @@ class _PurchaseStatBox extends StatelessWidget {
 
 class _ConfirmPurchaseSheet extends StatefulWidget {
   final ShoppingItem item;
-  final void Function(int quantity, int price) onConfirm;
+  final Future<void> Function(int quantity, int price) onConfirm;
 
   const _ConfirmPurchaseSheet({required this.item, required this.onConfirm});
 
@@ -864,12 +962,8 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   @override
   void initState() {
     super.initState();
-    _qtyController = TextEditingController(
-      text: widget.item.actualQuantity?.toString() ?? '',
-    );
-    _priceController = TextEditingController(
-      text: widget.item.actualPrice?.toString() ?? '',
-    );
+    _qtyController = TextEditingController();
+    _priceController = TextEditingController();
   }
 
   @override
@@ -879,11 +973,12 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
     super.dispose();
   }
 
-  void _onConfirm() {
+  void _onConfirm() async {
     final qty = int.tryParse(_qtyController.text.trim());
     final price = int.tryParse(_priceController.text.trim());
     if (qty == null || qty <= 0 || price == null || price < 0) return;
-    widget.onConfirm(qty, price);
+    await widget.onConfirm(qty, price);
+    if (!mounted) return;
     Navigator.pop(context);
   }
 

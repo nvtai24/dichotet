@@ -73,8 +73,13 @@ class BudgetViewModel extends ChangeNotifier {
       (sum, i) => sum + (i.quantity * i.estimatedPrice),
     );
     final spent = items
-        .where((i) => i.isChecked && i.actualPrice != null)
-        .fold(0, (sum, i) => sum + i.actualPrice!);
+        .where((i) => i.isChecked && i.purchases.isNotEmpty)
+        .fold(
+          0,
+          (sum, i) =>
+              sum +
+              i.purchases.fold(0, (s, p) => s + p.quantity * p.pricePerUnit),
+        );
 
     return BudgetCategory(
       label: label,

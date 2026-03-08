@@ -16,6 +16,18 @@ class StorePrice {
   });
 }
 
+class PurchaseRecord {
+  final int quantity;
+  final int pricePerUnit;
+  final DateTime purchasedAt;
+
+  PurchaseRecord({
+    required this.quantity,
+    required this.pricePerUnit,
+    required this.purchasedAt,
+  });
+}
+
 class ShoppingItem {
   final String name;
   final String categoryName;
@@ -28,9 +40,8 @@ class ShoppingItem {
   final String? note;
   final String? imageUrl;
   final List<StorePrice> storePrices;
+  final List<PurchaseRecord> purchases;
   bool isChecked;
-  int? actualPrice;
-  int? actualQuantity;
 
   ShoppingItem({
     required this.name,
@@ -44,10 +55,10 @@ class ShoppingItem {
     this.note,
     this.imageUrl,
     List<StorePrice>? storePrices,
+    List<PurchaseRecord>? purchases,
     this.isChecked = false,
-    this.actualPrice,
-    this.actualQuantity,
-  }) : storePrices = storePrices ?? [];
+  }) : storePrices = storePrices ?? [],
+       purchases = purchases ?? [];
 }
 
 class ShoppingCategory {

@@ -58,8 +58,15 @@ class MockShoppingService implements IShoppingService {
   }) async {
     await Future.delayed(const Duration(milliseconds: 200));
     item.isChecked = isPurchased;
-    item.actualQuantity = actualQuantity;
-    item.actualPrice = actualPrice;
+    if (isPurchased && actualQuantity != null && actualPrice != null) {
+      item.purchases.add(
+        PurchaseRecord(
+          quantity: actualQuantity,
+          pricePerUnit: actualPrice,
+          purchasedAt: DateTime.now(),
+        ),
+      );
+    }
   }
 
   @override

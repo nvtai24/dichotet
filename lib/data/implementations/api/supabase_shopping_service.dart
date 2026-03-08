@@ -18,10 +18,12 @@ class SupabaseShoppingService implements IShoppingService {
     // Lấy tất cả categories
     final catRows = await _client.from('categories').select().order('id');
 
-    // Lấy items của user hiện tại, kèm category name và purchase locations
+    // Lấy items của user hiện tại, kèm category name, purchase locations và purchases
     final itemRows = await _client
         .from('shopping_items')
-        .select('*, categories(category_name), purchase_locations(*)')
+        .select(
+          '*, categories(category_name), purchase_locations(*), purchases(*)',
+        )
         .eq('user_id', userId)
         .order('created_at', ascending: false);
 
@@ -48,6 +50,19 @@ class SupabaseShoppingService implements IShoppingService {
         );
       }).toList();
 
+      // Parse purchases (tất cả bản ghi)
+      final purchasesRaw = row['purchases'] as List<dynamic>? ?? [];
+      final purchases = purchasesRaw.map((p) {
+        final m = p as Map<String, dynamic>;
+        return PurchaseRecord(
+          quantity: (m['quantity'] as num?)?.toInt() ?? 0,
+          pricePerUnit: (m['price_per_unit'] as num?)?.toInt() ?? 0,
+          purchasedAt:
+              DateTime.tryParse(m['purchased_at'] as String? ?? '') ??
+              DateTime.now(),
+        );
+      }).toList();
+
       final item = ShoppingItem(
         name: row['name'] as String,
         categoryName: catName,
@@ -59,6 +74,7 @@ class SupabaseShoppingService implements IShoppingService {
         note: row['note'] as String?,
         isChecked: row['is_purchased'] as bool? ?? false,
         storePrices: storePrices,
+        purchases: purchases,
       );
 
       itemsByCategory.putIfAbsent(catId, () => []).add(item);
@@ -182,14 +198,32 @@ class SupabaseShoppingService implements IShoppingService {
 
     if (rows.isEmpty) return;
 
+    final itemId = rows.first['id'] as int;
+
     await _client
         .from('shopping_items')
         .update({'is_purchased': isPurchased})
-        .eq('id', rows.first['id']);
+        .eq('id', itemId);
+
+    // Insert vào bảng purchases
+    if (isPurchased && actualQuantity != null && actualPrice != null) {
+      await _client.from('purchases').insert({
+        'shopping_item_id': itemId,
+        'quantity': actualQuantity,
+        'price_per_unit': actualPrice,
+      });
+    }
 
     item.isChecked = isPurchased;
-    item.actualQuantity = actualQuantity;
-    item.actualPrice = actualPrice;
+    if (isPurchased && actualQuantity != null && actualPrice != null) {
+      item.purchases.add(
+        PurchaseRecord(
+          quantity: actualQuantity,
+          pricePerUnit: actualPrice,
+          purchasedAt: DateTime.now(),
+        ),
+      );
+    }
   }
 
   // ─── Add Store Price ──────────────────────────────────────────────
