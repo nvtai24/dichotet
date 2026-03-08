@@ -32,7 +32,7 @@ class SupabaseBudgetService implements IBudgetService {
     final itemRows = await _client
         .from('shopping_items')
         .select(
-          'quantity, est_price_per_unit, category_id, categories(category_name), purchases(quantity, price_per_unit)',
+          'quantity, est_price_per_unit, category_id, categories(category_name, icon_name, color_hex), purchases(quantity, price_per_unit)',
         )
         .eq('user_id', userId)
         .eq('session_id', sessionId);
@@ -46,10 +46,10 @@ class SupabaseBudgetService implements IBudgetService {
       final catId = row['category_id'] as int?;
       if (catId == null) continue;
 
-      final catName =
-          (row['categories'] as Map<String, dynamic>?)?['category_name']
-              as String? ??
-          '';
+      final catData = row['categories'] as Map<String, dynamic>?;
+      final catName = catData?['category_name'] as String? ?? '';
+      final iconName = catData?['icon_name'] as String?;
+      final colorHex = catData?['color_hex'] as String?;
       final qty = (row['quantity'] as num?)?.toInt() ?? 0;
       final estPrice = (row['est_price_per_unit'] as num?)?.toInt() ?? 0;
       final itemEstimated = qty * estPrice;
@@ -66,7 +66,10 @@ class SupabaseBudgetService implements IBudgetService {
       totalEstimated += itemEstimated;
       totalSpent += itemSpent;
 
-      final acc = catMap.putIfAbsent(catId, () => _CatAccumulator(catName));
+      final acc = catMap.putIfAbsent(
+        catId,
+        () => _CatAccumulator(catName, iconName, colorHex),
+      );
       acc.estimated += itemEstimated;
       acc.spent += itemSpent;
     }
@@ -77,6 +80,8 @@ class SupabaseBudgetService implements IBudgetService {
           (e) => CategoryBudgetData(
             name: e.value.name,
             categoryId: e.key,
+            iconName: e.value.iconName,
+            colorHex: e.value.colorHex,
             estimated: e.value.estimated,
             spent: e.value.spent,
           ),
@@ -94,7 +99,9 @@ class SupabaseBudgetService implements IBudgetService {
 
 class _CatAccumulator {
   final String name;
+  final String? iconName;
+  final String? colorHex;
   int estimated = 0;
   int spent = 0;
-  _CatAccumulator(this.name);
+  _CatAccumulator(this.name, this.iconName, this.colorHex);
 }

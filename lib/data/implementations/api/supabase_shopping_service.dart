@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/utils/category_style.dart';
 import '../../../models/shopping_models.dart';
 import '../../interfaces/api/i_shopping_service.dart';
 
@@ -22,7 +23,7 @@ class SupabaseShoppingService implements IShoppingService {
     final itemRows = await _client
         .from('shopping_items')
         .select(
-          '*, categories(category_name), purchase_locations(*), purchases(*, purchase_locations(location_name))',
+          '*, categories(category_name, icon_name, color_hex), purchase_locations(*), purchases(*, purchase_locations(location_name))',
         )
         .eq('user_id', userId)
         .eq('session_id', sessionId)
@@ -34,10 +35,9 @@ class SupabaseShoppingService implements IShoppingService {
       final catId = row['category_id'] as int?;
       if (catId == null) continue;
 
-      final catName =
-          (row['categories'] as Map<String, dynamic>?)?['category_name']
-              as String? ??
-          '';
+      final catData = row['categories'] as Map<String, dynamic>?;
+      final catName = catData?['category_name'] as String? ?? '';
+      final catColorHex = catData?['color_hex'] as String?;
 
       // Parse purchase_locations thành storePrices
       final locationsRaw = row['purchase_locations'] as List<dynamic>? ?? [];
@@ -71,7 +71,7 @@ class SupabaseShoppingService implements IShoppingService {
         name: row['name'] as String,
         categoryName: catName,
         categoryTag: catName.toUpperCase(),
-        categoryColor: _colorForCategory(catId),
+        categoryColor: CategoryStyle.colorFrom(catColorHex),
         quantity: row['quantity'] as int? ?? 1,
         unit: row['unit'] as String? ?? '',
         estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
@@ -89,14 +89,16 @@ class SupabaseShoppingService implements IShoppingService {
     for (final cat in catRows) {
       final catId = cat['id'] as int;
       final catName = cat['category_name'] as String;
+      final iconName = cat['icon_name'] as String?;
+      final colorHex = cat['color_hex'] as String?;
       categories.add(
         ShoppingCategory(
           name: catName,
-          color: _colorForCategory(catId),
+          color: CategoryStyle.colorFrom(colorHex),
           tag: catName.toUpperCase(),
-          icon: _iconForCategory(catId),
+          icon: CategoryStyle.iconFrom(iconName),
           items: itemsByCategory[catId] ?? [],
-          isExpanded: categories.isEmpty, // expand first
+          isExpanded: categories.isEmpty,
         ),
       );
     }
@@ -435,28 +437,4 @@ class SupabaseShoppingService implements IShoppingService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────
-
-  Color _colorForCategory(int id) {
-    const colors = [
-      Color(0xFFC62828), // red
-      Color(0xFF43A047), // green
-      Color(0xFFE91E8A), // pink
-      Color(0xFFFF6F00), // orange
-      Color(0xFF1565C0), // blue
-      Color(0xFF6A1B9A), // purple
-    ];
-    return colors[id % colors.length];
-  }
-
-  IconData _iconForCategory(int id) {
-    const icons = [
-      Icons.card_giftcard_outlined,
-      Icons.restaurant_outlined,
-      Icons.local_florist_outlined,
-      Icons.redeem_outlined,
-      Icons.local_cafe_outlined,
-      Icons.category_outlined,
-    ];
-    return icons[id % icons.length];
-  }
 }

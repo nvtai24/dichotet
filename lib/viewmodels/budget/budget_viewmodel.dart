@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/category_style.dart';
 import '../../data/interfaces/api/i_budget_service.dart';
 import '../../data/interfaces/repositories/i_budget_repository.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
@@ -36,8 +37,8 @@ class BudgetViewModel extends ChangeNotifier {
         .map(
           (c) => BudgetCategory(
             label: c.name,
-            icon: _iconForCategory(c.categoryId),
-            color: _colorForCategory(c.categoryId),
+            icon: CategoryStyle.iconFrom(c.iconName),
+            color: CategoryStyle.colorFrom(c.colorHex),
             estimated: c.estimated,
             spent: c.spent,
           ),
@@ -58,30 +59,6 @@ class BudgetViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  static Color _colorForCategory(int id) {
-    const colors = [
-      Color(0xFFC62828),
-      Color(0xFF43A047),
-      Color(0xFFE91E8A),
-      Color(0xFFFF6F00),
-      Color(0xFF1565C0),
-      Color(0xFF6A1B9A),
-    ];
-    return colors[id % colors.length];
-  }
-
-  static IconData _iconForCategory(int id) {
-    const icons = [
-      Icons.card_giftcard_outlined,
-      Icons.restaurant_outlined,
-      Icons.local_florist_outlined,
-      Icons.redeem_outlined,
-      Icons.local_cafe_outlined,
-      Icons.category_outlined,
-    ];
-    return icons[id % icons.length];
   }
 
   @override
