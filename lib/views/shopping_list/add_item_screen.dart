@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 
 class AddItemScreen extends StatefulWidget {
@@ -16,14 +17,15 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final _unitController = TextEditingController();
   final _priceController = TextEditingController();
   final _noteController = TextEditingController();
-  final _actualPriceController = TextEditingController();
 
   String? _selectedCategory;
   int _quantity = 1;
-  String _selectedStore = '';
 
   List<String> _categories = [];
   List<String> _stores = [];
+
+  // Danh sách nơi mua dự kiến
+  final List<_StorePriceEntry> _storePriceEntries = [];
 
   @override
   void initState() {
@@ -31,7 +33,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
     final vm = context.read<ShoppingListViewModel>();
     _categories = vm.categoryNames;
     _stores = vm.storeNames;
-    if (_stores.isNotEmpty) _selectedStore = _stores.first;
   }
 
   @override
@@ -40,13 +41,75 @@ class _AddItemScreenState extends State<AddItemScreen> {
     _unitController.dispose();
     _priceController.dispose();
     _noteController.dispose();
-    _actualPriceController.dispose();
+    for (final entry in _storePriceEntries) {
+      entry.dispose();
+    }
     super.dispose();
   }
 
-  void _onSave() {
-    // TODO: save item logic
-    Navigator.pop(context);
+  void _onSave() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập tên sản phẩm')),
+      );
+      return;
+    }
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng chọn danh mục')));
+      return;
+    }
+
+    final unit = _unitController.text.trim();
+    final price = int.tryParse(_priceController.text.trim()) ?? 0;
+    final note = _noteController.text.trim();
+
+    // Tạo danh sách store prices
+    final storePrices = <StorePrice>[];
+    for (final entry in _storePriceEntries) {
+      final storeName = entry.storeName;
+      final storePrice = int.tryParse(entry.priceController.text.trim()) ?? 0;
+      if (storeName.isNotEmpty && storePrice > 0) {
+        storePrices.add(
+          StorePrice(
+            storeName: storeName,
+            type: StoreType.market,
+            pricePerUnit: storePrice,
+            lastUpdated: 'Vừa thêm',
+          ),
+        );
+      }
+    }
+
+    final item = ShoppingItem(
+      name: name,
+      categoryName: _selectedCategory!,
+      categoryTag: _selectedCategory!.toUpperCase(),
+      categoryColor: AppColors.primary,
+      quantity: _quantity,
+      unit: unit.isEmpty ? 'cái' : unit,
+      estimatedPrice: price,
+      note: note.isEmpty ? null : note,
+      storePrices: storePrices,
+    );
+
+    final vm = context.read<ShoppingListViewModel>();
+    try {
+      await vm.addItem(item, _selectedCategory!);
+      await vm.loadData();
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã thêm sản phẩm thành công!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+    }
   }
 
   @override
@@ -190,7 +253,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Purchase Location & Price',
+                        'Nơi mua dự kiến',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
@@ -198,101 +261,80 @@ class _AddItemScreenState extends State<AddItemScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: _showStorePicker,
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.add_location_alt_outlined,
-                              size: 14,
-                              color: AppColors.primary,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Add Store',
-                              style: TextStyle(
+                        onTap: _addStoreEntry,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.add_location_alt_outlined,
+                                size: 14,
                                 color: AppColors.primary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 4),
+                              Text(
+                                'Thêm nơi mua',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  // Store row
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.storefront_outlined,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Market/Store',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
+                  if (_storePriceEntries.isEmpty) ...[
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.storefront_outlined,
+                            size: 36,
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Chưa có nơi mua nào',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary.withValues(
+                                alpha: 0.6,
                               ),
                             ),
-                            Text(
-                              _selectedStore,
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Nhấn "Thêm nơi mua" để lên kế hoạch',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary.withValues(
+                                alpha: 0.5,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.edit_outlined,
-                          size: 18,
-                          color: AppColors.textSecondary,
-                        ),
-                        onPressed: _showStorePicker,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Price / Unit at this location',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _actualPriceController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      hintText: 'Actual price',
-                      suffixText: 'VND',
-                      suffixStyle: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                  ],
+                  ...List.generate(_storePriceEntries.length, (index) {
+                    final entry = _storePriceEntries[index];
+                    return _buildStoreEntryCard(entry, index);
+                  }),
                 ],
               ),
             ),
@@ -359,7 +401,20 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  void _showStorePicker() {
+  void _addStoreEntry() {
+    setState(() {
+      _storePriceEntries.add(_StorePriceEntry());
+    });
+  }
+
+  void _removeStoreEntry(int index) {
+    setState(() {
+      _storePriceEntries[index].dispose();
+      _storePriceEntries.removeAt(index);
+    });
+  }
+
+  void _showStorePickerFor(int index) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -391,17 +446,138 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   color: AppColors.primary,
                 ),
                 title: Text(s),
-                trailing: _selectedStore == s
+                trailing: _storePriceEntries[index].storeName == s
                     ? const Icon(Icons.check, color: AppColors.primary)
                     : null,
                 onTap: () {
-                  setState(() => _selectedStore = s);
+                  setState(() {
+                    _storePriceEntries[index].storeName = s;
+                    _storePriceEntries[index].nameController.text = s;
+                  });
                   Navigator.pop(context);
                 },
               ),
             ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(
+                Icons.edit_outlined,
+                color: AppColors.textSecondary,
+              ),
+              title: const Text('Nhập tên khác...'),
+              onTap: () {
+                Navigator.pop(context);
+                // Focus vào text field để user tự nhập
+                _storePriceEntries[index].nameController.clear();
+                _storePriceEntries[index].storeName = '';
+                setState(() {});
+              },
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStoreEntryCard(_StorePriceEntry entry, int index) {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: store number + delete button
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.storefront_outlined,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Nơi mua ${index + 1}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _removeStoreEntry(index),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.close, size: 16, color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Store name
+          TextField(
+            controller: entry.nameController,
+            decoration: InputDecoration(
+              hintText: 'Tên cửa hàng / chợ',
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              suffixIcon: _stores.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.arrow_drop_down,
+                        color: AppColors.textSecondary,
+                      ),
+                      onPressed: () => _showStorePickerFor(index),
+                    )
+                  : null,
+            ),
+            onChanged: (v) => entry.storeName = v,
+          ),
+          const SizedBox(height: 8),
+          // Price
+          TextField(
+            controller: entry.priceController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              hintText: 'Giá / đơn vị tại đây',
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              suffixIcon: Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Text(
+                  '₫',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              suffixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -505,5 +681,18 @@ class _StepButton extends StatelessWidget {
         child: Icon(icon, size: 18, color: AppColors.primary),
       ),
     );
+  }
+}
+
+// ─── Store Price Entry Model ───────────────────────────────────────────────
+
+class _StorePriceEntry {
+  String storeName = '';
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController priceController = TextEditingController();
+
+  void dispose() {
+    nameController.dispose();
+    priceController.dispose();
   }
 }
