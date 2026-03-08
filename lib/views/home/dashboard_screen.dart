@@ -160,16 +160,8 @@ class _HeroCountdownCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  'Tết Nguyên Đán ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
                 Text(
-                  '$tetYear',
+                  'Tết Nguyên Đán $tetYear 🧧',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -178,7 +170,9 @@ class _HeroCountdownCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Chuẩn bị đang diễn ra tốt đẹp!',
+                  daysToTet == 0
+                      ? 'Chúc mừng năm mới! 🎉🎊'
+                      : 'Lên danh sách, sắm Tết thôi nào!',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 13,
