@@ -327,7 +327,10 @@ class _SocialLoginRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _SocialButton(icon: _GoogleIcon(), onTap: () {}),
+        _SocialButton(
+          icon: _GoogleIcon(),
+          onTap: () => _onGoogleLogin(context),
+        ),
         const SizedBox(width: 16),
         _SocialButton(
           icon: const Icon(Icons.facebook, size: 24, color: Color(0xFF1877F2)),
@@ -335,6 +338,24 @@ class _SocialLoginRow extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _onGoogleLogin(BuildContext context) async {
+    final authVM = context.read<AuthViewModel>();
+    final success = await authVM.signInWithGoogle();
+
+    if (!context.mounted) return;
+
+    if (success) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authVM.error ?? 'Đăng nhập Google thất bại')),
+      );
+    }
   }
 }
 

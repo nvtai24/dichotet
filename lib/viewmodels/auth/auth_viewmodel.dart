@@ -89,6 +89,27 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // ─── Google Sign In ────────────────────────────────────────────────
+
+  Future<bool> signInWithGoogle() async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      _profile = await _repository.signInWithGoogle();
+      _setLoading(false);
+      return true;
+    } on AuthException catch (e) {
+      _error = e.message;
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _error = 'Đã xảy ra lỗi. Vui lòng thử lại.';
+      _setLoading(false);
+      return false;
+    }
+  }
+
   // ─── Password Reset ───────────────────────────────────────────────
 
   Future<bool> sendPasswordReset({required String email}) async {

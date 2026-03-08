@@ -41,5 +41,8 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<Profile?> getCurrentUser() => _service.getCurrentUser();
 
   @override
+  Future<Profile> signInWithGoogle() => _service.signInWithGoogle();
+
+  @override
   bool get isLoggedIn => _service.isLoggedIn;
 }

@@ -1,3 +1,4 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../domain/entities/profile.dart';
 import '../../interfaces/api/i_auth_service.dart';
@@ -90,6 +91,43 @@ class SupabaseAuthService implements IAuthService {
 
   @override
   bool get isLoggedIn => _client.auth.currentUser != null;
+
+  // ─── Google Sign-In ────────────────────────────────────────────────
+
+  @override
+  Future<Profile> signInWithGoogle() async {
+    const webClientId = String.fromEnvironment(
+      'GOOGLE_WEB_CLIENT_ID',
+      defaultValue: 'YOUR_GOOGLE_WEB_CLIENT_ID',
+    );
+
+    final googleSignIn = GoogleSignIn.instance;
+    await googleSignIn.initialize(serverClientId: webClientId);
+
+    final GoogleSignInAccount googleUser;
+    try {
+      googleUser = await googleSignIn.authenticate();
+    } on GoogleSignInException {
+      throw AuthException('Đăng nhập Google đã bị huỷ.');
+    }
+
+    final idToken = googleUser.authentication.idToken;
+    if (idToken == null) {
+      throw AuthException('Không lấy được token từ Google.');
+    }
+
+    final response = await _client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+    );
+
+    final user = response.user;
+    if (user == null) {
+      throw AuthException('Đăng nhập Google không thành công.');
+    }
+
+    return _mapUser(user);
+  }
 
   // ─── Helper ───────────────────────────────────────────────────────
 

@@ -26,6 +26,9 @@ abstract class IAuthService {
   /// Trả về profile của user hiện tại (nếu đã đăng nhập), hoặc `null`.
   Future<Profile?> getCurrentUser();
 
+  /// Đăng nhập bằng Google (native) rồi gửi idToken cho Supabase.
+  Future<Profile> signInWithGoogle();
+
   /// Kiểm tra nhanh user đã đăng nhập chưa.
   bool get isLoggedIn;
 }

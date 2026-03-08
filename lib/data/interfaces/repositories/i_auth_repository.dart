@@ -19,5 +19,7 @@ abstract class IAuthRepository {
 
   Future<Profile?> getCurrentUser();
 
+  Future<Profile> signInWithGoogle();
+
   bool get isLoggedIn;
 }
