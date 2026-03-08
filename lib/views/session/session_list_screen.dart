@@ -19,7 +19,9 @@ class _SessionListScreenState extends State<SessionListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<SessionViewModel>().loadSessions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SessionViewModel>().loadSessions();
+    });
   }
 
   void _openSession(ShoppingSession session) {

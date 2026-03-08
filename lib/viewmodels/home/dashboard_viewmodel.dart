@@ -1,17 +1,21 @@
 import 'package:flutter/foundation.dart';
+import '../../models/shopping_models.dart';
+import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 
 /// Dashboard ViewModel – derives stats from ShoppingListViewModel.
 /// Không gọi repository riêng mà tái sử dụng dữ liệu từ shopping.
 class DashboardViewModel extends ChangeNotifier {
   final ShoppingListViewModel _shoppingVM;
+  final SessionViewModel _sessionVM;
 
-  DashboardViewModel(this._shoppingVM) {
-    // Lắng nghe thay đổi từ ShoppingListViewModel
-    _shoppingVM.addListener(_onShoppingChanged);
+  DashboardViewModel(this._shoppingVM, this._sessionVM) {
+    // Lắng nghe thay đổi từ ShoppingListViewModel & SessionViewModel
+    _shoppingVM.addListener(_onChanged);
+    _sessionVM.addListener(_onChanged);
   }
 
-  void _onShoppingChanged() => notifyListeners();
+  void _onChanged() => notifyListeners();
 
   // ─── Computed from shopping data ────────────────────────────────────
 
@@ -25,7 +29,7 @@ class DashboardViewModel extends ChangeNotifier {
   double get shoppingProgress => _shoppingVM.shoppingProgress;
   int get totalItems => _shoppingVM.totalItems;
   int get purchasedItems => _shoppingVM.purchasedItems;
-  int get estimatedBudget => _shoppingVM.estimatedBudget;
+  int get estimatedBudget => _sessionVM.selectedSession?.budget.toInt() ?? 0;
   int get spentBudget => _shoppingVM.spentBudget;
 
   String get progressMessage {
@@ -34,40 +38,19 @@ class DashboardViewModel extends ChangeNotifier {
     return 'Sắp xong rồi, cố lên!';
   }
 
-  // ─── Destinations (mock, sau này lấy từ API) ───────────────────────
+  // ─── Recent items ──────────────────────────────────────────────────
 
-  List<Destination> get destinations => const [
-    Destination(
-      name: 'Chợ Bến Thành',
-      category: 'Hoa & Trang trí',
-      distance: '0.8km',
-      isWalking: true,
-    ),
-    Destination(
-      name: 'Lotte Mart',
-      category: 'Thực phẩm & Đồ uống',
-      distance: '2.4km',
-      isWalking: false,
-    ),
-  ];
+  List<ShoppingItem> get recentItems {
+    final items = _shoppingVM.allItems;
+    if (items.isEmpty) return [];
+    final reversed = items.reversed.toList();
+    return reversed.take(3).toList();
+  }
 
   @override
   void dispose() {
-    _shoppingVM.removeListener(_onShoppingChanged);
+    _shoppingVM.removeListener(_onChanged);
+    _sessionVM.removeListener(_onChanged);
     super.dispose();
   }
-}
-
-class Destination {
-  final String name;
-  final String category;
-  final String distance;
-  final bool isWalking;
-
-  const Destination({
-    required this.name,
-    required this.category,
-    required this.distance,
-    required this.isWalking,
-  });
 }

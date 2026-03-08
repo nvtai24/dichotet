@@ -48,7 +48,7 @@ class ShoppingListViewModel extends ChangeNotifier {
       allItems.fold(0, (sum, i) => sum + (i.quantity * i.estimatedPrice));
 
   int get spentBudget => allItems
-      .where((i) => i.isChecked && i.purchases.isNotEmpty)
+      .where((i) => i.purchases.isNotEmpty)
       .fold(
         0,
         (sum, i) =>

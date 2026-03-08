@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../models/shopping_models.dart';
 import '../../viewmodels/home/dashboard_viewmodel.dart';
+import '../main_screen.dart';
+import '../shopping_list/add_item_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -42,7 +45,7 @@ class DashboardScreen extends StatelessWidget {
                       spent: vm.spentBudget,
                     ),
                     const SizedBox(height: 20),
-                    _ShoppingDestinationsSection(destinations: vm.destinations),
+                    _RecentItemsSection(items: vm.recentItems),
                   ],
                 ),
               ),
@@ -420,11 +423,22 @@ class _BudgetCard extends StatelessWidget {
   }
 }
 
-// ─── Shopping Destinations ─────────────────────────────────────────────────
+// ─── Recent Items ──────────────────────────────────────────────────────────
 
-class _ShoppingDestinationsSection extends StatelessWidget {
-  final List<Destination> destinations;
-  const _ShoppingDestinationsSection({required this.destinations});
+class _RecentItemsSection extends StatelessWidget {
+  final List<ShoppingItem> items;
+  const _RecentItemsSection({required this.items});
+
+  String _formatPrice(int price) {
+    if (price == 0) return '0 ₫';
+    final s = price.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return '${buf.toString()} ₫';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -435,58 +449,112 @@ class _ShoppingDestinationsSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Địa điểm mua sắm gần đây',
+              'Món đồ vừa thêm gần đây',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                foregroundColor: AppColors.primary,
+            if (items.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  final state = context
+                      .findAncestorStateOfType<MainScreenState>();
+                  state?.switchToTab(1);
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: AppColors.primary,
+                ),
+                child: const Text(
+                  'Xem tất cả',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
               ),
-              child: const Text(
-                'Xem tất cả',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 12),
-        ...destinations.map(
-          (d) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _DestinationTile(
-              icon: d.isWalking
-                  ? Icons.storefront_outlined
-                  : Icons.shopping_basket_outlined,
-              name: d.name,
-              category: d.category,
-              distance: d.distance,
-              isWalking: d.isWalking,
+        if (items.isEmpty)
+          _EmptyRecentItems()
+        else
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _RecentItemTile(item: item, formatPrice: _formatPrice),
             ),
           ),
-        ),
       ],
     );
   }
 }
 
-class _DestinationTile extends StatelessWidget {
-  final IconData icon;
-  final String name;
-  final String category;
-  final String distance;
-  final bool isWalking;
+class _EmptyRecentItems extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.shopping_basket_outlined,
+            size: 48,
+            color: AppColors.textHint,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Chưa có sản phẩm nào',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Hãy thêm món đồ đầu tiên của bạn!',
+            style: TextStyle(color: AppColors.textHint, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddItemScreen()),
+              );
+            },
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Thêm vật phẩm'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-  const _DestinationTile({
-    required this.icon,
-    required this.name,
-    required this.category,
-    required this.distance,
-    required this.isWalking,
-  });
+class _RecentItemTile extends StatelessWidget {
+  final ShoppingItem item;
+  final String Function(int) formatPrice;
+
+  const _RecentItemTile({required this.item, required this.formatPrice});
 
   @override
   Widget build(BuildContext context) {
@@ -511,36 +579,40 @@ class _DestinationTile extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 22, color: AppColors.primary),
+            child: const Icon(
+              Icons.shopping_bag_outlined,
+              size: 22,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: Theme.of(context).textTheme.titleMedium),
-                Text(category, style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  item.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${item.quantity} ${item.unit} • ${item.categoryName}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                distance,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Icon(
-                isWalking ? Icons.directions_walk : Icons.directions_car,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
-            ],
+          Text(
+            formatPrice(item.quantity * item.estimatedPrice),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
           ),
         ],
       ),

@@ -59,11 +59,17 @@ class _DichotetAppState extends State<DichotetApp> {
         ChangeNotifierProvider(
           create: (_) => ShoppingListViewModel(shoppingRepository),
         ),
-        ChangeNotifierProxyProvider<ShoppingListViewModel, DashboardViewModel>(
-          create: (ctx) =>
-              DashboardViewModel(ctx.read<ShoppingListViewModel>()),
-          update: (_, shoppingVM, prev) =>
-              prev ?? DashboardViewModel(shoppingVM),
+        ChangeNotifierProxyProvider2<
+          ShoppingListViewModel,
+          SessionViewModel,
+          DashboardViewModel
+        >(
+          create: (ctx) => DashboardViewModel(
+            ctx.read<ShoppingListViewModel>(),
+            ctx.read<SessionViewModel>(),
+          ),
+          update: (_, shoppingVM, sessionVM, prev) =>
+              prev ?? DashboardViewModel(shoppingVM, sessionVM),
         ),
         ChangeNotifierProxyProvider<ShoppingListViewModel, BudgetViewModel>(
           create: (ctx) => BudgetViewModel(ctx.read<ShoppingListViewModel>()),
