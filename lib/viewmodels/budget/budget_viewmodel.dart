@@ -3,18 +3,28 @@ import '../../core/utils/category_style.dart';
 import '../../data/interfaces/api/i_budget_service.dart';
 import '../../data/interfaces/repositories/i_budget_repository.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
+import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 
 class BudgetViewModel extends ChangeNotifier {
   final IBudgetRepository _repository;
   final SessionViewModel _sessionVM;
+  final ShoppingListViewModel _shoppingVM;
 
-  BudgetViewModel(this._repository, this._sessionVM) {
+  BudgetViewModel(this._repository, this._sessionVM, this._shoppingVM) {
     _sessionVM.addListener(_onSessionChanged);
+    _shoppingVM.addListener(_onShoppingChanged);
   }
 
   void _onSessionChanged() {
     final sid = _sessionVM.selectedSession?.id;
     if (sid != null) loadBudget(sid);
+  }
+
+  void _onShoppingChanged() {
+    final sid = _sessionVM.selectedSession?.id;
+    if (sid != null && !_isLoading && !_shoppingVM.isLoading) {
+      loadBudget(sid);
+    }
   }
 
   bool _isLoading = false;
@@ -64,6 +74,7 @@ class BudgetViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _sessionVM.removeListener(_onSessionChanged);
+    _shoppingVM.removeListener(_onShoppingChanged);
     super.dispose();
   }
 }
