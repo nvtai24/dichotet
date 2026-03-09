@@ -16,12 +16,22 @@ class ItemDetailScreen extends StatefulWidget {
 }
 
 class _ItemDetailScreenState extends State<ItemDetailScreen> {
-  late final ShoppingItem _item;
+  late ShoppingItem _item;
 
   @override
   void initState() {
     super.initState();
     _item = widget.item;
+  }
+
+  ShoppingItem? _findItemByName(String name) {
+    final vm = context.read<ShoppingListViewModel>();
+    for (final cat in vm.categories) {
+      for (final item in cat.items) {
+        if (item.name == name) return item;
+      }
+    }
+    return null;
   }
 
   @override
@@ -53,14 +63,19 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
               onTap: () async {
-                final result = await Navigator.push<bool>(
+                final result = await Navigator.push<String>(
                   context,
                   MaterialPageRoute(
                     builder: (_) => EditItemScreen(item: _item),
                   ),
                 );
-                if (result == true && mounted) {
-                  Navigator.pop(context); // back to list to see refreshed data
+                if (result != null && mounted) {
+                  final updated = _findItemByName(result);
+                  if (updated != null) {
+                    setState(() => _item = updated);
+                  } else {
+                    Navigator.pop(context);
+                  }
                 }
               },
               child: Container(
@@ -268,7 +283,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       ),
                     );
                     if (result == true && mounted) {
-                      Navigator.pop(context);
+                      final updated = _findItemByName(_item.name);
+                      if (updated != null) {
+                        setState(() => _item = updated);
+                      } else {
+                        Navigator.pop(context);
+                      }
                     }
                   },
                   child: Container(
@@ -674,8 +694,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             price: price,
             locationName: location,
           );
+          await vm.loadData();
           if (!mounted) return;
-          setState(() {});
+          final updated = _findItemByName(_item.name);
+          if (updated != null) {
+            setState(() => _item = updated);
+          } else {
+            setState(() {});
+          }
         },
       ),
     );

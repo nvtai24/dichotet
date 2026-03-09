@@ -120,8 +120,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     try {
       await vm.updateItem(widget.item, newItem, _selectedCategory!);
       if (!mounted) return;
-      // Pop cả edit screen lẫn detail screen để refresh
-      Navigator.pop(context, true);
+      Navigator.pop(context, name);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Đã cập nhật sản phẩm!')));
