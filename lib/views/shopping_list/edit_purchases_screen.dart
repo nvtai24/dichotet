@@ -67,23 +67,28 @@ class _EditPurchasesScreenState extends State<EditPurchasesScreen> {
   void _onSave() async {
     final vm = context.read<ShoppingListViewModel>();
     try {
-      // Delete removed purchases
+      // Delete removed purchases (skip individual reloads)
       for (final id in _deletedPurchaseIds) {
-        await vm.deletePurchase(id);
+        await vm.deletePurchase(id, reload: false);
       }
 
-      // Update modified purchases
+      // Update modified purchases (skip individual reloads)
       for (final pe in _purchaseEntries) {
         if (pe.purchaseId == null) continue;
         final newQty = int.tryParse(pe.quantityController.text.trim()) ?? 0;
         final newPrice = int.tryParse(pe.priceController.text.trim()) ?? 0;
         if (newQty != pe.originalQuantity || newPrice != pe.originalPrice) {
-          await vm.updatePurchase(pe.purchaseId!, newQty, newPrice);
+          await vm.updatePurchase(
+            pe.purchaseId!,
+            newQty,
+            newPrice,
+            reload: false,
+          );
         }
       }
 
-      // Recalculate isChecked based on total purchased vs required quantity
-      await vm.recalculatePurchaseStatus(widget.item);
+      // Reload data once after all changes are applied
+      await vm.loadData();
 
       if (!mounted) return;
       Navigator.pop(context, true);

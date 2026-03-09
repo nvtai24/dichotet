@@ -135,8 +135,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   _buildStatsRow(),
                   const SizedBox(height: 16),
 
-                  // Purchase info card (if purchased)
-                  if (_item.isChecked) ...[
+                  // Purchase info card (if has any purchases)
+                  if (_item.purchases.isNotEmpty) ...[
                     _buildPurchaseInfoCard(),
                     const SizedBox(height: 16),
                   ],

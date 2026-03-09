@@ -157,15 +157,16 @@ class ShoppingListViewModel extends ChangeNotifier {
   Future<void> updatePurchase(
     int purchaseId,
     int quantity,
-    int pricePerUnit,
-  ) async {
+    int pricePerUnit, {
+    bool reload = true,
+  }) async {
     await _repository.updatePurchase(purchaseId, quantity, pricePerUnit);
-    await loadData();
+    if (reload) await loadData();
   }
 
-  Future<void> deletePurchase(int purchaseId) async {
+  Future<void> deletePurchase(int purchaseId, {bool reload = true}) async {
     await _repository.deletePurchase(purchaseId);
-    await loadData();
+    if (reload) await loadData();
   }
 
   Future<void> recalculatePurchaseStatus(ShoppingItem item) async {
