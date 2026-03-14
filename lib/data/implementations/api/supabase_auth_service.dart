@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../domain/entities/profile.dart';
@@ -96,10 +97,8 @@ class SupabaseAuthService implements IAuthService {
 
   @override
   Future<Profile> signInWithGoogle() async {
-    const webClientId = String.fromEnvironment(
-      'GOOGLE_WEB_CLIENT_ID',
-      defaultValue: 'YOUR_GOOGLE_WEB_CLIENT_ID',
-    );
+    final webClientId =
+        dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? 'YOUR_GOOGLE_WEB_CLIENT_ID';
 
     final googleSignIn = GoogleSignIn.instance;
     await googleSignIn.initialize(serverClientId: webClientId);
