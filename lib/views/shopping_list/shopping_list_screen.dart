@@ -387,6 +387,11 @@ class _ItemTile extends StatelessWidget {
         ? AppColors.error
         : AppColors.textPrimary;
 
+    final purchasedQty =
+        item.purchases.fold<int>(0, (sum, p) => sum + p.quantity);
+    final hasPurchase = purchasedQty > 0;
+    final isPartial = hasPurchase && !item.isChecked;
+
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -413,14 +418,55 @@ class _ItemTile extends StatelessWidget {
                       decorationColor: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'SL: ${item.quantity} ${item.unit}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Text(
+                        'SL: ${item.quantity} ${item.unit}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (hasPurchase) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: item.isChecked
+                                ? const Color(0xFF4CAF50).withValues(alpha: 0.12)
+                                : const Color(0xFFFF9800).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Đã mua: $purchasedQty/${item.quantity}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: item.isChecked
+                                  ? const Color(0xFF2E7D32)
+                                  : const Color(0xFFE65100),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
+                  if (isPartial) ...[
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: purchasedQty / item.quantity,
+                        minHeight: 3,
+                        backgroundColor: const Color(0xFFFF9800).withValues(alpha: 0.15),
+                        valueColor: const AlwaysStoppedAnimation(Color(0xFFFF9800)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
