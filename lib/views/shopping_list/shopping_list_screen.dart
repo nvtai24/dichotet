@@ -390,8 +390,6 @@ class _ItemTile extends StatelessWidget {
     final purchasedQty =
         item.purchases.fold<int>(0, (sum, p) => sum + p.quantity);
     final hasPurchase = purchasedQty > 0;
-    final isPartial = hasPurchase && !item.isChecked;
-
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -455,18 +453,6 @@ class _ItemTile extends StatelessWidget {
                       ],
                     ],
                   ),
-                  if (isPartial) ...[
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: LinearProgressIndicator(
-                        value: purchasedQty / item.quantity,
-                        minHeight: 3,
-                        backgroundColor: const Color(0xFFFF9800).withValues(alpha: 0.15),
-                        valueColor: const AlwaysStoppedAnimation(Color(0xFFFF9800)),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
