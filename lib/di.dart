@@ -20,8 +20,12 @@ import 'data/interfaces/repositories/i_profile_repository.dart';
 import 'data/interfaces/repositories/i_auth_repository.dart';
 import 'data/interfaces/repositories/i_session_repository.dart';
 import 'data/interfaces/repositories/i_budget_repository.dart';
+import 'data/local/local_cache_service.dart';
 
 SupabaseClient get supabase => Supabase.instance.client;
+
+// ─── Local cache ──────────────────────────────────────────────────────
+final LocalCacheService localCacheService = LocalCacheService();
 
 // ─── Services (API layer) ─────────────────────────────────────────────
 final IShoppingService shoppingService = SupabaseShoppingService(supabase);
@@ -33,6 +37,7 @@ final IBudgetService budgetService = SupabaseBudgetService(supabase);
 // ─── Repositories ─────────────────────────────────────────────────────
 final IShoppingRepository shoppingRepository = ShoppingRepositoryImpl(
   shoppingService,
+  localCacheService,
 );
 final IProfileRepository profileRepository = ProfileRepositoryImpl(
   profileService,
@@ -40,5 +45,6 @@ final IProfileRepository profileRepository = ProfileRepositoryImpl(
 final IAuthRepository authRepository = AuthRepositoryImpl(authService);
 final ISessionRepository sessionRepository = SessionRepositoryImpl(
   sessionService,
+  localCacheService,
 );
 final IBudgetRepository budgetRepository = BudgetRepositoryImpl(budgetService);

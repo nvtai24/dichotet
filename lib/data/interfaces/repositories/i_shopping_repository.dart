@@ -26,4 +26,5 @@ abstract class IShoppingRepository {
   Future<void> deletePurchase(int purchaseId);
   Future<void> recalculatePurchaseStatus(ShoppingItem item);
   Future<void> deleteItem(ShoppingItem item);
+  void invalidateSessionCache(String sessionId);
 }

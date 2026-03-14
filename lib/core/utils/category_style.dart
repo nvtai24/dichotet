@@ -44,6 +44,22 @@ class CategoryStyle {
     }
   }
 
+  /// Chuyển IconData → tên icon string (dùng cho cache serialization).
+  static String iconNameFrom(IconData icon) {
+    return _iconMap.entries
+            .firstWhere(
+              (e) => e.value.codePoint == icon.codePoint,
+              orElse: () => const MapEntry('category', Icons.category_outlined),
+            )
+            .key;
+  }
+
+  /// Chuyển Color → hex string dạng #RRGGBB (dùng cho cache serialization).
+  static String colorHexFrom(Color color) {
+    final rgb = color.toARGB32() & 0xFFFFFF;
+    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+  }
+
   /// Danh sách tên icon có sẵn (dùng cho UI chọn icon nếu cần).
   static List<String> get availableIconNames => _iconMap.keys.toList();
 }

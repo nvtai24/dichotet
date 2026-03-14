@@ -56,12 +56,16 @@ class ShoppingListViewModel extends ChangeNotifier {
             i.purchases.fold(0, (s, p) => s + p.quantity * p.pricePerUnit),
       );
 
-  // ─── Actions ────────────────────────────────────────────────────────
+  // ─── Session ────────────────────────────────────────────────────────
 
   void setSessionId(String sessionId) {
+    if (_sessionId == sessionId) return;
     _sessionId = sessionId;
+    _categories = [];
     notifyListeners();
   }
+
+  // ─── Load (cache-first via repository) ──────────────────────────────
 
   Future<void> loadData() async {
     if (_sessionId == null) return;
@@ -85,6 +89,15 @@ class ShoppingListViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Force fresh data from API (e.g. pull-to-refresh)
+  Future<void> forceRefresh() async {
+    if (_sessionId == null) return;
+    _repository.invalidateSessionCache(_sessionId!);
+    await loadData();
+  }
+
+  // ─── UI state ───────────────────────────────────────────────────────
 
   void setSearchQuery(String query) {
     _searchQuery = query;
@@ -118,10 +131,17 @@ class ShoppingListViewModel extends ChangeNotifier {
         .toList();
   }
 
+  // ─── CRUD (optimistic updates) ───────────────────────────────────────
+
   Future<void> addItem(ShoppingItem item, String categoryName) async {
     if (_sessionId == null) return;
-    await _repository.addItem(item, categoryName, _sessionId!);
+
+    // Optimistic: add to local state immediately
+    _addItemToCategory(item, categoryName);
     notifyListeners();
+
+    await _repository.addItem(item, categoryName, _sessionId!);
+    // Cache already invalidated by repository
   }
 
   Future<void> updateItem(
@@ -129,8 +149,12 @@ class ShoppingListViewModel extends ChangeNotifier {
     ShoppingItem newItem,
     String categoryName,
   ) async {
+    // Optimistic: replace in local state
+    _replaceItem(oldItem, newItem, categoryName);
+    notifyListeners();
+
     await _repository.updateItem(oldItem, newItem, categoryName);
-    await loadData();
+    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
   }
 
   Future<void> confirmPurchase(
@@ -146,6 +170,7 @@ class ShoppingListViewModel extends ChangeNotifier {
       actualPrice: price,
       locationName: locationName,
     );
+    // item mutated in-place by service
     notifyListeners();
   }
 
@@ -160,22 +185,46 @@ class ShoppingListViewModel extends ChangeNotifier {
     int pricePerUnit, {
     bool reload = true,
   }) async {
+    // Optimistic: update in-memory
+    final item = _findItemByPurchaseId(purchaseId);
+    if (item != null) {
+      final idx = item.purchases.indexWhere((p) => p.id == purchaseId);
+      if (idx != -1) {
+        item.purchases[idx] = PurchaseRecord(
+          id: purchaseId,
+          quantity: quantity,
+          pricePerUnit: pricePerUnit,
+          purchasedAt: item.purchases[idx].purchasedAt,
+          locationName: item.purchases[idx].locationName,
+        );
+        _recalcIsChecked(item);
+        notifyListeners();
+      }
+    }
+
     await _repository.updatePurchase(purchaseId, quantity, pricePerUnit);
-    if (reload) await loadData();
   }
 
   Future<void> deletePurchase(int purchaseId, {bool reload = true}) async {
+    // Optimistic: remove in-memory
+    final item = _findItemByPurchaseId(purchaseId);
+    if (item != null) {
+      item.purchases.removeWhere((p) => p.id == purchaseId);
+      _recalcIsChecked(item);
+      notifyListeners();
+    }
+
     await _repository.deletePurchase(purchaseId);
-    if (reload) await loadData();
   }
 
   Future<void> recalculatePurchaseStatus(ShoppingItem item) async {
     await _repository.recalculatePurchaseStatus(item);
-    await loadData();
+    // item.isChecked mutated in-place by service
+    notifyListeners();
   }
 
   Future<void> deleteItem(ShoppingItem item) async {
-    // Remove locally first for smooth UI
+    // Optimistic: remove locally
     for (final cat in _categories) {
       cat.items.remove(item);
     }
@@ -183,6 +232,53 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await _repository.deleteItem(item);
-    await loadData();
+    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────────────
+
+  void _addItemToCategory(ShoppingItem item, String categoryName) {
+    final existing = _categories.where((c) => c.name == categoryName).toList();
+    if (existing.isNotEmpty) {
+      existing.first.items.insert(0, item);
+    } else {
+      _categories.insert(
+        0,
+        ShoppingCategory(
+          name: categoryName,
+          color: item.categoryColor,
+          tag: item.categoryTag,
+          icon: item.categoryIcon,
+          items: [item],
+          isExpanded: true,
+        ),
+      );
+    }
+  }
+
+  void _replaceItem(
+      ShoppingItem oldItem, ShoppingItem newItem, String categoryName) {
+    // Remove from old category
+    for (final cat in _categories) {
+      cat.items.remove(oldItem);
+    }
+    _categories.removeWhere((c) => c.items.isEmpty);
+    // Add to new category
+    _addItemToCategory(newItem, categoryName);
+  }
+
+  ShoppingItem? _findItemByPurchaseId(int purchaseId) {
+    for (final cat in _categories) {
+      for (final item in cat.items) {
+        if (item.purchases.any((p) => p.id == purchaseId)) return item;
+      }
+    }
+    return null;
+  }
+
+  void _recalcIsChecked(ShoppingItem item) {
+    final total =
+        item.purchases.fold<int>(0, (sum, p) => sum + p.quantity);
+    item.isChecked = total >= item.quantity;
   }
 }

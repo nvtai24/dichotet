@@ -1,0 +1,149 @@
+import 'dart:convert';
+import '../../core/utils/category_style.dart';
+import '../../models/shopping_models.dart';
+
+/// Serialize / deserialize app models to/from JSON strings for Hive storage.
+/// Color stored as int (ARGB), IconData stored as codePoint int.
+class CacheSerializer {
+  // ─── String list ──────────────────────────────────────────────────
+
+  static String encodeStringList(List<String> list) => jsonEncode(list);
+
+  static List<String> decodeStringList(String json) =>
+      (jsonDecode(json) as List).cast<String>();
+
+  // ─── ShoppingSession ──────────────────────────────────────────────
+
+  static String encodeSessions(List<ShoppingSession> sessions) =>
+      jsonEncode(sessions.map(_sessionToMap).toList());
+
+  static List<ShoppingSession> decodeSessions(String json) =>
+      (jsonDecode(json) as List)
+          .map((m) => _sessionFromMap(m as Map<String, dynamic>))
+          .toList();
+
+  static Map<String, dynamic> _sessionToMap(ShoppingSession s) => {
+        'id': s.id,
+        'userId': s.userId,
+        'name': s.name,
+        'budget': s.budget,
+        'isActive': s.isActive,
+        'createdAt': s.createdAt.toIso8601String(),
+      };
+
+  static ShoppingSession _sessionFromMap(Map<String, dynamic> m) =>
+      ShoppingSession(
+        id: m['id'] as String,
+        userId: m['userId'] as String,
+        name: m['name'] as String,
+        budget: (m['budget'] as num).toDouble(),
+        isActive: m['isActive'] as bool? ?? true,
+        createdAt: DateTime.parse(m['createdAt'] as String),
+      );
+
+  // ─── ShoppingCategory ─────────────────────────────────────────────
+
+  static String encodeCategories(List<ShoppingCategory> categories) =>
+      jsonEncode(categories.map(_categoryToMap).toList());
+
+  static List<ShoppingCategory> decodeCategories(String json) =>
+      (jsonDecode(json) as List)
+          .map((m) => _categoryFromMap(m as Map<String, dynamic>))
+          .toList();
+
+  static Map<String, dynamic> _categoryToMap(ShoppingCategory c) => {
+        'name': c.name,
+        'colorHex': CategoryStyle.colorHexFrom(c.color),
+        'tag': c.tag,
+        'iconName': CategoryStyle.iconNameFrom(c.icon),
+        'isExpanded': c.isExpanded,
+        'items': c.items.map(_itemToMap).toList(),
+      };
+
+  static ShoppingCategory _categoryFromMap(Map<String, dynamic> m) =>
+      ShoppingCategory(
+        name: m['name'] as String,
+        color: CategoryStyle.colorFrom(m['colorHex'] as String?),
+        tag: m['tag'] as String,
+        icon: CategoryStyle.iconFrom(m['iconName'] as String?),
+        isExpanded: m['isExpanded'] as bool? ?? false,
+        items: (m['items'] as List)
+            .map((i) => _itemFromMap(i as Map<String, dynamic>))
+            .toList(),
+      );
+
+  // ─── ShoppingItem ─────────────────────────────────────────────────
+
+  static Map<String, dynamic> _itemToMap(ShoppingItem i) => {
+        'name': i.name,
+        'categoryName': i.categoryName,
+        'categoryTag': i.categoryTag,
+        'categoryColorHex': CategoryStyle.colorHexFrom(i.categoryColor),
+        'categoryIconName': CategoryStyle.iconNameFrom(i.categoryIcon),
+        'quantity': i.quantity,
+        'unit': i.unit,
+        'estimatedPrice': i.estimatedPrice,
+        'isHighPriority': i.isHighPriority,
+        'note': i.note,
+        'imageUrl': i.imageUrl,
+        'isChecked': i.isChecked,
+        'storePrices': i.storePrices.map(_storePriceToMap).toList(),
+        'purchases': i.purchases.map(_purchaseToMap).toList(),
+      };
+
+  static ShoppingItem _itemFromMap(Map<String, dynamic> m) => ShoppingItem(
+        name: m['name'] as String,
+        categoryName: m['categoryName'] as String,
+        categoryTag: m['categoryTag'] as String,
+        categoryColor: CategoryStyle.colorFrom(m['categoryColorHex'] as String?),
+        categoryIcon: CategoryStyle.iconFrom(m['categoryIconName'] as String?),
+        quantity: m['quantity'] as int,
+        unit: m['unit'] as String,
+        estimatedPrice: m['estimatedPrice'] as int,
+        isHighPriority: m['isHighPriority'] as bool? ?? false,
+        note: m['note'] as String?,
+        imageUrl: m['imageUrl'] as String?,
+        isChecked: m['isChecked'] as bool? ?? false,
+        storePrices: (m['storePrices'] as List)
+            .map((s) => _storePriceFromMap(s as Map<String, dynamic>))
+            .toList(),
+        purchases: (m['purchases'] as List)
+            .map((p) => _purchaseFromMap(p as Map<String, dynamic>))
+            .toList(),
+      );
+
+  // ─── StorePrice ───────────────────────────────────────────────────
+
+  static Map<String, dynamic> _storePriceToMap(StorePrice s) => {
+        'storeName': s.storeName,
+        'type': s.type.index,
+        'pricePerUnit': s.pricePerUnit,
+        'lastUpdated': s.lastUpdated,
+      };
+
+  static StorePrice _storePriceFromMap(Map<String, dynamic> m) => StorePrice(
+        storeName: m['storeName'] as String,
+        type: StoreType.values[m['type'] as int],
+        pricePerUnit: m['pricePerUnit'] as int,
+        lastUpdated: m['lastUpdated'] as String,
+      );
+
+  // ─── PurchaseRecord ───────────────────────────────────────────────
+
+  static Map<String, dynamic> _purchaseToMap(PurchaseRecord p) => {
+        'id': p.id,
+        'quantity': p.quantity,
+        'pricePerUnit': p.pricePerUnit,
+        'purchasedAt': p.purchasedAt.toIso8601String(),
+        'locationName': p.locationName,
+      };
+
+  static PurchaseRecord _purchaseFromMap(Map<String, dynamic> m) =>
+      PurchaseRecord(
+        id: m['id'] as int?,
+        quantity: m['quantity'] as int,
+        pricePerUnit: m['pricePerUnit'] as int,
+        purchasedAt: DateTime.parse(m['purchasedAt'] as String),
+        locationName: m['locationName'] as String?,
+      );
+}
