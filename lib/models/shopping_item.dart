@@ -13,6 +13,7 @@ class ShoppingItem {
   final int estimatedPrice;
   final bool isHighPriority;
   final String? note;
+  final DateTime createdAt;
   final List<StorePrice> storePrices;
   final List<PurchaseRecord> purchases;
   bool isChecked;
@@ -28,9 +29,11 @@ class ShoppingItem {
     required this.estimatedPrice,
     this.isHighPriority = false,
     this.note,
+    DateTime? createdAt,
     List<StorePrice>? storePrices,
     List<PurchaseRecord>? purchases,
     this.isChecked = false,
-  }) : storePrices = storePrices ?? [],
+  }) : createdAt = createdAt ?? DateTime.now(),
+       storePrices = storePrices ?? [],
        purchases = purchases ?? [];
 }

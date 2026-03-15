@@ -69,8 +69,8 @@ class DashboardViewModel extends ChangeNotifier {
   List<ShoppingItem> get recentItems {
     final items = _shoppingVM.allItems;
     if (items.isEmpty) return [];
-    final reversed = items.reversed.toList();
-    return reversed.take(3).toList();
+    final sorted = [...items]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return sorted.take(3).toList();
   }
 
   @override

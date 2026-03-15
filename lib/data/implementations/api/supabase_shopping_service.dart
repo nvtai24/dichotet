@@ -85,6 +85,7 @@ class SupabaseShoppingService implements IShoppingService {
         unit: row['unit'] as String? ?? '',
         estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
         note: row['note'] as String?,
+        createdAt: DateTime.tryParse(row['created_at'] as String? ?? ''),
         isChecked: totalPurchased >= requiredQty,
         storePrices: storePrices,
         purchases: purchases,
