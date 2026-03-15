@@ -34,6 +34,14 @@ class SessionViewModel extends ChangeNotifier {
     }
   }
 
+  void reset() {
+    _sessions = [];
+    _selectedSession = null;
+    _error = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+
   void selectSession(ShoppingSession session) {
     _selectedSession = session;
     notifyListeners();

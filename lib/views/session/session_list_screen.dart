@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/shopping_models.dart';
+import '../../di.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/budget/budget_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
@@ -181,7 +182,14 @@ class _SessionListScreenState extends State<SessionListScreen> {
           IconButton(
             onPressed: () async {
               final authVM = context.read<AuthViewModel>();
+              final sessionVM = context.read<SessionViewModel>();
+              final shoppingVM = context.read<ShoppingListViewModel>();
+
               await authVM.signOut();
+              localCacheService.clear();
+              sessionVM.reset();
+              shoppingVM.reset();
+
               if (!mounted) return;
               Navigator.pushReplacement(
                 context,

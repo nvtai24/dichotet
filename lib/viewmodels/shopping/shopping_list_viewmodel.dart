@@ -71,6 +71,18 @@ class ShoppingListViewModel extends ChangeNotifier {
 
   // ─── Session ────────────────────────────────────────────────────────
 
+  void reset() {
+    _sessionId = null;
+    _categories = [];
+    _categoryNames = [];
+    _storeNames = [];
+    _searchQuery = '';
+    _activeTab = 0;
+    _isLoading = false;
+    _error = null;
+    notifyListeners();
+  }
+
   void setSessionId(String sessionId) {
     if (_sessionId == sessionId) return;
     _sessionId = sessionId;
