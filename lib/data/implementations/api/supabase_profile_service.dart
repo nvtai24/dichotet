@@ -26,7 +26,6 @@ class SupabaseProfileService implements IProfileService {
       lastName: data['last_name'] as String?,
       email: user.email,
       phone: data['phone'] as String?,
-      role: data['role'] == 'admin' ? UserRole.admin : UserRole.user,
     );
   }
 

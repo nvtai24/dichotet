@@ -137,7 +137,6 @@ class SupabaseAuthService implements IAuthService {
       firstName: meta['first_name'] as String?,
       lastName: meta['last_name'] as String?,
       email: user.email,
-      avatarUrl: meta['avatar_url'] as String?,
     );
   }
 }

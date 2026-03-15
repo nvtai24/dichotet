@@ -85,7 +85,6 @@ class CacheSerializer {
         'estimatedPrice': i.estimatedPrice,
         'isHighPriority': i.isHighPriority,
         'note': i.note,
-        'imageUrl': i.imageUrl,
         'isChecked': i.isChecked,
         'storePrices': i.storePrices.map(_storePriceToMap).toList(),
         'purchases': i.purchases.map(_purchaseToMap).toList(),
@@ -102,7 +101,6 @@ class CacheSerializer {
         estimatedPrice: m['estimatedPrice'] as int,
         isHighPriority: m['isHighPriority'] as bool? ?? false,
         note: m['note'] as String?,
-        imageUrl: m['imageUrl'] as String?,
         isChecked: m['isChecked'] as bool? ?? false,
         storePrices: (m['storePrices'] as List)
             .map((s) => _storePriceFromMap(s as Map<String, dynamic>))

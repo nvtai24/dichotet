@@ -61,7 +61,6 @@ class ShoppingItem {
   final int estimatedPrice;
   final bool isHighPriority;
   final String? note;
-  final String? imageUrl;
   final List<StorePrice> storePrices;
   final List<PurchaseRecord> purchases;
   bool isChecked;
@@ -77,7 +76,6 @@ class ShoppingItem {
     required this.estimatedPrice,
     this.isHighPriority = false,
     this.note,
-    this.imageUrl,
     List<StorePrice>? storePrices,
     List<PurchaseRecord>? purchases,
     this.isChecked = false,

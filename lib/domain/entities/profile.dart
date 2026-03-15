@@ -1,13 +1,9 @@
-enum UserRole { user, admin }
-
 class Profile {
   final String id;
   final String? firstName;
   final String? lastName;
   final String? email;
   final String? phone;
-  final String? avatarUrl;
-  final UserRole role;
 
   const Profile({
     required this.id,
@@ -15,8 +11,6 @@ class Profile {
     this.lastName,
     this.email,
     this.phone,
-    this.avatarUrl,
-    this.role = UserRole.user,
   });
 
   String get fullName {

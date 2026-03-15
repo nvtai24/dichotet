@@ -58,8 +58,6 @@ class SettingsViewModel extends ChangeNotifier {
         lastName: lastName,
         email: _profile!.email,
         phone: phone ?? _profile!.phone,
-        avatarUrl: _profile!.avatarUrl,
-        role: _profile!.role,
       );
       await _repository.updateProfile(updated);
       _profile = updated;
