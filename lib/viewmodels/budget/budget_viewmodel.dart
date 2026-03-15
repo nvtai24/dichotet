@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/category_style.dart';
-import '../../data/interfaces/api/i_budget_service.dart';
+import '../../data/dtos/budget_dto.dart';
 import '../../data/interfaces/repositories/i_budget_repository.dart';
+import '../../models/budget_models.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 
@@ -77,22 +78,4 @@ class BudgetViewModel extends ChangeNotifier {
     _shoppingVM.removeListener(_onShoppingChanged);
     super.dispose();
   }
-}
-
-class BudgetCategory {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final int estimated;
-  final int spent;
-
-  const BudgetCategory({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.estimated,
-    required this.spent,
-  });
-
-  double get progress => estimated == 0 ? 0.0 : spent / estimated;
 }

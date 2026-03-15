@@ -1,4 +1,5 @@
-import '../../../data/interfaces/api/i_budget_service.dart';
+import '../../../data/dtos/budget_dto.dart';
+import '../../interfaces/api/i_budget_service.dart';
 import '../../interfaces/repositories/i_budget_repository.dart';
 
 class BudgetRepositoryImpl implements IBudgetRepository {

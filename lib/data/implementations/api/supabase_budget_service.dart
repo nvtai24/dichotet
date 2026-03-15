@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../dtos/budget_dto.dart';
 import '../../interfaces/api/i_budget_service.dart';
 
 class SupabaseBudgetService implements IBudgetService {

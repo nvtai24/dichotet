@@ -58,6 +58,8 @@ class DashboardViewModel extends ChangeNotifier {
 
   String get progressMessage {
     if (shoppingProgress == 0) return 'Chưa có món nào được mua';
+    if (shoppingProgress > 0 && shoppingProgress < 1.0)
+      return 'Đã mua $purchasedItems/$totalItems món';
     if (shoppingProgress >= 1.0) return 'Đã hoàn thành! 🎉';
     return 'Sắp xong rồi, cố lên!';
   }
