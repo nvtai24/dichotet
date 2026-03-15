@@ -694,7 +694,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             price: price,
             locationName: location,
           );
-          await vm.loadData();
+          await vm.forceRefresh();
           if (!mounted) return;
           final updated = _findItemByName(_item.name);
           if (updated != null) {

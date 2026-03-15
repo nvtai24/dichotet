@@ -88,7 +88,7 @@ class _EditPurchasesScreenState extends State<EditPurchasesScreen> {
       }
 
       // Reload data once after all changes are applied
-      await vm.loadData();
+      await vm.forceRefresh();
 
       if (!mounted) return;
       Navigator.pop(context, true);
