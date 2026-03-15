@@ -1,4 +1,4 @@
-import '../../../domain/entities/profile.dart';
+import '../../../models/profile.dart';
 import '../../interfaces/api/i_auth_service.dart';
 import '../../interfaces/repositories/i_auth_repository.dart';
 

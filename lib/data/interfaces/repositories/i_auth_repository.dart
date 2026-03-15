@@ -1,4 +1,4 @@
-import '../../../domain/entities/profile.dart';
+import '../../../models/profile.dart';
 
 abstract class IAuthRepository {
   Future<Profile> signUp({

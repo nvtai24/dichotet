@@ -1,7 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../domain/entities/profile.dart';
+import '../../../models/profile.dart';
 import '../../interfaces/api/i_auth_service.dart';
 
 class SupabaseAuthService implements IAuthService {

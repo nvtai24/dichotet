@@ -1,4 +1,4 @@
-import '../../../domain/entities/profile.dart';
+import '../../../models/profile.dart';
 
 /// API layer interface for user profile.
 /// Implement với Supabase Auth khi phát triển API thật.

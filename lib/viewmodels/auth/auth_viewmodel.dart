@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/interfaces/repositories/i_auth_repository.dart';
-import '../../domain/entities/profile.dart';
+import '../../models/profile.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final IAuthRepository _repository;

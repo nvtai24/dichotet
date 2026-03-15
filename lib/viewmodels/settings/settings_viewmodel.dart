@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../data/interfaces/repositories/i_profile_repository.dart';
-import '../../domain/entities/profile.dart';
+import '../../models/profile.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   final IProfileRepository _repository;
