@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'item_detail_screen.dart';
@@ -397,6 +398,16 @@ class _ItemTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Thumbnail ảnh
+            AppNetworkImage(
+              url: item.imageUrl,
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(width: 10),
+
             // Name + qty
             Expanded(
               child: Column(

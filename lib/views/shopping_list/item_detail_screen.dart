@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'edit_item_screen.dart';
@@ -100,6 +101,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Ảnh sản phẩm
+            AppNetworkImage(
+              url: _item.imageUrl,
+              width: double.infinity,
+              height: 220,
+              fit: BoxFit.cover,
+            ),
+
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(

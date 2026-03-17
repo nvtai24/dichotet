@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/home/dashboard_viewmodel.dart';
 import '../main_screen.dart';
@@ -661,13 +662,12 @@ class _RecentItemTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: item.categoryColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(item.categoryIcon, size: 22, color: item.categoryColor),
+          AppNetworkImage(
+            url: item.imageUrl,
+            width: 48,
+            height: 48,
+            fit: BoxFit.cover,
+            borderRadius: BorderRadius.circular(12),
           ),
           const SizedBox(width: 12),
           Expanded(
