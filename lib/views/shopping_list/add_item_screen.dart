@@ -794,10 +794,46 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
-class _QuantityStepper extends StatelessWidget {
+class _QuantityStepper extends StatefulWidget {
   final int value;
   final ValueChanged<int> onChanged;
   const _QuantityStepper({required this.value, required this.onChanged});
+
+  @override
+  State<_QuantityStepper> createState() => _QuantityStepperState();
+}
+
+class _QuantityStepperState extends State<_QuantityStepper> {
+  late final TextEditingController _controller;
+  bool _editing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: '${widget.value}');
+  }
+
+  @override
+  void didUpdateWidget(_QuantityStepper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_editing && oldWidget.value != widget.value) {
+      _controller.text = '${widget.value}';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _commitEdit() {
+    final parsed = int.tryParse(_controller.text.trim());
+    final newVal = (parsed != null && parsed > 0) ? parsed : widget.value;
+    _controller.text = '$newVal';
+    setState(() => _editing = false);
+    widget.onChanged(newVal);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -812,21 +848,50 @@ class _QuantityStepper extends StatelessWidget {
           _StepButton(
             icon: Icons.remove,
             onTap: () {
-              if (value > 1) onChanged(value - 1);
+              if (widget.value > 1) widget.onChanged(widget.value - 1);
             },
           ),
           Expanded(
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
+            child: _editing
+                ? TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onSubmitted: (_) => _commitEdit(),
+                    onTapOutside: (_) => _commitEdit(),
+                  )
+                : GestureDetector(
+                    onTap: () {
+                      setState(() => _editing = true);
+                      _controller.selection = TextSelection(
+                        baseOffset: 0,
+                        extentOffset: _controller.text.length,
+                      );
+                    },
+                    child: Text(
+                      '${widget.value}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
           ),
-          _StepButton(icon: Icons.add, onTap: () => onChanged(value + 1)),
+          _StepButton(icon: Icons.add, onTap: () => widget.onChanged(widget.value + 1)),
         ],
       ),
     );
