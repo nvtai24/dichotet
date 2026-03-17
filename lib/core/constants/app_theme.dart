@@ -138,6 +138,31 @@ class AppTheme {
         space: 1,
       ),
 
+      // SnackBar
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: const Color(0xFF1A1A1A),
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        behavior: SnackBarBehavior.floating,
+        elevation: 6,
+      ),
+
+      // Dialog
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 8,
+        shadowColor: Colors.black.withValues(alpha: 0.15),
+        titleTextStyle: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+
       // Text
       textTheme: const TextTheme(
         headlineLarge: TextStyle(

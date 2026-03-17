@@ -82,11 +82,9 @@ class _SessionListScreenState extends State<SessionListScreen> {
               final budget = double.tryParse(budgetController.text.trim()) ?? 0;
               if (name.isEmpty) return;
 
+              final sessionVM = context.read<SessionViewModel>();
               Navigator.pop(ctx);
-              await context.read<SessionViewModel>().createSession(
-                name,
-                budget,
-              );
+              await sessionVM.createSession(name, budget);
             },
             child: const Text('Tạo'),
           ),
@@ -205,6 +203,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
         onPressed: _showCreateDialog,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        elevation: 4,
         child: const Icon(Icons.add),
       ),
       body: Consumer<SessionViewModel>(
@@ -265,7 +264,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: vm.sessions.length,
             itemBuilder: (context, index) {
               final session = vm.sessions[index];

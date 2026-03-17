@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../viewmodels/budget/budget_viewmodel.dart';
@@ -89,7 +90,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
       );
     } else {
       body = SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -126,7 +127,24 @@ class _BudgetScreenState extends State<BudgetScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Ngân sách')),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        title: const Text(
+          'Ngân sách',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: body,
     );
   }

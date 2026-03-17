@@ -30,7 +30,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

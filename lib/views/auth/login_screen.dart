@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -201,40 +201,102 @@ class _WelcomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 140,
+      height: 168,
       decoration: BoxDecoration(
-        color: const Color(0xFFFCE4EC),
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            const Color(0xFFD32F2F),
+            AppColors.primaryLight,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
+          // Decorative circles
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 20,
+            bottom: -40,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
           // Decorative flower (top-right)
-          Positioned(top: -20, right: -20, child: _FlowerDecoration(size: 120)),
+          Positioned(top: -20, right: -20, child: _FlowerDecoration(size: 130)),
           // Content
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 100, 20),
+            padding: const EdgeInsets.fromLTRB(22, 22, 110, 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'CHÚC MỪNG NĂM MỚI',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Text(
+                    '🧧 CHÚC MỪNG NĂM MỚI',
+                    style: TextStyle(
+                      color: AppColors.gold,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
                 const Text(
                   'Chào mừng đến\nMua Sắm Tết',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    height: 1.2,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Lên danh sách, sắm Tết thôi nào!',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -330,11 +392,6 @@ class _SocialLoginRow extends StatelessWidget {
         _SocialButton(
           icon: _GoogleIcon(),
           onTap: () => _onGoogleLogin(context),
-        ),
-        const SizedBox(width: 16),
-        _SocialButton(
-          icon: const Icon(Icons.facebook, size: 24, color: Color(0xFF1877F2)),
-          onTap: () {},
         ),
       ],
     );

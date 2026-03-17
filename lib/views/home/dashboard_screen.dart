@@ -125,89 +125,150 @@ class _HeroCountdownCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       width: double.infinity,
-      height: 150,
+      height: 185,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.primaryDark, AppColors.primary, Color(0xFFEF5350)],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          // Decorative geometric shapes (top-right)
+          // Decorative shapes (background layer)
           Positioned(
-            right: -20,
-            top: -20,
-            child: _DecorativeShape(size: 100, opacity: 0.12),
+            left: -25,
+            top: -25,
+            child: _DecorativeShape(size: 90, opacity: 0.07),
           ),
           Positioned(
-            right: 30,
-            bottom: -30,
-            child: _DecorativeShape(size: 80, opacity: 0.08),
+            left: 40,
+            bottom: -35,
+            child: _DecorativeShape(size: 70, opacity: 0.06),
           ),
           Positioned(
-            right: -10,
-            top: 40,
-            child: _DecorativeShape(size: 60, opacity: 0.1),
+            right: -15,
+            bottom: -15,
+            child: _DecorativeShape(size: 55, opacity: 0.06),
           ),
-          // Content
+          // Content Row
           Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'Tết Nguyên Đán $tetYear 🧧',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  daysToTet == 0
-                      ? 'Chúc mừng năm mới! 🎉🎊'
-                      : 'Lên danh sách, sắm Tết thôi nào!',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                // Left: text content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.alarm, size: 14, color: AppColors.gold),
-                      const SizedBox(width: 6),
                       Text(
-                        '$daysToTet ngày nữa là Tết',
+                        'Tết Nguyên Đán $tetYear 🧧',
                         style: const TextStyle(
-                          color: AppColors.gold,
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        daysToTet == 0
+                            ? 'Chúc mừng năm mới! 🎉🎊'
+                            : 'Lên danh sách, sắm Tết thôi nào!',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.alarm,
+                              size: 13,
+                              color: AppColors.gold,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              daysToTet == 0
+                                  ? 'Hôm nay là Tết!'
+                                  : '$daysToTet ngày nữa là Tết',
+                              style: const TextStyle(
+                                color: AppColors.gold,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
+                // Right: big day count circle
+                if (daysToTet > 0) ...[
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.12),
+                      border: Border.all(
+                        color: AppColors.gold.withValues(alpha: 0.6),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$daysToTet',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'ngày',
+                          style: TextStyle(
+                            color: AppColors.gold,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -258,11 +319,15 @@ class _ShoppingCompletionSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: AppColors.primary.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.06),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,7 +350,7 @@ class _ShoppingCompletionSection extends StatelessWidget {
               Text(
                 '$percent%',
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: AppColors.primary,
                 ),
@@ -293,16 +358,33 @@ class _ShoppingCompletionSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: AppColors.border,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.primary,
-              ),
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Stack(
+                children: [
+                  Container(
+                    height: 8,
+                    width: constraints.maxWidth,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOut,
+                    height: 8,
+                    width: constraints.maxWidth * progress.clamp(0.0, 1.0),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primaryLight, AppColors.primaryDark],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
