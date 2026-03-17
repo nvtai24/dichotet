@@ -1,15 +1,17 @@
-enum StoreType { market, supermarket, vendor }
-
 class StorePrice {
   final String storeName;
-  final StoreType type;
   final int pricePerUnit;
   final String lastUpdated;
+  final double? lat;
+  final double? lon;
 
   StorePrice({
     required this.storeName,
-    required this.type,
     required this.pricePerUnit,
     required this.lastUpdated,
+    this.lat,
+    this.lon,
   });
+
+  bool get hasLocation => lat != null && lon != null && lat != -1 && lon != -1;
 }

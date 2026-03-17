@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_network_image.dart';
@@ -7,6 +8,7 @@ import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'edit_item_screen.dart';
 import 'edit_purchases_screen.dart';
+import '../location/location_picker_screen.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final ShoppingItem item;
@@ -722,13 +724,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       builder: (_) => _ConfirmPurchaseSheet(
         item: _item,
-        onConfirm: (qty, price, location) async {
+        onConfirm: (qty, price, location, lat, lon) async {
           final vm = context.read<ShoppingListViewModel>();
           await vm.confirmPurchase(
             _item,
             quantity: qty,
             price: price,
             locationName: location,
+            locationLat: lat,
+            locationLon: lon,
           );
           await vm.forceRefresh();
           if (!mounted) return;
@@ -808,17 +812,9 @@ class _StorePriceRow extends StatelessWidget {
 
   const _StorePriceRow({required this.store, required this.unit});
 
-  IconData get _icon => switch (store.type) {
-    StoreType.market => Icons.place_outlined,
-    StoreType.supermarket => Icons.shopping_cart_outlined,
-    StoreType.vendor => Icons.store_outlined,
-  };
+  IconData get _icon => Icons.place_outlined;
 
-  Color get _iconColor => switch (store.type) {
-    StoreType.market => AppColors.primary,
-    StoreType.supermarket => const Color(0xFF43A047),
-    StoreType.vendor => const Color(0xFFFF6F00),
-  };
+  Color get _iconColor => AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
@@ -1107,13 +1103,34 @@ class _AddPriceSheet extends StatefulWidget {
 class _AddPriceSheetState extends State<_AddPriceSheet> {
   final _storeController = TextEditingController();
   final _priceController = TextEditingController();
-  StoreType _storeType = StoreType.market;
+  double? _lat;
+  double? _lon;
 
   @override
   void dispose() {
     _storeController.dispose();
     _priceController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickLocation() async {
+    final result = await Navigator.push<LatLng?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationPickerScreen(
+          storeName: _storeController.text.trim().isNotEmpty
+              ? _storeController.text.trim()
+              : null,
+          initialLocation:
+              (_lat != null && _lon != null) ? LatLng(_lat!, _lon!) : null,
+        ),
+      ),
+    );
+    if (result == null) {
+      setState(() { _lat = null; _lon = null; });
+    } else {
+      setState(() { _lat = result.latitude; _lon = result.longitude; });
+    }
   }
 
   void _onAdd() {
@@ -1124,9 +1141,10 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
     widget.onAdd(
       StorePrice(
         storeName: _storeController.text.trim(),
-        type: _storeType,
         pricePerUnit: int.tryParse(_priceController.text.trim()) ?? 0,
         lastUpdated: 'Vừa xong',
+        lat: _lat,
+        lon: _lon,
       ),
     );
     Navigator.pop(context);
@@ -1134,12 +1152,6 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final storeTypes = [
-      (StoreType.market, 'Chợ'),
-      (StoreType.supermarket, 'Siêu thị'),
-      (StoreType.vendor, 'Quầy hàng'),
-    ];
-
     return Padding(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -1171,46 +1183,6 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
             ),
           ),
           const SizedBox(height: 14),
-          // Store type chips
-          Row(
-            children: storeTypes.map((t) {
-              final isSelected = t.$1 == _storeType;
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _storeType = t.$1),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary.withValues(alpha: 0.5)
-                              : Colors.transparent,
-                        ),
-                      ),
-                      child: Text(
-                        t.$2,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
           TextField(
             controller: _storeController,
             textCapitalization: TextCapitalization.words,
@@ -1230,6 +1202,61 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
               hintText: '0',
               prefixIcon: Icon(Icons.sell_outlined, size: 20),
               suffixText: '₫',
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _pickLocation,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                color: (_lat != null)
+                    ? AppColors.primary.withValues(alpha: 0.07)
+                    : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: (_lat != null)
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : AppColors.border,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _lat != null
+                        ? Icons.location_on_rounded
+                        : Icons.add_location_alt_outlined,
+                    size: 18,
+                    color: _lat != null
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _lat != null
+                          ? 'Đã ghim: ${_lat!.toStringAsFixed(4)}, ${_lon!.toStringAsFixed(4)}'
+                          : 'Ghim vị trí trên bản đồ (tùy chọn)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _lat != null
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                        fontWeight: _lat != null
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                  if (_lat != null)
+                    GestureDetector(
+                      onTap: () => setState(() { _lat = null; _lon = null; }),
+                      child: Icon(Icons.close_rounded,
+                          size: 16,
+                          color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -1294,8 +1321,9 @@ class _PurchaseStatBox extends StatelessWidget {
 
 class _ConfirmPurchaseSheet extends StatefulWidget {
   final ShoppingItem item;
-  final Future<void> Function(int quantity, int price, String? locationName)
-  onConfirm;
+  final Future<void> Function(
+      int quantity, int price, String? locationName,
+      double? lat, double? lon) onConfirm;
 
   const _ConfirmPurchaseSheet({required this.item, required this.onConfirm});
 
@@ -1309,6 +1337,8 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   late final TextEditingController _newLocationController;
   String? _selectedLocation;
   bool _isAddingNew = false;
+  double? _newLat;
+  double? _newLon;
 
   List<String> get _locationNames =>
       widget.item.storePrices.map((s) => s.storeName).toSet().toList();
@@ -1329,6 +1359,27 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
     super.dispose();
   }
 
+  Future<void> _pickLocation() async {
+    final result = await Navigator.push<LatLng?>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LocationPickerScreen(
+          storeName: _newLocationController.text.trim().isNotEmpty
+              ? _newLocationController.text.trim()
+              : null,
+          initialLocation: (_newLat != null && _newLon != null)
+              ? LatLng(_newLat!, _newLon!)
+              : null,
+        ),
+      ),
+    );
+    if (result == null) {
+      setState(() { _newLat = null; _newLon = null; });
+    } else {
+      setState(() { _newLat = result.latitude; _newLon = result.longitude; });
+    }
+  }
+
   void _onConfirm() async {
     final qty = int.tryParse(_qtyController.text.trim());
     final price = int.tryParse(_priceController.text.trim());
@@ -1340,7 +1391,7 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
 
     if (location == null || location.isEmpty) return;
 
-    await widget.onConfirm(qty, price, location);
+    await widget.onConfirm(qty, price, location, _newLat, _newLon);
     if (!mounted) return;
     Navigator.pop(context);
   }
@@ -1455,28 +1506,93 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
               },
             )
           else
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _newLocationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Tên địa điểm mới',
-                      prefixIcon: Icon(
-                        Icons.add_location_alt_outlined,
-                        size: 20,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _newLocationController,
+                        decoration: const InputDecoration(
+                          labelText: 'Tên địa điểm mới',
+                          prefixIcon: Icon(
+                            Icons.add_location_alt_outlined,
+                            size: 20,
+                          ),
+                        ),
                       ),
+                    ),
+                    if (_locationNames.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => setState(() {
+                          _isAddingNew = false;
+                          _newLocationController.clear();
+                          _newLat = null;
+                          _newLon = null;
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: _pickLocation,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _newLat != null
+                          ? AppColors.primary.withValues(alpha: 0.07)
+                          : const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _newLat != null
+                            ? AppColors.primary.withValues(alpha: 0.3)
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _newLat != null
+                              ? Icons.location_on_rounded
+                              : Icons.add_location_alt_outlined,
+                          size: 16,
+                          color: _newLat != null
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _newLat != null
+                                ? 'Đã ghim: ${_newLat!.toStringAsFixed(4)}, ${_newLon!.toStringAsFixed(4)}'
+                                : 'Ghim vị trí trên bản đồ (tùy chọn)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _newLat != null
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              fontWeight: _newLat != null
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                        if (_newLat != null)
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() { _newLat = null; _newLon = null; }),
+                            child: Icon(Icons.close_rounded,
+                                size: 14,
+                                color: AppColors.textSecondary
+                                    .withValues(alpha: 0.6)),
+                          ),
+                      ],
                     ),
                   ),
                 ),
-                if (_locationNames.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => setState(() {
-                      _isAddingNew = false;
-                      _newLocationController.clear();
-                    }),
-                  ),
               ],
             ),
           const SizedBox(height: 12),

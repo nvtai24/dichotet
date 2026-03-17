@@ -74,6 +74,8 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
     int? actualQuantity,
     int? actualPrice,
     String? locationName,
+    double? locationLat,
+    double? locationLon,
   }) =>
       _service.updateItemPurchaseStatus(
         item,
@@ -81,6 +83,8 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
         actualQuantity: actualQuantity,
         actualPrice: actualPrice,
         locationName: locationName,
+        locationLat: locationLat,
+        locationLon: locationLon,
       );
 
   @override

@@ -24,6 +24,8 @@ abstract class IShoppingService {
     int? actualQuantity,
     int? actualPrice,
     String? locationName,
+    double? locationLat,
+    double? locationLon,
   });
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice);
   Future<void> updatePurchase(int purchaseId, int quantity, int pricePerUnit);

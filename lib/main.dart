@@ -19,6 +19,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+
   await dotenv.load();
   await Hive.initFlutter();
   await localCacheService.init();

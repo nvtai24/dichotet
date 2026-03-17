@@ -187,6 +187,8 @@ class ShoppingListViewModel extends ChangeNotifier {
     required int quantity,
     required int price,
     String? locationName,
+    double? locationLat,
+    double? locationLon,
   }) async {
     await _repository.updateItemPurchaseStatus(
       item,
@@ -194,6 +196,8 @@ class ShoppingListViewModel extends ChangeNotifier {
       actualQuantity: quantity,
       actualPrice: price,
       locationName: locationName,
+      locationLat: locationLat,
+      locationLon: locationLon,
     );
     // item mutated in-place by service
     notifyListeners();

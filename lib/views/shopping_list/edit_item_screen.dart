@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
+import '../location/location_picker_screen.dart';
 
 class EditItemScreen extends StatefulWidget {
   final ShoppingItem item;
@@ -58,6 +60,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
       entry.storeName = sp.storeName;
       entry.nameController.text = sp.storeName;
       entry.priceController.text = sp.pricePerUnit.toString();
+      entry.lat = sp.lat;
+      entry.lon = sp.lon;
       _storePriceEntries.add(entry);
     }
   }
@@ -152,9 +156,10 @@ class _EditItemScreenState extends State<EditItemScreen> {
         storePrices.add(
           StorePrice(
             storeName: storeName,
-            type: StoreType.market,
             pricePerUnit: storePrice,
             lastUpdated: 'Vừa cập nhật',
+            lat: entry.lat,
+            lon: entry.lon,
           ),
         );
       }
@@ -769,6 +774,77 @@ class _EditItemScreenState extends State<EditItemScreen> {
               suffixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
             ),
           ),
+          const SizedBox(height: 10),
+          // Map pin button
+          GestureDetector(
+            onTap: () async {
+              final result = await Navigator.push<LatLng?>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => LocationPickerScreen(
+                    storeName: entry.storeName.isNotEmpty ? entry.storeName : null,
+                    initialLocation: entry.hasLocation
+                        ? LatLng(entry.lat!, entry.lon!)
+                        : null,
+                  ),
+                ),
+              );
+              if (result == null && entry.hasLocation) {
+                setState(() {
+                  entry.lat = null;
+                  entry.lon = null;
+                });
+              } else if (result != null) {
+                setState(() {
+                  entry.lat = result.latitude;
+                  entry.lon = result.longitude;
+                });
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: entry.hasLocation
+                    ? AppColors.primary.withValues(alpha: 0.08)
+                    : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: entry.hasLocation
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : AppColors.border,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    entry.hasLocation
+                        ? Icons.location_on_rounded
+                        : Icons.add_location_alt_outlined,
+                    size: 16,
+                    color: entry.hasLocation
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    entry.hasLocation
+                        ? 'Đã ghim: ${entry.lat!.toStringAsFixed(4)}, ${entry.lon!.toStringAsFixed(4)}'
+                        : 'Ghim vị trí trên bản đồ (tùy chọn)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: entry.hasLocation
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                      fontWeight: entry.hasLocation
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -906,8 +982,12 @@ class _StepButton extends StatelessWidget {
 
 class _StorePriceEntry {
   String storeName = '';
+  double? lat;
+  double? lon;
   final TextEditingController nameController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
+
+  bool get hasLocation => lat != null && lon != null;
 
   void dispose() {
     nameController.dispose();

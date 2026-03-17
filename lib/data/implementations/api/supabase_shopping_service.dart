@@ -44,11 +44,15 @@ class SupabaseShoppingService implements IShoppingService {
       final locationsRaw = row['purchase_locations'] as List<dynamic>? ?? [];
       final storePrices = locationsRaw.map((loc) {
         final m = loc as Map<String, dynamic>;
+        final rawLat = (m['lat'] as num?)?.toDouble();
+        final rawLon = (m['lon'] as num?)?.toDouble();
         return StorePrice(
           storeName: m['location_name'] as String? ?? '',
-          type: StoreType.market,
+
           pricePerUnit: ((m['price_per_unit'] as num?)?.toInt()) ?? 0,
           lastUpdated: 'Đã lưu',
+          lat: (rawLat != null && rawLat != -1) ? rawLat : null,
+          lon: (rawLon != null && rawLon != -1) ? rawLon : null,
         );
       }).toList();
 
@@ -188,8 +192,8 @@ class SupabaseShoppingService implements IShoppingService {
             (sp) => {
               'shopping_item_id': itemId,
               'location_name': sp.storeName,
-              'lat': -1,
-              'lon': -1,
+              'lat': sp.lat ?? -1,
+              'lon': sp.lon ?? -1,
               'price_per_unit': sp.pricePerUnit,
             },
           )
@@ -254,8 +258,8 @@ class SupabaseShoppingService implements IShoppingService {
             (sp) => {
               'shopping_item_id': itemId,
               'location_name': sp.storeName,
-              'lat': -1,
-              'lon': -1,
+              'lat': sp.lat ?? -1,
+              'lon': sp.lon ?? -1,
               'price_per_unit': sp.pricePerUnit,
             },
           )
@@ -273,6 +277,8 @@ class SupabaseShoppingService implements IShoppingService {
     int? actualQuantity,
     int? actualPrice,
     String? locationName,
+    double? locationLat,
+    double? locationLon,
   }) async {
     // Tìm item theo tên + user
     final userId = _client.auth.currentUser?.id;
@@ -311,8 +317,8 @@ class SupabaseShoppingService implements IShoppingService {
               .insert({
                 'shopping_item_id': itemId,
                 'location_name': locationName,
-                'lat': -1,
-                'lon': -1,
+                'lat': locationLat ?? -1,
+                'lon': locationLon ?? -1,
                 'price_per_unit': actualPrice,
               })
               .select('id');
@@ -322,7 +328,7 @@ class SupabaseShoppingService implements IShoppingService {
             item.storePrices.add(
               StorePrice(
                 storeName: locationName,
-                type: StoreType.market,
+      
                 pricePerUnit: actualPrice,
                 lastUpdated: 'Đã lưu',
               ),
