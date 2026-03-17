@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/app_network_image.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
@@ -160,19 +161,32 @@ class SettingsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primary.withValues(alpha: 0.12),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 30,
-              color: AppColors.primary,
-            ),
-          ),
+          Builder(builder: (_) {
+            final url = vm.userAvatarUrl;
+            if (url != null && url.isNotEmpty) {
+              return ClipOval(
+                child: AppNetworkImage(
+                  url: url,
+                  width: 56,
+                  height: 56,
+                  fit: BoxFit.cover,
+                ),
+              );
+            }
+            return Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.12),
+              ),
+              child: const Icon(
+                Icons.person_rounded,
+                size: 30,
+                color: AppColors.primary,
+              ),
+            );
+          }),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -197,16 +211,22 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
             ),
-            child: const Icon(
-              Icons.edit_outlined,
-              size: 16,
-              color: AppColors.primary,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ class Profile {
   final String? lastName;
   final String? email;
   final String? phone;
+  final String? imageUrl;
 
   const Profile({
     required this.id,
@@ -11,6 +12,7 @@ class Profile {
     this.lastName,
     this.email,
     this.phone,
+    this.imageUrl,
   });
 
   String get fullName {

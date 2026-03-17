@@ -18,6 +18,7 @@ class SettingsViewModel extends ChangeNotifier {
   String get userName => _profile?.fullName ?? 'Người dùng';
   String get userEmail => _profile?.email ?? '';
   String get userPhone => _profile?.phone ?? '';
+  String? get userAvatarUrl => _profile?.imageUrl;
 
   // ─── Actions ────────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ class SettingsViewModel extends ChangeNotifier {
     required String firstName,
     required String lastName,
     String? phone,
+    String? imageUrl,
   }) async {
     if (_profile == null) return false;
 
@@ -58,6 +60,7 @@ class SettingsViewModel extends ChangeNotifier {
         lastName: lastName,
         email: _profile!.email,
         phone: phone ?? _profile!.phone,
+        imageUrl: imageUrl ?? _profile!.imageUrl,
       );
       await _repository.updateProfile(updated);
       _profile = updated;
@@ -70,4 +73,7 @@ class SettingsViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<String?> uploadAvatar(Uint8List bytes, String fileName) =>
+      _repository.uploadAvatar(bytes, fileName);
 }
