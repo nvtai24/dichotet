@@ -710,11 +710,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => _AddPriceSheet(
+        existingNames: _item.storePrices.map((s) => s.storeName).toList(),
         onAdd: (store) {
-            final vm = context.read<ShoppingListViewModel>();
-            vm.addStorePrice(_item, store);
-            setState(() => _item.storePrices.add(store));
-          },
+          final vm = context.read<ShoppingListViewModel>();
+          vm.addStorePrice(_item, store);
+          setState(() => _item.storePrices.add(store));
+        },
       ),
     );
   }
@@ -1098,7 +1099,8 @@ class _PriceComparisonCard extends StatelessWidget {
 
 class _AddPriceSheet extends StatefulWidget {
   final ValueChanged<StorePrice> onAdd;
-  const _AddPriceSheet({required this.onAdd});
+  final List<String> existingNames;
+  const _AddPriceSheet({required this.onAdd, required this.existingNames});
 
   @override
   State<_AddPriceSheet> createState() => _AddPriceSheetState();
@@ -1109,6 +1111,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
   final _priceController = TextEditingController();
   double? _lat;
   double? _lon;
+  String? _storeError;
 
   @override
   void dispose() {
@@ -1138,10 +1141,14 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
   }
 
   void _onAdd() {
-    if (_storeController.text.trim().isEmpty ||
-        _priceController.text.trim().isEmpty) {
+    final name = _storeController.text.trim();
+    if (name.isEmpty || _priceController.text.trim().isEmpty) return;
+
+    if (widget.existingNames.contains(name)) {
+      setState(() => _storeError = 'Cửa hàng "$name" đã tồn tại');
       return;
     }
+
     widget.onAdd(
       StorePrice(
         storeName: _storeController.text.trim(),
@@ -1195,11 +1202,15 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
                 child: TextField(
                   controller: _storeController,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Tên cửa hàng',
                     hintText: 'Ví dụ: Chợ Bến Thành',
-                    prefixIcon: Icon(Icons.storefront_outlined, size: 20),
+                    prefixIcon: const Icon(Icons.storefront_outlined, size: 20),
+                    errorText: _storeError,
                   ),
+                  onChanged: (_) {
+                    if (_storeError != null) setState(() => _storeError = null);
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -1349,6 +1360,7 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   bool _isAddingNew = false;
   double? _newLat;
   double? _newLon;
+  String? _locationError;
 
   List<String> get _locationNames =>
       widget.item.storePrices.map((s) => s.storeName).toSet().toList();
@@ -1400,6 +1412,11 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
         : _selectedLocation;
 
     if (location == null || location.isEmpty) return;
+
+    if (_isAddingNew && _locationNames.contains(location)) {
+      setState(() => _locationError = 'Địa điểm "$location" đã tồn tại');
+      return;
+    }
 
     await widget.onConfirm(qty, price, location, _newLat, _newLon);
     if (!mounted) return;
@@ -1514,11 +1531,15 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
                 Expanded(
                   child: TextField(
                     controller: _newLocationController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Tên địa điểm',
-                      prefixIcon: Icon(Icons.place_outlined, size: 20),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      prefixIcon: const Icon(Icons.place_outlined, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      errorText: _locationError,
                     ),
+                    onChanged: (_) {
+                      if (_locationError != null) setState(() => _locationError = null);
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
