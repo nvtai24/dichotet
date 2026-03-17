@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -31,6 +33,7 @@ class DashboardScreen extends StatelessWidget {
               _HeroCountdownCard(
                 daysToTet: vm.daysToTet,
                 tetYear: vm.tetYear,
+                tetZodiac: vm.tetZodiac,
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
@@ -117,7 +120,11 @@ class DashboardScreen extends StatelessWidget {
             ),
             child: const Padding(
               padding: EdgeInsets.all(6),
-              child: Icon(Icons.person_outline, size: 20, color: AppColors.textPrimary),
+              child: Icon(
+                Icons.person_outline,
+                size: 20,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ),
@@ -132,7 +139,11 @@ class _SectionHeader extends StatelessWidget {
   final String emoji;
   final String title;
   final Widget? trailing;
-  const _SectionHeader({required this.emoji, required this.title, this.trailing});
+  const _SectionHeader({
+    required this.emoji,
+    required this.title,
+    this.trailing,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -157,38 +168,125 @@ class _SectionHeader extends StatelessWidget {
 
 // ─── Hero Countdown Card ───────────────────────────────────────────────────
 
-class _HeroCountdownCard extends StatelessWidget {
+/// Đặt URL ảnh nền Tết vào đây
+const String _kTetBgImageUrl =
+    'https://unatotovietnam.com/wp-content/uploads/2025/01/Net-Dep-Truyen-Thong-va-Van-Hoa-Dan-Toc.jpg';
+
+const List<String> _kTetQuotes = [
+  '"Tết đến, nhà nhà sum vầy, lòng người ấm áp."',
+  '"Xuân về mang theo ngàn lời chúc tốt lành."',
+  '"Mỗi cái Tết là một trang mới của cuộc đời."',
+  '"Hoa đào nở, lòng người rộn ràng đón xuân."',
+  '"Tết là lúc yêu thương được gói vào từng món quà."',
+  '"Năm mới — cơ hội mới, hy vọng mới, hạnh phúc mới."',
+  '"Chuẩn bị kỹ, Tết vui trọn vẹn."',
+  '"Pháo hoa rực rỡ, lòng người rạng rỡ đón xuân sang."',
+  '"Sắm Tết sớm — Tết thảnh thơi, Tết trọn niềm vui."',
+  '"Xuân này hơn hẳn mấy xuân qua."',
+  '"Tết là hành trình trở về, không phải điểm đến."',
+  '"Mùi bánh chưng, tiếng pháo — ký ức Tết không phai."',
+  '"Một năm mới, một phiên bản tốt hơn của chính mình."',
+  '"Đầu xuân mới, gieo hạt giống yêu thương."',
+  '"Tết không chỉ là nghỉ ngơi, mà là nạp lại yêu thương."',
+  '"Chúc xuân an, hạ lạc, thu thành, đông hưởng."',
+  '"Vạn sự như ý, ngàn điều tốt lành theo bước xuân sang."',
+  '"Gia đình là món quà lớn nhất mỗi dịp Tết về."',
+  '"Xuân ý nghĩa khi bên cạnh những người ta yêu thương."',
+  '"Năm cũ qua đi, mang theo những lo âu — năm mới đến, mang theo hy vọng."',
+  '"Tết là khi bếp nhà luôn đỏ lửa và tiếng cười chưa bao giờ tắt."',
+  '"Sắm Tết là chuẩn bị cho một mùa xuân đầy đủ và trọn vẹn."',
+  '"Mỗi đồng tiền sắm Tết là một nụ cười được chuẩn bị trước."',
+  '"Xuân sang, lộc mới, phúc dồi dào, tài thịnh vượng."',
+  '"Đón Tết với tấm lòng biết ơn — đó là cách sống đẹp nhất."',
+  '"Tết nhắc ta rằng: gia đình mới là tài sản thực sự."',
+  '"Hãy sắm Tết đủ đầy — để mâm cơm sum họp thêm ý nghĩa."',
+  '"Năm mới gõ cửa, mang theo muôn vàn điều tốt đẹp."',
+  '"Tiếng cười con trẻ — âm thanh hay nhất của ngày Tết."',
+  '"Mùa xuân là lời nhắc nhở rằng sau mọi mùa đông đều có hoa nở."',
+];
+
+class _HeroCountdownCard extends StatefulWidget {
   final int daysToTet;
   final int tetYear;
-  const _HeroCountdownCard({required this.daysToTet, required this.tetYear});
+  final String tetZodiac;
+  const _HeroCountdownCard({
+    required this.daysToTet,
+    required this.tetYear,
+    required this.tetZodiac,
+  });
+
+  @override
+  State<_HeroCountdownCard> createState() => _HeroCountdownCardState();
+}
+
+class _HeroCountdownCardState extends State<_HeroCountdownCard> {
+  late final String _quote;
+
+  @override
+  void initState() {
+    super.initState();
+    final rng = DateTime.now().millisecondsSinceEpoch;
+    _quote = _kTetQuotes[rng % _kTetQuotes.length];
+  }
+
+  /// "Đinh Mùi 🐐" → "Đinh Mùi"
+  String _zodiacShortName(String zodiac) {
+    final parts = zodiac.split(' ');
+    return parts.length >= 2 ? '${parts[0]} ${parts[1]}' : zodiac;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final daysToTet = widget.daysToTet;
+    final tetYear = widget.tetYear;
+    final tetZodiac = widget.tetZodiac;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       width: double.infinity,
-      height: 185,
+      height: 200,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, Color(0xFFEF5350)],
-        ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.38),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: AppColors.primary.withValues(alpha: 0.42),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
+            spreadRadius: -4,
           ),
         ],
       ),
       clipBehavior: Clip.hardEdge,
       child: Stack(
+        fit: StackFit.expand,
         children: [
-          Positioned(left: -25, top: -25, child: _DecorativeShape(size: 90, opacity: 0.07)),
-          Positioned(left: 40, bottom: -35, child: _DecorativeShape(size: 70, opacity: 0.06)),
-          Positioned(right: -15, bottom: -15, child: _DecorativeShape(size: 55, opacity: 0.06)),
+          // 1. Ảnh nền (blurred)
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
+            child: Image.network(
+              _kTetBgImageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, _) =>
+                  Container(color: AppColors.primaryDark),
+            ),
+          ),
+          // 2. Red gradient overlay
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xCC7B0000),
+                  Color(0xBBC62828),
+                  Color(0xAAE53935),
+                ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
+          // 3. Dot decoration
+          const Positioned(right: 115, bottom: 22, child: _DotGrid()),
+          // 4. Content
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
             child: Row(
@@ -199,47 +297,78 @@ class _HeroCountdownCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Title
                       Text(
-                        'Tết Nguyên Đán $tetYear 🧧',
+                        'Tết ${_zodiacShortName(tetZodiac)} $tetYear 🧧',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 17,
                           fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                          shadows: [
+                            Shadow(color: Color(0x88000000), blurRadius: 8, offset: Offset(0, 2)),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 9),
+                      // Daily quote
                       Text(
-                        daysToTet == 0
-                            ? 'Chúc mừng năm mới! 🎉🎊'
-                            : 'Lên danh sách, sắm Tết thôi nào!',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.82),
-                          fontSize: 13,
+                        daysToTet == 0 ? 'Chúc mừng năm mới! 🎉🎊' : _quote,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
                           height: 1.4,
+                          shadows: [
+                            Shadow(color: Color(0xAA000000), blurRadius: 6, offset: Offset(0, 1)),
+                          ],
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 16),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.gold.withValues(alpha: 0.22),
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.gold.withValues(alpha: 0.28),
+                              AppColors.goldDark.withValues(alpha: 0.18),
+                            ],
+                          ),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: AppColors.gold.withValues(alpha: 0.5),
+                            color: AppColors.gold.withValues(alpha: 0.6),
                             width: 1,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.gold.withValues(alpha: 0.18),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.alarm, size: 13, color: AppColors.gold),
+                            const Icon(
+                              Icons.alarm_rounded,
+                              size: 13,
+                              color: AppColors.gold,
+                            ),
                             const SizedBox(width: 5),
                             Text(
-                              daysToTet == 0 ? 'Hôm nay là Tết!' : '$daysToTet ngày nữa là Tết',
+                              daysToTet == 0
+                                  ? 'Hôm nay là Tết!'
+                                  : '$daysToTet ngày nữa là Tết',
                               style: const TextStyle(
                                 color: AppColors.gold,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -249,41 +378,10 @@ class _HeroCountdownCard extends StatelessWidget {
                   ),
                 ),
                 if (daysToTet > 0) ...[
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.12),
-                      border: Border.all(
-                        color: AppColors.gold.withValues(alpha: 0.65),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '$daysToTet',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w900,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'ngày',
-                          style: TextStyle(
-                            color: AppColors.gold,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(width: 14),
+                  _CountdownRing(
+                    days: daysToTet,
+                    zodiacEmoji: tetZodiac.split(' ').last,
                   ),
                 ],
               ],
@@ -295,25 +393,84 @@ class _HeroCountdownCard extends StatelessWidget {
   }
 }
 
-class _DecorativeShape extends StatelessWidget {
-  final double size;
-  final double opacity;
-  const _DecorativeShape({required this.size, required this.opacity});
+// Triple-ring countdown circle
+class _CountdownRing extends StatelessWidget {
+  final int days;
+  final String zodiacEmoji;
+  const _CountdownRing({required this.days, required this.zodiacEmoji});
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: 0.8,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: opacity),
-          borderRadius: BorderRadius.circular(size * 0.25),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Outer faint ring
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1),
+          ),
         ),
-      ),
+        // Middle gold ring
+        Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.06),
+            border: Border.all(color: AppColors.gold.withValues(alpha: 0.55), width: 1.5),
+          ),
+        ),
+        // Inner filled circle
+        Container(
+          width: 74,
+          height: 74,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.13),
+          ),
+          child: Center(
+            child: Text(zodiacEmoji, style: const TextStyle(fontSize: 36)),
+          ),
+        ),
+      ],
     );
   }
+}
+
+// 2×2 dot grid texture
+class _DotGrid extends StatelessWidget {
+  const _DotGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _dotRow(0.28, 0.14),
+        const SizedBox(height: 5),
+        _dotRow(0.14, 0.28),
+        const SizedBox(height: 5),
+        _dotRow(0.20, 0.10),
+      ],
+    );
+  }
+
+  Widget _dotRow(double op1, double op2) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [_dot(op1), const SizedBox(width: 5), _dot(op2)],
+  );
+
+  Widget _dot(double opacity) => Container(
+    width: 4,
+    height: 4,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withValues(alpha: opacity),
+    ),
+  );
 }
 
 // ─── Shopping Completion ───────────────────────────────────────────────────
@@ -379,7 +536,10 @@ class _ShoppingCompletionSection extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isDone
@@ -464,7 +624,11 @@ class _StatChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  const _StatChip({required this.icon, required this.label, required this.color});
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -678,10 +842,7 @@ class _BudgetStatCol extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             note,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textHint,
-            ),
+            style: const TextStyle(fontSize: 10, color: AppColors.textHint),
           ),
         ],
       ),
@@ -739,7 +900,9 @@ class _BudgetProgressBar extends StatelessWidget {
                         height: 10,
                         width: w * estimateRatio,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF7B61FF).withValues(alpha: 0.25),
+                          color: const Color(
+                            0xFF7B61FF,
+                          ).withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ),
@@ -757,13 +920,19 @@ class _BudgetProgressBar extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: isSpentOver
                               ? [Colors.red.shade300, Colors.red.shade600]
-                              : [const Color(0xFF00BFA5), const Color(0xFF00897B)],
+                              : [
+                                  const Color(0xFF00BFA5),
+                                  const Color(0xFF00897B),
+                                ],
                         ),
                         borderRadius: BorderRadius.circular(5),
                         boxShadow: [
                           BoxShadow(
-                            color: (isSpentOver ? Colors.red : const Color(0xFF00897B))
-                                .withValues(alpha: 0.3),
+                            color:
+                                (isSpentOver
+                                        ? Colors.red
+                                        : const Color(0xFF00897B))
+                                    .withValues(alpha: 0.3),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -796,7 +965,10 @@ class _BudgetProgressBar extends StatelessWidget {
           children: [
             _BarLegend(color: const Color(0xFF00897B), label: 'Đã chi'),
             const SizedBox(width: 12),
-            _BarLegend(color: const Color(0xFF7B61FF).withValues(alpha: 0.5), label: 'Dự tính'),
+            _BarLegend(
+              color: const Color(0xFF7B61FF).withValues(alpha: 0.5),
+              label: 'Dự tính',
+            ),
             if (budget > 0) ...[
               const Spacer(),
               Text(
@@ -829,10 +1001,16 @@ class _BarLegend extends StatelessWidget {
         Container(
           width: 10,
           height: 10,
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
         ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        ),
       ],
     );
   }
@@ -872,118 +1050,157 @@ class _BudgetInsightCard extends StatelessWidget {
         const _Insight(
           emoji: '📋',
           title: 'Chưa có dữ liệu',
-          body: 'Đặt ngân sách cho phiên và thêm vật phẩm để xem phân tích chi tiết.',
+          body:
+              'Đặt ngân sách cho phiên và thêm vật phẩm để xem phân tích chi tiết.',
           color: Colors.blueGrey,
         ),
       ];
     }
 
     if (budget == 0 && listEstimate > 0) {
-      result.add(_Insight(
-        emoji: '💰',
-        title: 'Chưa đặt ngân sách',
-        body: 'Danh sách dự tính ${_fmt(listEstimate)}. Hãy đặt ngân sách để kiểm soát chi tiêu tốt hơn.',
-        color: Colors.orange,
-      ));
+      result.add(
+        _Insight(
+          emoji: '💰',
+          title: 'Chưa đặt ngân sách',
+          body:
+              'Danh sách dự tính ${_fmt(listEstimate)}. Hãy đặt ngân sách để kiểm soát chi tiêu tốt hơn.',
+          color: Colors.orange,
+        ),
+      );
     }
 
     if (listEstimate == 0) {
-      result.add(const _Insight(
-        emoji: '🛒',
-        title: 'Danh sách còn trống',
-        body: 'Thêm vật phẩm vào danh sách để tính dự tính chi tiêu.',
-        color: Colors.blue,
-      ));
+      result.add(
+        const _Insight(
+          emoji: '🛒',
+          title: 'Danh sách còn trống',
+          body: 'Thêm vật phẩm vào danh sách để tính dự tính chi tiêu.',
+          color: Colors.blue,
+        ),
+      );
       return result;
     }
 
     if (budget > 0 && spent > budget) {
-      result.add(_Insight(
-        emoji: '🚨',
-        title: 'Vượt ngân sách ${_fmt(spent - budget)}!',
-        body: 'Chi tiêu thực tế đã vượt giới hạn ngân sách. Cần dừng hoặc điều chỉnh kế hoạch.',
-        color: Colors.red,
-      ));
+      result.add(
+        _Insight(
+          emoji: '🚨',
+          title: 'Vượt ngân sách ${_fmt(spent - budget)}!',
+          body:
+              'Chi tiêu thực tế đã vượt giới hạn ngân sách. Cần dừng hoặc điều chỉnh kế hoạch.',
+          color: Colors.red,
+        ),
+      );
     } else if (budget > 0 && listEstimate > budget) {
-      result.add(_Insight(
-        emoji: '⚠️',
-        title: 'Dự tính vượt ngân sách ${_fmt(listEstimate - budget)}',
-        body: 'Danh sách hiện tại ước tính vượt ngân sách. Cân nhắc bỏ bớt hoặc tìm nơi rẻ hơn.',
-        color: Colors.orange,
-      ));
+      result.add(
+        _Insight(
+          emoji: '⚠️',
+          title: 'Dự tính vượt ngân sách ${_fmt(listEstimate - budget)}',
+          body:
+              'Danh sách hiện tại ước tính vượt ngân sách. Cân nhắc bỏ bớt hoặc tìm nơi rẻ hơn.',
+          color: Colors.orange,
+        ),
+      );
     } else if (budget > 0 && listEstimate > budget * 0.85) {
       final pct = (listEstimate * 100 ~/ budget);
-      result.add(_Insight(
-        emoji: '📊',
-        title: 'Gần chạm ngân sách ($pct%)',
-        body: 'Còn ${_fmt(budget - listEstimate)} dự phòng. Hãy thận trọng khi thêm vật phẩm.',
-        color: Colors.amber.shade700,
-      ));
+      result.add(
+        _Insight(
+          emoji: '📊',
+          title: 'Gần chạm ngân sách ($pct%)',
+          body:
+              'Còn ${_fmt(budget - listEstimate)} dự phòng. Hãy thận trọng khi thêm vật phẩm.',
+          color: Colors.amber.shade700,
+        ),
+      );
     } else if (budget > 0) {
       final leftover = budget - listEstimate;
       final pctUsed = (listEstimate * 100 ~/ budget);
-      result.add(_Insight(
-        emoji: '✅',
-        title: 'Ngân sách thoải mái ($pctUsed% dự tính)',
-        body: 'Còn ${_fmt(leftover)} dự phòng. Có thể thêm vật phẩm hoặc để dành.',
-        color: const Color(0xFF43A047),
-      ));
+      result.add(
+        _Insight(
+          emoji: '✅',
+          title: 'Ngân sách thoải mái ($pctUsed% dự tính)',
+          body:
+              'Còn ${_fmt(leftover)} dự phòng. Có thể thêm vật phẩm hoặc để dành.',
+          color: const Color(0xFF43A047),
+        ),
+      );
     }
 
     if (spent == 0) {
-      result.add(_Insight(
-        emoji: '🛍️',
-        title: 'Chưa bắt đầu chi tiêu',
-        body: 'Có ${_fmt(listEstimate)} dự tính đang chờ. Bắt đầu mua sắm nào!',
-        color: Colors.blue,
-      ));
+      result.add(
+        _Insight(
+          emoji: '🛍️',
+          title: 'Chưa bắt đầu chi tiêu',
+          body:
+              'Có ${_fmt(listEstimate)} dự tính đang chờ. Bắt đầu mua sắm nào!',
+          color: Colors.blue,
+        ),
+      );
     } else if (progress >= 1.0) {
       if (spent < listEstimate) {
-        result.add(_Insight(
-          emoji: '🎉',
-          title: 'Hoàn thành! Tiết kiệm ${_fmt(listEstimate - spent)}',
-          body: 'Mua xong toàn bộ danh sách và tiết kiệm so với dự tính. Xuất sắc!',
-          color: const Color(0xFF43A047),
-        ));
+        result.add(
+          _Insight(
+            emoji: '🎉',
+            title: 'Hoàn thành! Tiết kiệm ${_fmt(listEstimate - spent)}',
+            body:
+                'Mua xong toàn bộ danh sách và tiết kiệm so với dự tính. Xuất sắc!',
+            color: const Color(0xFF43A047),
+          ),
+        );
       } else if (spent > listEstimate) {
-        result.add(_Insight(
-          emoji: '📈',
-          title: 'Hoàn thành, tốn hơn dự tính ${_fmt(spent - listEstimate)}',
-          body: 'Giá thực tế cao hơn ước tính. Cân nhắc cập nhật lại giá cho lần sau.',
-          color: Colors.orange,
-        ));
+        result.add(
+          _Insight(
+            emoji: '📈',
+            title: 'Hoàn thành, tốn hơn dự tính ${_fmt(spent - listEstimate)}',
+            body:
+                'Giá thực tế cao hơn ước tính. Cân nhắc cập nhật lại giá cho lần sau.',
+            color: Colors.orange,
+          ),
+        );
       } else {
-        result.add(const _Insight(
-          emoji: '🎯',
-          title: 'Hoàn thành đúng dự tính!',
-          body: 'Chi tiêu khớp hoàn toàn với kế hoạch. Lập kế hoạch chuẩn lắm!',
-          color: Color(0xFF43A047),
-        ));
+        result.add(
+          const _Insight(
+            emoji: '🎯',
+            title: 'Hoàn thành đúng dự tính!',
+            body:
+                'Chi tiêu khớp hoàn toàn với kế hoạch. Lập kế hoạch chuẩn lắm!',
+            color: Color(0xFF43A047),
+          ),
+        );
       }
     } else if (spent > listEstimate) {
-      result.add(_Insight(
-        emoji: '📈',
-        title: 'Thực tế đang cao hơn dự tính',
-        body: 'Đã chi ${_fmt(spent)} trong khi dự tính chỉ ${_fmt(listEstimate)}. Xem lại giá cả các mặt hàng.',
-        color: Colors.orange,
-      ));
+      result.add(
+        _Insight(
+          emoji: '📈',
+          title: 'Thực tế đang cao hơn dự tính',
+          body:
+              'Đã chi ${_fmt(spent)} trong khi dự tính chỉ ${_fmt(listEstimate)}. Xem lại giá cả các mặt hàng.',
+          color: Colors.orange,
+        ),
+      );
     } else {
       final remaining = listEstimate - spent;
       final donePct = (progress * 100).toInt();
       if (spent <= listEstimate * 0.5 && progress > 0.4) {
-        result.add(_Insight(
-          emoji: '👍',
-          title: 'Chi tiêu hiệu quả ($donePct% hoàn thành)',
-          body: 'Chỉ dùng ${(spent * 100 ~/ listEstimate)}% dự tính. Đang tiết kiệm tốt!',
-          color: const Color(0xFF43A047),
-        ));
+        result.add(
+          _Insight(
+            emoji: '👍',
+            title: 'Chi tiêu hiệu quả ($donePct% hoàn thành)',
+            body:
+                'Chỉ dùng ${(spent * 100 ~/ listEstimate)}% dự tính. Đang tiết kiệm tốt!',
+            color: const Color(0xFF43A047),
+          ),
+        );
       } else {
-        result.add(_Insight(
-          emoji: '🔄',
-          title: '$donePct% hoàn thành, còn ${_fmt(remaining)}',
-          body: 'Đã chi ${_fmt(spent)}, ước tính cần thêm ${_fmt(remaining)} để hoàn tất danh sách.',
-          color: AppColors.primary,
-        ));
+        result.add(
+          _Insight(
+            emoji: '🔄',
+            title: '$donePct% hoàn thành, còn ${_fmt(remaining)}',
+            body:
+                'Đã chi ${_fmt(spent)}, ước tính cần thêm ${_fmt(remaining)} để hoàn tất danh sách.',
+            color: AppColors.primary,
+          ),
+        );
       }
     }
 
@@ -1011,7 +1228,10 @@ class _BudgetInsightCard extends StatelessWidget {
           // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
-            child: const _SectionHeader(emoji: '💡', title: 'Phân tích ngân sách'),
+            child: const _SectionHeader(
+              emoji: '💡',
+              title: 'Phân tích ngân sách',
+            ),
           ),
           const SizedBox(height: 12),
           // Insight rows
@@ -1022,11 +1242,16 @@ class _BudgetInsightCard extends StatelessWidget {
               children: [
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: ins.color.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: ins.color.withValues(alpha: 0.12)),
+                    border: Border.all(
+                      color: ins.color.withValues(alpha: 0.12),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1039,7 +1264,10 @@ class _BudgetInsightCard extends StatelessWidget {
                           color: ins.color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(ins.emoji, style: const TextStyle(fontSize: 18)),
+                        child: Text(
+                          ins.emoji,
+                          style: const TextStyle(fontSize: 18),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -1105,10 +1333,14 @@ class _RecentItemsSection extends StatelessWidget {
           title: 'Vừa thêm gần đây',
           trailing: items.isNotEmpty
               ? GestureDetector(
-                  onTap: () =>
-                      context.findAncestorStateOfType<MainScreenState>()?.switchToTab(1),
+                  onTap: () => context
+                      .findAncestorStateOfType<MainScreenState>()
+                      ?.switchToTab(1),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -1198,7 +1430,9 @@ class _EmptyRecentItems extends StatelessWidget {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
@@ -1234,7 +1468,9 @@ class _RecentItemTile extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               color: item.categoryColor,
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(16),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -1269,7 +1505,10 @@ class _RecentItemTile extends StatelessWidget {
                     if (item.isChecked) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF43A047).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -1277,7 +1516,11 @@ class _RecentItemTile extends StatelessWidget {
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check, size: 10, color: Color(0xFF43A047)),
+                            Icon(
+                              Icons.check,
+                              size: 10,
+                              color: Color(0xFF43A047),
+                            ),
                             SizedBox(width: 3),
                             Text(
                               'Đã mua',
@@ -1297,7 +1540,10 @@ class _RecentItemTile extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: item.categoryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),

@@ -44,6 +44,17 @@ class DashboardViewModel extends ChangeNotifier {
 
   int get tetYear => _nextTet.year;
 
+  /// Trả về tên Can Chi của năm Tết sắp tới, vd: "Đinh Mùi 🐐"
+  String get tetZodiac {
+    const can = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+    const chi = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+    const emoji = ['🐭', '🐮', '🐯', '🐰', '🐉', '🐍', '🐴', '🐐', '🐒', '🐓', '🐕', '🐗'];
+    final y = tetYear;
+    final canName = can[(y - 4) % 10];
+    final chiIdx = (y - 4) % 12;
+    return '$canName ${chi[chiIdx]} ${emoji[chiIdx]}';
+  }
+
   int get daysToTet {
     final today = DateTime.now();
     final todayOnly = DateTime(today.year, today.month, today.day);
