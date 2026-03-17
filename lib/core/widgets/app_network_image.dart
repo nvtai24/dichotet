@@ -96,21 +96,33 @@ class _Placeholder extends StatelessWidget {
 
   const _Placeholder({this.width, this.height});
 
+  bool get _isSmall => (height != null && height! <= 72) || (width != null && width! <= 72);
+
   @override
   Widget build(BuildContext context) {
+    final iconSize = _isSmall ? 20.0 : 32.0;
     return Container(
       width: width,
       height: height,
-      color: const Color(0xFFFCE4EC),
-      child: const Column(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFEEEEEE), Color(0xFFE0E0E0)],
+        ),
+      ),
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.image_outlined, size: 32, color: AppColors.textHint),
-          SizedBox(height: 6),
-          Text(
-            'Chưa có ảnh',
-            style: TextStyle(fontSize: 12, color: AppColors.textHint),
-          ),
+          Icon(Icons.shopping_bag_outlined, size: iconSize, color: const Color(0xFFBDBDBD)),
+          if (!_isSmall) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'Chưa có ảnh',
+              style: TextStyle(fontSize: 12, color: Color(0xFFBDBDBD)),
+            ),
+          ],
         ],
       ),
     );

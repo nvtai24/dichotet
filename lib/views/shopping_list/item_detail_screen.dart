@@ -602,6 +602,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           ],
         ),
         const SizedBox(height: 12),
+        if (_item.storePrices.length >= 2) ...[
+          _PriceComparisonCard(
+            storePrices: _item.storePrices,
+            unit: _item.unit,
+          ),
+          const SizedBox(height: 12),
+        ],
         _item.storePrices.isEmpty
             ? Container(
                 padding: const EdgeInsets.all(20),
@@ -863,6 +870,207 @@ class _StorePriceRow extends StatelessWidget {
       buf.write(s[i]);
     }
     return '${buf.toString()} ₫';
+  }
+}
+
+// ─── Price Comparison Card ────────────────────────────────────────────────────
+
+class _PriceComparisonCard extends StatelessWidget {
+  final List<StorePrice> storePrices;
+  final String unit;
+
+  const _PriceComparisonCard({
+    required this.storePrices,
+    required this.unit,
+  });
+
+  String _fmt(int price) {
+    if (price >= 1000000) {
+      final m = price / 1000000;
+      return '${m % 1 == 0 ? m.toInt() : m.toStringAsFixed(1)}M ₫';
+    }
+    if (price >= 1000) return '${(price / 1000).toStringAsFixed(0)}k ₫';
+    return '$price ₫';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...storePrices]
+      ..sort((a, b) => a.pricePerUnit.compareTo(b.pricePerUnit));
+    final cheapest = sorted.first;
+    final maxPrice = sorted.last.pricePerUnit;
+    final saving = maxPrice - cheapest.pricePerUnit;
+    const green = Color(0xFF2E7D32);
+    const greenLight = Color(0xFF43A047);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            greenLight.withValues(alpha: 0.08),
+            greenLight.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: greenLight.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: greenLight.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.compare_arrows_rounded,
+                  size: 15,
+                  color: greenLight,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'So sánh giá',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: green,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: greenLight.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${sorted.length} cửa hàng',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: green,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Ranking rows
+          ...sorted.asMap().entries.map((e) {
+            final i = e.key;
+            final store = e.value;
+            final isCheapest = i == 0;
+            final ratio = maxPrice == 0 ? 1.0 : store.pricePerUnit / maxPrice;
+            const medals = ['🥇', '🥈', '🥉'];
+            final medal = i < 3 ? medals[i] : '${i + 1}.';
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: i < sorted.length - 1 ? 10 : 0),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    child: Text(medal, style: const TextStyle(fontSize: 14)),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      store.storeName,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            isCheapest ? FontWeight.w700 : FontWeight.w500,
+                        color: isCheapest ? green : AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 4,
+                    child: LayoutBuilder(
+                      builder: (_, constraints) => Stack(
+                        children: [
+                          Container(
+                            height: 6,
+                            width: constraints.maxWidth,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                          Container(
+                            height: 6,
+                            width: constraints.maxWidth * ratio,
+                            decoration: BoxDecoration(
+                              color: isCheapest
+                                  ? greenLight
+                                  : const Color(0xFFEF5350)
+                                      .withValues(alpha: 0.55 + 0.45 * ratio),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _fmt(store.pricePerUnit),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          isCheapest ? FontWeight.w700 : FontWeight.w500,
+                      color: isCheapest ? green : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          // Savings tip
+          if (saving > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: greenLight.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Text('💡', style: TextStyle(fontSize: 13)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Mua ở ${cheapest.storeName} tiết kiệm ${_fmt(saving)}/$unit so với nơi đắt nhất',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: green,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 

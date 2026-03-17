@@ -238,6 +238,7 @@ class SupabaseShoppingService implements IShoppingService {
           'unit': newItem.unit,
           'est_price_per_unit': newItem.estimatedPrice,
           'note': newItem.note,
+          'image_url': newItem.imageUrl,
         })
         .eq('id', itemId);
 
