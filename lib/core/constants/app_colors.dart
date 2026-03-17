@@ -12,7 +12,7 @@ class AppColors {
   static const Color goldDark = Color(0xFFFF8F00);
 
   // --- Background ---
-  static const Color background = Color(0xFFFFF8EE);
+  static const Color background = Color(0xFFF4F5F9);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFFFF3E0);
 

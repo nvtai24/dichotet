@@ -218,7 +218,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
