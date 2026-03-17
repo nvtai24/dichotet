@@ -102,11 +102,31 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Ảnh sản phẩm
-            AppNetworkImage(
-              url: _item.imageUrl,
-              width: double.infinity,
-              height: 220,
-              fit: BoxFit.cover,
+            GestureDetector(
+              onTap: (_item.imageUrl != null && _item.imageUrl!.isNotEmpty)
+                  ? () => Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          opaque: false,
+                          barrierColor: Colors.black,
+                          pageBuilder: (_, _, _) => _FullScreenImagePage(
+                            url: _item.imageUrl!,
+                            heroTag: 'item_image_${_item.name}',
+                          ),
+                          transitionsBuilder: (_, anim, _, child) =>
+                              FadeTransition(opacity: anim, child: child),
+                        ),
+                      )
+                  : null,
+              child: Hero(
+                tag: 'item_image_${_item.name}',
+                child: AppNetworkImage(
+                  url: _item.imageUrl,
+                  width: double.infinity,
+                  height: 220,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
 
             Padding(
@@ -1506,6 +1526,67 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
               child: const Text(
                 'Xác nhận',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Full Screen Image ────────────────────────────────────────────────────────
+
+class _FullScreenImagePage extends StatelessWidget {
+  final String url;
+  final String heroTag;
+
+  const _FullScreenImagePage({required this.url, required this.heroTag});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Hero(
+                tag: heroTag,
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (_, child, progress) => progress == null
+                      ? child
+                      : const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        ),
+                  errorBuilder: (context, error, stack) => const Center(
+                    child: Icon(Icons.broken_image_outlined,
+                        color: Colors.white54, size: 64),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 20),
+                  ),
+                ),
               ),
             ),
           ),
