@@ -115,32 +115,7 @@ class DashboardScreen extends StatelessWidget {
         ),
       ),
       centerTitle: true,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 10, 12, 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Padding(
-              padding: EdgeInsets.all(6),
-              child: Icon(
-                Icons.person_outline,
-                size: 20,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-        ),
-      ],
+      actions: const [],
     );
   }
 }
