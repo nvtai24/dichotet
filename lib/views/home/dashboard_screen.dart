@@ -157,7 +157,7 @@ class _SectionHeader extends StatelessWidget {
 
 /// Đặt URL ảnh nền Tết vào đây
 const String _kTetBgImageUrl =
-    'https://unatotovietnam.com/wp-content/uploads/2025/01/Net-Dep-Truyen-Thong-va-Van-Hoa-Dan-Toc.jpg';
+    'https://prooackmrpvgdxyurvdr.supabase.co/storage/v1/object/public/bg/tet.jpg';
 
 const List<String> _kTetQuotes = [
   '"Tết đến, nhà nhà sum vầy, lòng người ấm áp."',
@@ -293,7 +293,11 @@ class _HeroCountdownCardState extends State<_HeroCountdownCard> {
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.3,
                           shadows: [
-                            Shadow(color: Color(0x88000000), blurRadius: 8, offset: Offset(0, 2)),
+                            Shadow(
+                              color: Color(0x88000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
                           ],
                         ),
                       ),
@@ -307,7 +311,11 @@ class _HeroCountdownCardState extends State<_HeroCountdownCard> {
                           fontStyle: FontStyle.italic,
                           height: 1.4,
                           shadows: [
-                            Shadow(color: Color(0xAA000000), blurRadius: 6, offset: Offset(0, 1)),
+                            Shadow(
+                              color: Color(0xAA000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 1),
+                            ),
                           ],
                         ),
                         maxLines: 2,
@@ -397,7 +405,10 @@ class _CountdownRing extends StatelessWidget {
           height: 100,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.12),
+              width: 1,
+            ),
           ),
         ),
         // Middle gold ring
@@ -407,7 +418,10 @@ class _CountdownRing extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withValues(alpha: 0.06),
-            border: Border.all(color: AppColors.gold.withValues(alpha: 0.55), width: 1.5),
+            border: Border.all(
+              color: AppColors.gold.withValues(alpha: 0.55),
+              width: 1.5,
+            ),
           ),
         ),
         // Inner filled circle
@@ -1468,53 +1482,15 @@ class _RecentItemTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item.name,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (item.isChecked) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF43A047).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check,
-                              size: 10,
-                              color: Color(0xFF43A047),
-                            ),
-                            SizedBox(width: 3),
-                            Text(
-                              'Đã mua',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF43A047),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+                Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -1550,16 +1526,49 @@ class _RecentItemTile extends StatelessWidget {
               ],
             ),
           ),
-          // Price
+          // Price + badge
           Padding(
             padding: const EdgeInsets.only(right: 14),
-            child: Text(
-              _RecentItemsSection._fmt(totalPrice),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (item.isChecked)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    margin: const EdgeInsets.only(bottom: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF43A047).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check, size: 10, color: Color(0xFF43A047)),
+                        SizedBox(width: 3),
+                        Text(
+                          'Đã mua',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF43A047),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Text(
+                  _RecentItemsSection._fmt(totalPrice),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1592,27 +1601,31 @@ class _TetCalendarSheetState extends State<_TetCalendarSheet> {
     _focusedMonth = DateTime(_today.year, _today.month);
   }
 
-  DateTime get _tetDay => DateTime(
-        widget.tetDate.year,
-        widget.tetDate.month,
-        widget.tetDate.day,
-      );
+  DateTime get _tetDay =>
+      DateTime(widget.tetDate.year, widget.tetDate.month, widget.tetDate.day);
 
   void _prevMonth() => setState(
-      () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1));
+    () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1),
+  );
 
   void _nextMonth() => setState(
-      () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1));
+    () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1),
+  );
 
   List<DateTime?> _buildDays() {
     final firstDay = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
-    final daysInMonth =
-        DateUtils.getDaysInMonth(_focusedMonth.year, _focusedMonth.month);
+    final daysInMonth = DateUtils.getDaysInMonth(
+      _focusedMonth.year,
+      _focusedMonth.month,
+    );
     // Monday-based offset (0=Mon … 6=Sun)
     final offset = (firstDay.weekday - 1) % 7;
     return [
       ...List.filled(offset, null),
-      ...List.generate(daysInMonth, (i) => DateTime(_focusedMonth.year, _focusedMonth.month, i + 1)),
+      ...List.generate(
+        daysInMonth,
+        (i) => DateTime(_focusedMonth.year, _focusedMonth.month, i + 1),
+      ),
     ];
   }
 
@@ -1621,15 +1634,26 @@ class _TetCalendarSheetState extends State<_TetCalendarSheet> {
 
   static const _weekHeaders = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
   static const _monthNames = [
-    '', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4',
-    'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8',
-    'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
+    '',
+    'Tháng 1',
+    'Tháng 2',
+    'Tháng 3',
+    'Tháng 4',
+    'Tháng 5',
+    'Tháng 6',
+    'Tháng 7',
+    'Tháng 8',
+    'Tháng 9',
+    'Tháng 10',
+    'Tháng 11',
+    'Tháng 12',
   ];
 
   @override
   Widget build(BuildContext context) {
     final days = _buildDays();
-    final tetInFocus = _focusedMonth.year == _tetDay.year &&
+    final tetInFocus =
+        _focusedMonth.year == _tetDay.year &&
         _focusedMonth.month == _tetDay.month;
 
     return Container(
@@ -1643,7 +1667,8 @@ class _TetCalendarSheetState extends State<_TetCalendarSheet> {
         children: [
           // Handle bar
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
               color: AppColors.divider,
               borderRadius: BorderRadius.circular(2),
@@ -1688,7 +1713,9 @@ class _TetCalendarSheetState extends State<_TetCalendarSheet> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: isSun ? AppColors.primary : AppColors.textSecondary,
+                      color: isSun
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -1715,7 +1742,9 @@ class _TetCalendarSheetState extends State<_TetCalendarSheet> {
               final isSunday = day.weekday == DateTime.sunday;
 
               Color? bgColor;
-              Color textColor = isSunday ? AppColors.primary : AppColors.textPrimary;
+              Color textColor = isSunday
+                  ? AppColors.primary
+                  : AppColors.textPrimary;
               if (isToday) {
                 bgColor = AppColors.primary;
                 textColor = Colors.white;
@@ -1738,7 +1767,9 @@ class _TetCalendarSheetState extends State<_TetCalendarSheet> {
                       '${day.day}',
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: (isToday || isTet) ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: (isToday || isTet)
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: textColor,
                       ),
                     ),
@@ -1776,11 +1807,18 @@ class _TetCalendarSheetState extends State<_TetCalendarSheet> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.info_outline, size: 12, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.info_outline,
+                      size: 12,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Tết: ${_tetDay.day}/${_tetDay.month}/${_tetDay.year}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -1804,11 +1842,15 @@ class _LegendDot extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 10, height: 10,
+          width: 10,
+          height: 10,
           decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
       ],
     );
   }
