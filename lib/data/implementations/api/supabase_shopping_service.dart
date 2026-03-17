@@ -375,7 +375,25 @@ class SupabaseShoppingService implements IShoppingService {
 
   @override
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
-    item.storePrices.add(storePrice);
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final rows = await _client
+        .from('shopping_items')
+        .select('id')
+        .eq('name', item.name)
+        .eq('user_id', userId)
+        .limit(1);
+    if (rows.isEmpty) return;
+
+    final itemId = rows.first['id'] as int;
+    await _client.from('purchase_locations').insert({
+      'shopping_item_id': itemId,
+      'location_name': storePrice.storeName,
+      'lat': storePrice.lat ?? -1,
+      'lon': storePrice.lon ?? -1,
+      'price_per_unit': storePrice.pricePerUnit,
+    });
   }
 
   // ─── Update Purchase ──────────────────────────────────────────────

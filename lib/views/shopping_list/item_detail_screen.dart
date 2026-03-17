@@ -710,7 +710,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => _AddPriceSheet(
-        onAdd: (store) => setState(() => _item.storePrices.add(store)),
+        onAdd: (store) {
+            final vm = context.read<ShoppingListViewModel>();
+            vm.addStorePrice(_item, store);
+            setState(() => _item.storePrices.add(store));
+          },
       ),
     );
   }
