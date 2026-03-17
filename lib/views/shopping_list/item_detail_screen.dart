@@ -1187,15 +1187,76 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
             ),
           ),
           const SizedBox(height: 14),
-          TextField(
-            controller: _storeController,
-            textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Tên cửa hàng',
-              hintText: 'Ví dụ: Chợ Bến Thành',
-              prefixIcon: Icon(Icons.storefront_outlined, size: 20),
-            ),
+          // Store name + map pin button
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _storeController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên cửa hàng',
+                    hintText: 'Ví dụ: Chợ Bến Thành',
+                    prefixIcon: Icon(Icons.storefront_outlined, size: 20),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _pickLocation,
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: _lat != null ? AppColors.primary : const Color(0xFFF0F0F0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _lat != null
+                        ? Icons.location_on_rounded
+                        : Icons.add_location_alt_outlined,
+                    size: 22,
+                    color: _lat != null ? Colors.white : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
+          if (_lat != null) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on_rounded, size: 11, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_lat!.toStringAsFixed(5)}, ${_lon!.toStringAsFixed(5)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => setState(() { _lat = null; _lon = null; }),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 11,
+                      color: AppColors.primary.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           TextField(
             controller: _priceController,
@@ -1206,61 +1267,6 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
               hintText: '0',
               prefixIcon: Icon(Icons.sell_outlined, size: 20),
               suffixText: '₫',
-            ),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: _pickLocation,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-              decoration: BoxDecoration(
-                color: (_lat != null)
-                    ? AppColors.primary.withValues(alpha: 0.07)
-                    : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: (_lat != null)
-                      ? AppColors.primary.withValues(alpha: 0.3)
-                      : AppColors.border,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _lat != null
-                        ? Icons.location_on_rounded
-                        : Icons.add_location_alt_outlined,
-                    size: 18,
-                    color: _lat != null
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _lat != null
-                          ? 'Đã ghim: ${_lat!.toStringAsFixed(4)}, ${_lon!.toStringAsFixed(4)}'
-                          : 'Ghim vị trí trên bản đồ (tùy chọn)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: _lat != null
-                            ? AppColors.primary
-                            : AppColors.textSecondary,
-                        fontWeight: _lat != null
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                  if (_lat != null)
-                    GestureDetector(
-                      onTap: () => setState(() { _lat = null; _lon = null; }),
-                      child: Icon(Icons.close_rounded,
-                          size: 16,
-                          color: AppColors.textSecondary.withValues(alpha: 0.6)),
-                    ),
-                ],
-              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -1402,18 +1408,22 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       padding: EdgeInsets.fromLTRB(
-        16,
         20,
-        16,
+        12,
+        20,
         MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle
+          // Handle bar
           Center(
             child: Container(
               width: 36,
@@ -1424,30 +1434,26 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // Title
+          // Header
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
+                child: const Icon(Icons.shopping_bag_outlined, size: 20, color: AppColors.primary),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Thông tin đã mua',
+                      'Xác nhận mua hàng',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
@@ -1456,10 +1462,9 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
                     ),
                     Text(
                       widget.item.name,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -1468,13 +1473,16 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
           ),
           const SizedBox(height: 20),
 
-          // Location dropdown
+          // ── Nơi mua ──
+          _SheetLabel(label: 'Nơi mua'),
+          const SizedBox(height: 8),
           if (!_isAddingNew)
             DropdownButtonFormField<String>(
               initialValue: _selectedLocation,
               decoration: const InputDecoration(
-                labelText: 'Nơi mua',
-                prefixIcon: Icon(Icons.location_on_outlined, size: 20),
+                hintText: 'Chọn địa điểm',
+                prefixIcon: Icon(Icons.place_outlined, size: 20),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               ),
               items: [
                 ..._locationNames.map(
@@ -1484,148 +1492,158 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
                   value: '__add_new__',
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.add_circle_outline,
-                        size: 16,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Thêm địa điểm mới',
-                        style: TextStyle(color: AppColors.primary),
-                      ),
+                      Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
+                      SizedBox(width: 6),
+                      Text('Địa điểm mới...', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
               ],
               onChanged: (value) {
                 if (value == '__add_new__') {
-                  setState(() {
-                    _isAddingNew = true;
-                    _selectedLocation = null;
-                  });
+                  setState(() { _isAddingNew = true; _selectedLocation = null; });
                 } else {
                   setState(() => _selectedLocation = value);
                 }
               },
             )
-          else
-            Column(
+          else ...[
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _newLocationController,
-                        decoration: const InputDecoration(
-                          labelText: 'Tên địa điểm mới',
-                          prefixIcon: Icon(
-                            Icons.add_location_alt_outlined,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (_locationNames.isNotEmpty)
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 20),
-                        onPressed: () => setState(() {
-                          _isAddingNew = false;
-                          _newLocationController.clear();
-                          _newLat = null;
-                          _newLon = null;
-                        }),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: _pickLocation,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _newLat != null
-                          ? AppColors.primary.withValues(alpha: 0.07)
-                          : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _newLat != null
-                            ? AppColors.primary.withValues(alpha: 0.3)
-                            : AppColors.border,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _newLat != null
-                              ? Icons.location_on_rounded
-                              : Icons.add_location_alt_outlined,
-                          size: 16,
-                          color: _newLat != null
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _newLat != null
-                                ? 'Đã ghim: ${_newLat!.toStringAsFixed(4)}, ${_newLon!.toStringAsFixed(4)}'
-                                : 'Ghim vị trí trên bản đồ (tùy chọn)',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: _newLat != null
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                              fontWeight: _newLat != null
-                                  ? FontWeight.w600
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                        if (_newLat != null)
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() { _newLat = null; _newLon = null; }),
-                            child: Icon(Icons.close_rounded,
-                                size: 14,
-                                color: AppColors.textSecondary
-                                    .withValues(alpha: 0.6)),
-                          ),
-                      ],
+                Expanded(
+                  child: TextField(
+                    controller: _newLocationController,
+                    decoration: const InputDecoration(
+                      hintText: 'Tên địa điểm',
+                      prefixIcon: Icon(Icons.place_outlined, size: 20),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Map pin button
+                GestureDetector(
+                  onTap: _pickLocation,
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: _newLat != null ? AppColors.primary : const Color(0xFFF0F0F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _newLat != null ? Icons.location_on_rounded : Icons.add_location_alt_outlined,
+                      size: 22,
+                      color: _newLat != null ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                if (_locationNames.isNotEmpty) ...[
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _isAddingNew = false;
+                      _newLocationController.clear();
+                      _newLat = null;
+                      _newLon = null;
+                    }),
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F0F0),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                    ),
+                  ),
+                ],
               ],
             ),
-          const SizedBox(height: 12),
+            if (_newLat != null) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on_rounded, size: 11, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_newLat!.toStringAsFixed(5)}, ${_newLon!.toStringAsFixed(5)}',
+                      style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () => setState(() { _newLat = null; _newLon = null; }),
+                      child: Icon(Icons.close_rounded, size: 11, color: AppColors.primary.withValues(alpha: 0.6)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+          const SizedBox(height: 16),
 
-          // Quantity input
-          TextField(
-            controller: _qtyController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              labelText: 'Số lượng đã mua',
-              hintText: 'Ví dụ: 2',
-              prefixIcon: const Icon(Icons.inventory_2_outlined, size: 20),
-              suffixText: widget.item.unit,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Price input
-          TextField(
-            controller: _priceController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              labelText: 'Số tiền đã dùng (VND)',
-              hintText: '0',
-              prefixIcon: Icon(Icons.payments_outlined, size: 20),
-              suffixText: '₫',
-            ),
+          // ── Số lượng + Giá ──
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SheetLabel(label: 'Số lượng'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _qtyController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        hintText: '0',
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        suffixIcon: Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: Text(
+                            widget.item.unit,
+                            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                          ),
+                        ),
+                        suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SheetLabel(label: 'Giá / đơn vị'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _priceController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                        hintText: '0',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        suffixIcon: Padding(
+                          padding: EdgeInsets.only(right: 10),
+                          child: Text('₫', style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                        ),
+                        suffixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
 
@@ -1638,21 +1656,26 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
                 minimumSize: const Size(double.infinity, 50),
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 elevation: 0,
               ),
-              child: const Text(
-                'Xác nhận',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-              ),
+              child: const Text('Xác nhận mua', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _SheetLabel extends StatelessWidget {
+  final String label;
+  const _SheetLabel({required this.label});
+  @override
+  Widget build(BuildContext context) => Text(
+    label,
+    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+  );
 }
 
 // ─── Full Screen Image ────────────────────────────────────────────────────────

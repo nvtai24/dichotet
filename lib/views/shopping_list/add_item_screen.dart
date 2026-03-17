@@ -29,7 +29,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
   bool _isUploadingImage = false;
 
   List<String> _categories = [];
-  List<String> _stores = [];
 
   // Danh sách nơi mua dự kiến
   final List<_StorePriceEntry> _storePriceEntries = [];
@@ -39,7 +38,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     super.initState();
     final vm = context.read<ShoppingListViewModel>();
     _categories = vm.categoryNames;
-    _stores = vm.storeNames;
+
   }
 
   @override
@@ -584,99 +583,38 @@ class _AddItemScreenState extends State<AddItemScreen> {
     });
   }
 
-  void _showStorePickerFor(int index) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Chọn cửa hàng',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            ..._stores.map(
-              (s) => ListTile(
-                leading: const Icon(
-                  Icons.storefront_outlined,
-                  color: AppColors.primary,
-                ),
-                title: Text(s),
-                trailing: _storePriceEntries[index].storeName == s
-                    ? const Icon(Icons.check, color: AppColors.primary)
-                    : null,
-                onTap: () {
-                  setState(() {
-                    _storePriceEntries[index].storeName = s;
-                    _storePriceEntries[index].nameController.text = s;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(
-                Icons.edit_outlined,
-                color: AppColors.textSecondary,
-              ),
-              title: const Text('Nhập tên khác...'),
-              onTap: () {
-                Navigator.pop(context);
-                // Focus vào text field để user tự nhập
-                _storePriceEntries[index].nameController.clear();
-                _storePriceEntries[index].storeName = '';
-                setState(() {});
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildStoreEntryCard(_StorePriceEntry entry, int index) {
     return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: store number + delete button
+          // Header
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(7),
                 ),
-                child: const Icon(
-                  Icons.storefront_outlined,
-                  size: 16,
-                  color: AppColors.primary,
-                ),
+                child: const Icon(Icons.storefront_outlined, size: 14, color: AppColors.primary),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
               Text(
                 'Nơi mua ${index + 1}',
                 style: const TextStyle(
@@ -688,39 +626,114 @@ class _AddItemScreenState extends State<AddItemScreen> {
               const Spacer(),
               GestureDetector(
                 onTap: () => _removeStoreEntry(index),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(Icons.close, size: 16, color: Colors.red),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          // Store name
-          TextField(
-            controller: entry.nameController,
-            decoration: InputDecoration(
-              hintText: 'Tên cửa hàng / chợ',
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
+          // Store name + map pin button
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: entry.nameController,
+                  decoration: InputDecoration(
+                    hintText: 'Tên cửa hàng / chợ',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    suffixIcon: null,
+                  ),
+                  onChanged: (v) => entry.storeName = v,
+                ),
               ),
-              suffixIcon: _stores.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.arrow_drop_down,
-                        color: AppColors.textSecondary,
+              const SizedBox(width: 8),
+              // Compact map pin button
+              GestureDetector(
+                onTap: () async {
+                  final result = await Navigator.push<LatLng?>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LocationPickerScreen(
+                        storeName: entry.storeName.isNotEmpty ? entry.storeName : null,
+                        initialLocation: entry.hasLocation
+                            ? LatLng(entry.lat!, entry.lon!)
+                            : null,
                       ),
-                      onPressed: () => _showStorePickerFor(index),
-                    )
-                  : null,
-            ),
-            onChanged: (v) => entry.storeName = v,
+                    ),
+                  );
+                  if (result == null && entry.hasLocation) {
+                    setState(() { entry.lat = null; entry.lon = null; });
+                  } else if (result != null) {
+                    setState(() {
+                      entry.lat = result.latitude;
+                      entry.lon = result.longitude;
+                    });
+                  }
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: entry.hasLocation
+                        ? AppColors.primary
+                        : const Color(0xFFF0F0F0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    entry.hasLocation
+                        ? Icons.location_on_rounded
+                        : Icons.add_location_alt_outlined,
+                    size: 20,
+                    color: entry.hasLocation
+                        ? Colors.white
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
+          // Location chip
+          if (entry.hasLocation) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on_rounded, size: 11, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${entry.lat!.toStringAsFixed(5)}, ${entry.lon!.toStringAsFixed(5)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => setState(() { entry.lat = null; entry.lon = null; }),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 11,
+                      color: AppColors.primary.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           // Price
           TextField(
@@ -728,95 +741,21 @@ class _AddItemScreenState extends State<AddItemScreen> {
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: const InputDecoration(
-              hintText: 'Giá / đơn vị tại đây',
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
+              hintText: 'Giá / đơn vị',
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              prefixIcon: Icon(Icons.sell_outlined, size: 18, color: AppColors.textSecondary),
               suffixIcon: Padding(
                 padding: EdgeInsets.only(right: 12),
                 child: Text(
                   '₫',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
               suffixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Map pin button
-          GestureDetector(
-            onTap: () async {
-              final result = await Navigator.push<LatLng?>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => LocationPickerScreen(
-                    storeName: entry.storeName.isNotEmpty ? entry.storeName : null,
-                    initialLocation: entry.hasLocation
-                        ? LatLng(entry.lat!, entry.lon!)
-                        : null,
-                  ),
-                ),
-              );
-              if (result == null && entry.hasLocation) {
-                // User xóa vị trí
-                setState(() {
-                  entry.lat = null;
-                  entry.lon = null;
-                });
-              } else if (result != null) {
-                setState(() {
-                  entry.lat = result.latitude;
-                  entry.lon = result.longitude;
-                });
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: entry.hasLocation
-                    ? AppColors.primary.withValues(alpha: 0.08)
-                    : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: entry.hasLocation
-                      ? AppColors.primary.withValues(alpha: 0.3)
-                      : AppColors.border,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    entry.hasLocation
-                        ? Icons.location_on_rounded
-                        : Icons.add_location_alt_outlined,
-                    size: 16,
-                    color: entry.hasLocation
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    entry.hasLocation
-                        ? 'Đã ghim: ${entry.lat!.toStringAsFixed(4)}, ${entry.lon!.toStringAsFixed(4)}'
-                        : 'Ghim vị trí trên bản đồ (tùy chọn)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: entry.hasLocation
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                      fontWeight: entry.hasLocation
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ],
