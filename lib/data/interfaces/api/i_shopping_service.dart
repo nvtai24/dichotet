@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import '../../../models/shopping_models.dart';
 
 /// API layer interface for shopping data.
@@ -29,4 +30,5 @@ abstract class IShoppingService {
   Future<void> deletePurchase(int purchaseId);
   Future<void> recalculatePurchaseStatus(ShoppingItem item);
   Future<void> deleteItem(ShoppingItem item);
+  Future<String> uploadItemImage(Uint8List bytes, String fileName);
 }

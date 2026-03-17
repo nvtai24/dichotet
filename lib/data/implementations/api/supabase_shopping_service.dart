@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/utils/category_style.dart';
 import '../../../models/shopping_models.dart';
@@ -85,6 +85,7 @@ class SupabaseShoppingService implements IShoppingService {
         unit: row['unit'] as String? ?? '',
         estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
         note: row['note'] as String?,
+        imageUrl: row['image_url'] as String?,
         createdAt: DateTime.tryParse(row['created_at'] as String? ?? ''),
         isChecked: totalPurchased >= requiredQty,
         storePrices: storePrices,
@@ -173,6 +174,7 @@ class SupabaseShoppingService implements IShoppingService {
           'unit': item.unit,
           'est_price_per_unit': item.estimatedPrice,
           'note': item.note,
+          'image_url': item.imageUrl,
           'user_id': userId,
           'session_id': sessionId,
         })
@@ -445,6 +447,22 @@ class SupabaseShoppingService implements IShoppingService {
         .eq('shopping_item_id', itemId);
     // Xoá item
     await _client.from('shopping_items').delete().eq('id', itemId);
+  }
+
+  // ─── Upload Item Image ────────────────────────────────────────────
+
+  @override
+  Future<String> uploadItemImage(Uint8List bytes, String fileName) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) throw Exception('Chưa đăng nhập');
+
+    final path = '$userId/$fileName';
+    await _client.storage.from('item-images').uploadBinary(
+      path,
+      bytes,
+      fileOptions: const FileOptions(upsert: true),
+    );
+    return _client.storage.from('item-images').getPublicUrl(path);
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────

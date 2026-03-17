@@ -85,6 +85,7 @@ class CacheSerializer {
         'estimatedPrice': i.estimatedPrice,
         'isHighPriority': i.isHighPriority,
         'note': i.note,
+        'imageUrl': i.imageUrl,
         'createdAt': i.createdAt.toIso8601String(),
         'isChecked': i.isChecked,
         'storePrices': i.storePrices.map(_storePriceToMap).toList(),
@@ -102,6 +103,7 @@ class CacheSerializer {
         estimatedPrice: m['estimatedPrice'] as int,
         isHighPriority: m['isHighPriority'] as bool? ?? false,
         note: m['note'] as String?,
+        imageUrl: m['imageUrl'] as String?,
         createdAt: DateTime.tryParse(m['createdAt'] as String? ?? ''),
         isChecked: m['isChecked'] as bool? ?? false,
         storePrices: (m['storePrices'] as List)

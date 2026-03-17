@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import '../../../models/shopping_models.dart';
 import '../../interfaces/api/i_shopping_service.dart';
 import '../../interfaces/repositories/i_shopping_repository.dart';
@@ -101,6 +102,10 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
 
   @override
   Future<void> deleteItem(ShoppingItem item) => _service.deleteItem(item);
+
+  @override
+  Future<String> uploadItemImage(Uint8List bytes, String fileName) =>
+      _service.uploadItemImage(bytes, fileName);
 
   @override
   void invalidateSessionCache(String sessionId) =>

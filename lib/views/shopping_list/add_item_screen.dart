@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/shopping_models.dart';
@@ -20,6 +22,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   String? _selectedCategory;
   int _quantity = 1;
+
+  XFile? _selectedImage;
+  bool _isUploadingImage = false;
 
   List<String> _categories = [];
   List<String> _stores = [];
@@ -45,6 +50,68 @@ class _AddItemScreenState extends State<AddItemScreen> {
       entry.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: source, imageQuality: 80);
+    if (file != null) setState(() => _selectedImage = file);
+  }
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Chọn ảnh sản phẩm',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
+              title: const Text('Chụp ảnh'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+              title: const Text('Chọn từ thư viện'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            if (_selectedImage != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text('Xoá ảnh', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  setState(() => _selectedImage = null);
+                  Navigator.pop(context);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _onSave() async {
@@ -83,6 +150,28 @@ class _AddItemScreenState extends State<AddItemScreen> {
       }
     }
 
+    final vm = context.read<ShoppingListViewModel>();
+
+    // Upload ảnh nếu có
+    String? imageUrl;
+    if (_selectedImage != null) {
+      setState(() => _isUploadingImage = true);
+      try {
+        final bytes = await _selectedImage!.readAsBytes();
+        final ext = _selectedImage!.name.split('.').last;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+        imageUrl = await vm.uploadItemImage(bytes, fileName);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi upload ảnh: $e')),
+        );
+        setState(() => _isUploadingImage = false);
+        return;
+      }
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+
     final item = ShoppingItem(
       name: name,
       categoryName: _selectedCategory!,
@@ -92,10 +181,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
       unit: unit.isEmpty ? 'cái' : unit,
       estimatedPrice: price,
       note: note.isEmpty ? null : note,
+      imageUrl: imageUrl,
       storePrices: storePrices,
     );
 
-    final vm = context.read<ShoppingListViewModel>();
     try {
       await vm.addItem(item, _selectedCategory!);
       await vm.loadData();
@@ -218,6 +307,84 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Image
+            _SectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _FieldLabel(label: 'Ảnh sản phẩm'),
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: _showImageSourceSheet,
+                    child: _selectedImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              File(_selectedImage!.path),
+                              width: double.infinity,
+                              height: 180,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Container(
+                            width: double.infinity,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                                style: BorderStyle.solid,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_photo_alternate_outlined,
+                                  size: 36,
+                                  color: AppColors.primary.withValues(alpha: 0.6),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Thêm ảnh sản phẩm',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.primary.withValues(alpha: 0.8),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Chụp ảnh hoặc chọn từ thư viện',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                  if (_selectedImage != null) ...[
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: _showImageSourceSheet,
+                      child: Text(
+                        'Đổi ảnh',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.primary.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

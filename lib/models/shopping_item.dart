@@ -13,6 +13,7 @@ class ShoppingItem {
   final int estimatedPrice;
   final bool isHighPriority;
   final String? note;
+  final String? imageUrl;
   final DateTime createdAt;
   final List<StorePrice> storePrices;
   final List<PurchaseRecord> purchases;
@@ -29,6 +30,7 @@ class ShoppingItem {
     required this.estimatedPrice,
     this.isHighPriority = false,
     this.note,
+    this.imageUrl,
     DateTime? createdAt,
     List<StorePrice>? storePrices,
     List<PurchaseRecord>? purchases,

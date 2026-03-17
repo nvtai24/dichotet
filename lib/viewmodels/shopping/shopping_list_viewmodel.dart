@@ -248,6 +248,9 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<String> uploadItemImage(Uint8List bytes, String fileName) =>
+      _repository.uploadItemImage(bytes, fileName);
+
   Future<void> deleteItem(ShoppingItem item) async {
     // Optimistic: remove locally
     for (final cat in _categories) {

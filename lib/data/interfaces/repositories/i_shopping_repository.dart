@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import '../../../models/shopping_models.dart';
 
 abstract class IShoppingRepository {
@@ -26,5 +27,6 @@ abstract class IShoppingRepository {
   Future<void> deletePurchase(int purchaseId);
   Future<void> recalculatePurchaseStatus(ShoppingItem item);
   Future<void> deleteItem(ShoppingItem item);
+  Future<String> uploadItemImage(Uint8List bytes, String fileName);
   void invalidateSessionCache(String sessionId);
 }
