@@ -54,6 +54,7 @@ class DashboardViewModel extends ChangeNotifier {
   int get totalItems => _shoppingVM.totalItems;
   int get purchasedItems => _shoppingVM.purchasedItems;
   int get estimatedBudget => _sessionVM.selectedSession?.budget.toInt() ?? 0;
+  int get listEstimate => _shoppingVM.estimatedBudget;
   int get spentBudget => _shoppingVM.spentBudget;
 
   String get progressMessage {
