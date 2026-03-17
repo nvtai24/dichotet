@@ -23,7 +23,7 @@ class DashboardScreen extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F5F9),
-        appBar: _buildAppBar(),
+        appBar: _buildAppBar(context, vm.nextTetDate),
         body: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
@@ -65,7 +65,16 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  AppBar _buildAppBar() {
+  void _showCalendar(BuildContext context, DateTime tetDate) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _TetCalendarSheet(tetDate: tetDate),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context, DateTime tetDate) {
     return AppBar(
       backgroundColor: const Color(0xFFF4F5F9),
       elevation: 0,
@@ -75,22 +84,25 @@ class DashboardScreen extends StatelessWidget {
       ),
       leading: Padding(
         padding: const EdgeInsets.all(10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.calendar_month_outlined,
-            size: 20,
-            color: AppColors.textPrimary,
+        child: GestureDetector(
+          onTap: () => _showCalendar(context, tetDate),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.calendar_month_outlined,
+              size: 20,
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
       ),
@@ -1584,6 +1596,252 @@ class _RecentItemTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─── Tet Calendar Sheet ────────────────────────────────────────────────────
+
+class _TetCalendarSheet extends StatefulWidget {
+  final DateTime tetDate;
+  const _TetCalendarSheet({required this.tetDate});
+
+  @override
+  State<_TetCalendarSheet> createState() => _TetCalendarSheetState();
+}
+
+class _TetCalendarSheetState extends State<_TetCalendarSheet> {
+  late DateTime _focusedMonth;
+  final DateTime _today = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _focusedMonth = DateTime(_today.year, _today.month);
+  }
+
+  DateTime get _tetDay => DateTime(
+        widget.tetDate.year,
+        widget.tetDate.month,
+        widget.tetDate.day,
+      );
+
+  void _prevMonth() => setState(
+      () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1));
+
+  void _nextMonth() => setState(
+      () => _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1));
+
+  List<DateTime?> _buildDays() {
+    final firstDay = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
+    final daysInMonth =
+        DateUtils.getDaysInMonth(_focusedMonth.year, _focusedMonth.month);
+    // Monday-based offset (0=Mon … 6=Sun)
+    final offset = (firstDay.weekday - 1) % 7;
+    return [
+      ...List.filled(offset, null),
+      ...List.generate(daysInMonth, (i) => DateTime(_focusedMonth.year, _focusedMonth.month, i + 1)),
+    ];
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  static const _weekHeaders = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  static const _monthNames = [
+    '', 'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4',
+    'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8',
+    'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final days = _buildDays();
+    final tetInFocus = _focusedMonth.year == _tetDay.year &&
+        _focusedMonth.month == _tetDay.month;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Container(
+            width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Month navigation
+          Row(
+            children: [
+              IconButton(
+                onPressed: _prevMonth,
+                icon: const Icon(Icons.chevron_left_rounded),
+                color: AppColors.textPrimary,
+              ),
+              Expanded(
+                child: Text(
+                  '${_monthNames[_focusedMonth.month]} ${_focusedMonth.year}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: _nextMonth,
+                icon: const Icon(Icons.chevron_right_rounded),
+                color: AppColors.textPrimary,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Week headers
+          Row(
+            children: _weekHeaders.map((h) {
+              final isSun = h == 'CN';
+              return Expanded(
+                child: Center(
+                  child: Text(
+                    h,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isSun ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+          // Day grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: days.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 0,
+              childAspectRatio: 1,
+            ),
+            itemBuilder: (_, i) {
+              final day = days[i];
+              if (day == null) return const SizedBox();
+              final isToday = _isSameDay(day, _today);
+              final isTet = _isSameDay(day, _tetDay);
+              final isSunday = day.weekday == DateTime.sunday;
+
+              Color? bgColor;
+              Color textColor = isSunday ? AppColors.primary : AppColors.textPrimary;
+              if (isToday) {
+                bgColor = AppColors.primary;
+                textColor = Colors.white;
+              } else if (isTet) {
+                bgColor = AppColors.gold;
+                textColor = Colors.white;
+              }
+
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: bgColor != null
+                        ? BoxDecoration(shape: BoxShape.circle, color: bgColor)
+                        : null,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: (isToday || isTet) ? FontWeight.w700 : FontWeight.w500,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+                  if (isTet) ...[
+                    const SizedBox(height: 1),
+                    const Text('🎊', style: TextStyle(fontSize: 8)),
+                  ],
+                ],
+              );
+            },
+          ),
+          // Legend
+          if (tetInFocus) ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _LegendDot(color: AppColors.primary, label: 'Hôm nay'),
+                const SizedBox(width: 20),
+                _LegendDot(color: AppColors.gold, label: 'Ngày Tết 🎊'),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _LegendDot(color: AppColors.primary, label: 'Hôm nay'),
+                const SizedBox(width: 20),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.info_outline, size: 12, color: AppColors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Tết: ${_tetDay.day}/${_tetDay.month}/${_tetDay.year}',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10, height: 10,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+      ],
     );
   }
 }

@@ -43,6 +43,7 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   int get tetYear => _nextTet.year;
+  DateTime get nextTetDate => _nextTet;
 
   /// Trả về tên Can Chi của năm Tết sắp tới, vd: "Đinh Mùi 🐐"
   String get tetZodiac {
