@@ -660,13 +660,14 @@ class _BudgetSummarySection extends StatelessWidget {
   });
 
   static String fmt(int price) {
-    if (price == 0) return '0 ₫';
-    if (price >= 1000000) {
-      final m = price / 1000000;
-      return '${m % 1 == 0 ? m.toInt() : m.toStringAsFixed(1)}M ₫';
+    if (price == 0) return '0 đ';
+    final s = price.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
     }
-    if (price >= 1000) return '${(price / 1000).toStringAsFixed(0)}k ₫';
-    return '$price ₫';
+    return '${buf.toString()} đ';
   }
 
   @override
@@ -1300,15 +1301,7 @@ class _RecentItemsSection extends StatelessWidget {
   final List<ShoppingItem> items;
   const _RecentItemsSection({required this.items});
 
-  static String _fmt(int price) {
-    if (price == 0) return '0 ₫';
-    if (price >= 1000000) {
-      final m = price / 1000000;
-      return '${m % 1 == 0 ? m.toInt() : m.toStringAsFixed(1)}M ₫';
-    }
-    if (price >= 1000) return '${(price / 1000).toStringAsFixed(0)}k ₫';
-    return '$price ₫';
-  }
+  static String _fmt(int price) => _BudgetSummarySection.fmt(price);
 
   @override
   Widget build(BuildContext context) {
