@@ -725,7 +725,6 @@ class _BudgetSummarySection extends StatelessWidget {
                         amount: fmt(budget),
                         note: budget == 0 ? 'Chưa đặt' : 'Giới hạn',
                         color: AppColors.primary,
-                        icon: Icons.savings_outlined,
                       ),
                     ),
                     _VerticalDivider(),
@@ -735,7 +734,6 @@ class _BudgetSummarySection extends StatelessWidget {
                         amount: fmt(listEstimate),
                         note: listEstimate == 0 ? 'Chưa có' : 'Từ danh sách',
                         color: const Color(0xFF7B61FF),
-                        icon: Icons.calculate_outlined,
                       ),
                     ),
                     _VerticalDivider(),
@@ -747,7 +745,6 @@ class _BudgetSummarySection extends StatelessWidget {
                         color: spent > budget && budget > 0
                             ? Colors.red
                             : const Color(0xFF00897B),
-                        icon: Icons.shopping_bag_outlined,
                       ),
                     ),
                   ],
@@ -791,14 +788,12 @@ class _BudgetStatCol extends StatelessWidget {
   final String amount;
   final String note;
   final Color color;
-  final IconData icon;
 
   const _BudgetStatCol({
     required this.label,
     required this.amount,
     required this.note,
     required this.color,
-    required this.icon,
   });
 
   @override
@@ -808,35 +803,20 @@ class _BudgetStatCol extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon, size: 12, color: color),
-              ),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+              letterSpacing: 0.3,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             amount,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
             ),
@@ -1039,33 +1019,12 @@ class _BudgetInsightCard extends StatelessWidget {
 
   static String _fmt(int v) => _BudgetSummarySection.fmt(v);
 
-  // TEMP: remove this override after UI check
-  static List<_Insight> generateAllForPreview() => [
-    const _Insight(emoji: '📋', title: 'Chưa có dữ liệu', body: 'Đặt ngân sách cho phiên và thêm vật phẩm để xem phân tích chi tiết.', color: Colors.blueGrey),
-    _Insight(emoji: '💰', title: 'Chưa đặt ngân sách', body: 'Danh sách dự tính 5.000.000 đ. Hãy đặt ngân sách để kiểm soát chi tiêu tốt hơn.', color: Colors.orange),
-    const _Insight(emoji: '🛒', title: 'Danh sách còn trống', body: 'Thêm vật phẩm vào danh sách để tính dự tính chi tiêu.', color: Colors.blue),
-    const _Insight(emoji: '🚨', title: 'Vượt ngân sách 500.000 đ!', body: 'Chi tiêu thực tế đã vượt giới hạn ngân sách. Cần dừng hoặc điều chỉnh kế hoạch.', color: Colors.red),
-    const _Insight(emoji: '⚠️', title: 'Dự tính vượt ngân sách 1.200.000 đ', body: 'Danh sách hiện tại ước tính vượt ngân sách. Cân nhắc bỏ bớt hoặc tìm nơi rẻ hơn.', color: Colors.orange),
-    _Insight(emoji: '📊', title: 'Gần chạm ngân sách (88%)', body: 'Còn 600.000 đ dự phòng. Hãy thận trọng khi thêm vật phẩm.', color: Colors.amber.shade700),
-    const _Insight(emoji: '✅', title: 'Ngân sách thoải mái (60% dự tính)', body: 'Còn 2.000.000 đ dự phòng. Có thể thêm vật phẩm hoặc để dành.', color: Color(0xFF43A047)),
-    const _Insight(emoji: '🛍️', title: 'Chưa bắt đầu chi tiêu', body: 'Có 4.500.000 đ dự tính đang chờ. Bắt đầu mua sắm nào!', color: Colors.blue),
-    const _Insight(emoji: '🎉', title: 'Hoàn thành! Tiết kiệm 300.000 đ', body: 'Mua xong toàn bộ danh sách và tiết kiệm so với dự tính. Xuất sắc!', color: Color(0xFF43A047)),
-    const _Insight(emoji: '📈', title: 'Hoàn thành, tốn hơn dự tính 200.000 đ', body: 'Giá thực tế cao hơn ước tính. Cân nhắc cập nhật lại giá cho lần sau.', color: Colors.orange),
-    const _Insight(emoji: '🎯', title: 'Hoàn thành đúng dự tính!', body: 'Chi tiêu khớp hoàn toàn với kế hoạch. Lập kế hoạch chuẩn lắm!', color: Color(0xFF43A047)),
-    const _Insight(emoji: '👍', title: 'Chi tiêu hiệu quả (45% hoàn thành)', body: 'Chỉ dùng 38% dự tính. Đang tiết kiệm tốt!', color: Color(0xFF43A047)),
-    const _Insight(emoji: '🔄', title: '30% hoàn thành, còn 3.000.000 đ', body: 'Đã chi 1.500.000 đ, ước tính cần thêm 3.000.000 đ để hoàn tất danh sách.', color: AppColors.primary),
-  ];
-
   static List<_Insight> generate({
     required int budget,
     required int listEstimate,
     required int spent,
     required double progress,
   }) {
-    // TEMP: preview all cases — revert sau khi check xong
-    return generateAllForPreview();
-
-    // ignore: dead_code
     final result = <_Insight>[];
 
     if (budget == 0 && listEstimate == 0 && spent == 0) {
