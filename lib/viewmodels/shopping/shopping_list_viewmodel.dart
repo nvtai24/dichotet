@@ -114,6 +114,15 @@ class ShoppingListViewModel extends ChangeNotifier {
     await loadData();
   }
 
+  /// Fetch category names trực tiếp từ API (bỏ qua cache)
+  Future<List<String>> fetchFreshCategoryNames() async {
+    _repository.invalidateCategoryNamesCache();
+    final names = await _repository.getCategoryNames();
+    _categoryNames = names;
+    notifyListeners();
+    return names;
+  }
+
   // ─── UI state ───────────────────────────────────────────────────────
 
   void setSearchQuery(String query) {

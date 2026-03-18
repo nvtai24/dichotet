@@ -21,9 +21,10 @@ class LocalCacheService {
   void invalidateShoppingData(String sessionId) =>
       _box.delete('shopping_$sessionId');
 
-  // ─── Category names (rarely change) ───────────────────────────────
+  // ─── Category names ────────────────────────────────────────────────
   void saveCategoryNames(String json) => _box.put('category_names', json);
   String? getCategoryNames() => _box.get('category_names');
+  void invalidateCategoryNames() => _box.delete('category_names');
 
   // ─── Store names ───────────────────────────────────────────────────
   void saveStoreNames(String json) => _box.put('store_names', json);

@@ -39,7 +39,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
     super.initState();
     final vm = context.read<ShoppingListViewModel>();
     _categories = vm.categoryNames;
-
+    vm.fetchFreshCategoryNames().then((names) {
+      if (mounted) setState(() => _categories = names);
+    });
   }
 
   @override

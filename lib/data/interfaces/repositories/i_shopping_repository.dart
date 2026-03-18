@@ -31,4 +31,5 @@ abstract class IShoppingRepository {
   Future<void> deleteItem(ShoppingItem item);
   Future<String> uploadItemImage(Uint8List bytes, String fileName);
   void invalidateSessionCache(String sessionId);
+  void invalidateCategoryNamesCache();
 }

@@ -52,6 +52,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
     final vm = context.read<ShoppingListViewModel>();
     _categories = vm.categoryNames;
+    vm.fetchFreshCategoryNames().then((names) {
+      if (mounted) setState(() => _categories = names);
+    });
     // Pre-populate store price entries
     for (final sp in item.storePrices) {
       final entry = _StorePriceEntry();

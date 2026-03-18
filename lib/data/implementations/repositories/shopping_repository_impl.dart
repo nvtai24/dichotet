@@ -33,7 +33,12 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   @override
   Future<List<String>> getCategoryNames() async {
     final cached = _cache.getCategoryNames();
-    if (cached != null) return CacheSerializer.decodeStringList(cached);
+    if (cached != null) {
+      _service.getCategoryNames().then((fresh) {
+        _cache.saveCategoryNames(CacheSerializer.encodeStringList(fresh));
+      }).catchError((_) {});
+      return CacheSerializer.decodeStringList(cached);
+    }
     final result = await _service.getCategoryNames();
     _cache.saveCategoryNames(CacheSerializer.encodeStringList(result));
     return result;
@@ -114,4 +119,7 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   @override
   void invalidateSessionCache(String sessionId) =>
       _cache.invalidateShoppingData(sessionId);
+
+  @override
+  void invalidateCategoryNamesCache() => _cache.invalidateCategoryNames();
 }
