@@ -455,10 +455,16 @@ class SupabaseShoppingService implements IShoppingService {
     final existing = await _client
         .from('stores')
         .select('id')
-        .eq('name', name)
+        .ilike('name', name)
         .limit(1);
 
-    if (existing.isNotEmpty) return existing.first['id'] as int;
+    if (existing.isNotEmpty) {
+      final id = existing.first['id'] as int;
+      if (lat != null && lon != null) {
+        await _client.from('stores').update({'lat': lat, 'lon': lon}).eq('id', id);
+      }
+      return id;
+    }
 
     final inserted = await _client
         .from('stores')

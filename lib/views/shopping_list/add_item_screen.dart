@@ -654,6 +654,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
 
   Widget _buildStoreEntryCard(_StorePriceEntry entry, int index) {
+    final allStoreNames = context.read<ShoppingListViewModel>().storeNames;
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -704,26 +705,68 @@ class _AddItemScreenState extends State<AddItemScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          // Store name + map pin button
+          // Store selection
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: TextField(
-                  controller: entry.nameController,
-                  decoration: InputDecoration(
-                    hintText: 'Tên cửa hàng / chợ',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+                child: Autocomplete<String>(
+                  initialValue: TextEditingValue(text: entry.storeName),
+                  optionsBuilder: (textEditingValue) {
+                    if (allStoreNames.isEmpty) return const Iterable.empty();
+                    if (textEditingValue.text.isEmpty) return allStoreNames;
+                    return allStoreNames.where(
+                      (n) => n.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+                    );
+                  },
+                  onSelected: (value) {
+                    final store = context.read<ShoppingListViewModel>().findStore(value);
+                    setState(() {
+                      entry.storeName = value;
+                      entry.lat = store?.lat;
+                      entry.lon = store?.lon;
+                    });
+                  },
+                  fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        hintText: 'Tên cửa hàng / chợ',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      onChanged: (v) => entry.storeName = v,
+                    );
+                  },
+                  optionsViewBuilder: (ctx, onSelected, options) => Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(12),
+                      clipBehavior: Clip.antiAlias,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          itemBuilder: (_, i) {
+                            final option = options.elementAt(i);
+                            return InkWell(
+                              onTap: () => onSelected(option),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Text(option, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                    suffixIcon: null,
                   ),
-                  onChanged: (v) => entry.storeName = v,
                 ),
               ),
               const SizedBox(width: 8),
-              // Compact map pin button
               GestureDetector(
                 onTap: () async {
                   final result = await Navigator.push<LatLng?>(
@@ -731,44 +774,31 @@ class _AddItemScreenState extends State<AddItemScreen> {
                     MaterialPageRoute(
                       builder: (_) => LocationPickerScreen(
                         storeName: entry.storeName.isNotEmpty ? entry.storeName : null,
-                        initialLocation: entry.hasLocation
-                            ? LatLng(entry.lat!, entry.lon!)
-                            : null,
+                        initialLocation: entry.hasLocation ? LatLng(entry.lat!, entry.lon!) : null,
                       ),
                     ),
                   );
                   if (result == null && entry.hasLocation) {
                     setState(() { entry.lat = null; entry.lon = null; });
                   } else if (result != null) {
-                    setState(() {
-                      entry.lat = result.latitude;
-                      entry.lon = result.longitude;
-                    });
+                    setState(() { entry.lat = result.latitude; entry.lon = result.longitude; });
                   }
                 },
                 child: Container(
-                  width: 44,
-                  height: 44,
+                  width: 44, height: 44,
                   decoration: BoxDecoration(
-                    color: entry.hasLocation
-                        ? AppColors.primary
-                        : const Color(0xFFF0F0F0),
+                    color: entry.hasLocation ? AppColors.primary : const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    entry.hasLocation
-                        ? Icons.location_on_rounded
-                        : Icons.add_location_alt_outlined,
+                    entry.hasLocation ? Icons.location_on_rounded : Icons.add_location_alt_outlined,
                     size: 20,
-                    color: entry.hasLocation
-                        ? Colors.white
-                        : AppColors.textSecondary,
+                    color: entry.hasLocation ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
               ),
             ],
           ),
-          // Location chip
           if (entry.hasLocation) ...[
             const SizedBox(height: 6),
             Container(
@@ -784,20 +814,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   const SizedBox(width: 4),
                   Text(
                     '${entry.lat!.toStringAsFixed(5)}, ${entry.lon!.toStringAsFixed(5)}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(width: 6),
                   GestureDetector(
                     onTap: () => setState(() { entry.lat = null; entry.lon = null; }),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 11,
-                      color: AppColors.primary.withValues(alpha: 0.6),
-                    ),
+                    child: Icon(Icons.close_rounded, size: 11, color: AppColors.primary.withValues(alpha: 0.6)),
                   ),
                 ],
               ),

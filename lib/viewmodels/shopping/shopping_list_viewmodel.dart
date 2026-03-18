@@ -298,6 +298,20 @@ class ShoppingListViewModel extends ChangeNotifier {
     _addItemToCategory(newItem, categoryName);
   }
 
+  /// Tìm StorePrice đầu tiên khớp tên trong toàn bộ items (case-insensitive).
+  /// Dùng để lấy lat/lon của store khi user chọn từ autocomplete.
+  StorePrice? findStore(String name) {
+    final lower = name.toLowerCase();
+    for (final cat in _categories) {
+      for (final item in cat.items) {
+        for (final sp in item.storePrices) {
+          if (sp.storeName.toLowerCase() == lower) return sp;
+        }
+      }
+    }
+    return null;
+  }
+
   ShoppingItem? _findItemByPurchaseId(int purchaseId) {
     for (final cat in _categories) {
       for (final item in cat.items) {
