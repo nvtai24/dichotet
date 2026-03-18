@@ -48,11 +48,11 @@ class SupabaseShoppingService implements IShoppingService {
         final rawLon = (m['lon'] as num?)?.toDouble();
         return StorePrice(
           storeName: m['location_name'] as String? ?? '',
-
           pricePerUnit: ((m['price_per_unit'] as num?)?.toInt()) ?? 0,
           lastUpdated: 'Đã lưu',
           lat: (rawLat != null && rawLat != -1) ? rawLat : null,
           lon: (rawLon != null && rawLon != -1) ? rawLon : null,
+          createdAt: DateTime.tryParse(m['created_at'] as String? ?? ''),
         );
       }).toList();
 

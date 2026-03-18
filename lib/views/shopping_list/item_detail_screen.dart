@@ -384,7 +384,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
             const SizedBox(height: 10),
             // Individual purchase records
-            ...purchases.asMap().entries.map((entry) {
+            ...([...purchases]..sort((a, b) => a.purchasedAt.compareTo(b.purchasedAt)))
+                .asMap().entries.map((entry) {
               final i = entry.key;
               final p = entry.value;
               final date = p.purchasedAt;
@@ -670,7 +671,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   ],
                 ),
                 child: Column(
-                  children: _item.storePrices.asMap().entries.map((e) {
+                  children: ([..._item.storePrices]
+                      ..sort((a, b) {
+                        if (a.createdAt == null && b.createdAt == null) return 0;
+                        if (a.createdAt == null) return 1;
+                        if (b.createdAt == null) return -1;
+                        return a.createdAt!.compareTo(b.createdAt!);
+                      }))
+                      .asMap()
+                      .entries
+                      .map((e) {
                     final isLast = e.key == _item.storePrices.length - 1;
                     return Column(
                       children: [
@@ -906,12 +916,14 @@ class _PriceComparisonCard extends StatelessWidget {
   });
 
   String _fmt(int price) {
-    if (price >= 1000000) {
-      final m = price / 1000000;
-      return '${m % 1 == 0 ? m.toInt() : m.toStringAsFixed(1)}M ₫';
+    if (price == 0) return '0 đ';
+    final s = price.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
     }
-    if (price >= 1000) return '${(price / 1000).toStringAsFixed(0)}k ₫';
-    return '$price ₫';
+    return '${buf.toString()} đ';
   }
 
   @override
@@ -991,8 +1003,7 @@ class _PriceComparisonCard extends StatelessWidget {
             final store = e.value;
             final isCheapest = i == 0;
             final ratio = maxPrice == 0 ? 1.0 : store.pricePerUnit / maxPrice;
-            const medals = ['🥇', '🥈', '🥉'];
-            final medal = i < 3 ? medals[i] : '${i + 1}.';
+            final medal = '${i + 1}.';
 
             return Padding(
               padding: EdgeInsets.only(bottom: i < sorted.length - 1 ? 10 : 0),

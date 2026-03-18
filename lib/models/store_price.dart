@@ -4,6 +4,7 @@ class StorePrice {
   final String lastUpdated;
   final double? lat;
   final double? lon;
+  final DateTime? createdAt;
 
   StorePrice({
     required this.storeName,
@@ -11,6 +12,7 @@ class StorePrice {
     required this.lastUpdated,
     this.lat,
     this.lon,
+    this.createdAt,
   });
 
   bool get hasLocation => lat != null && lon != null && lat != -1 && lon != -1;
