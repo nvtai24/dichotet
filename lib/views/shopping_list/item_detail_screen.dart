@@ -1084,13 +1084,17 @@ class _PriceComparisonCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    _fmt(store.pricePerUnit),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight:
-                          isCheapest ? FontWeight.w700 : FontWeight.w500,
-                      color: isCheapest ? green : AppColors.textSecondary,
+                  SizedBox(
+                    width: 90,
+                    child: Text(
+                      _fmt(store.pricePerUnit),
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight:
+                            isCheapest ? FontWeight.w700 : FontWeight.w500,
+                        color: isCheapest ? green : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ],
