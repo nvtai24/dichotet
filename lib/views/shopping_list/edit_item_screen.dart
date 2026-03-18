@@ -24,6 +24,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
   late final TextEditingController _noteController;
 
   String? _selectedCategory;
+  TextEditingController? _categoryFieldController;
   late int _quantity;
 
   XFile? _selectedImage;
@@ -134,10 +135,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
       );
       return;
     }
-    if (_selectedCategory == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Vui lòng chọn danh mục')));
+    final categoryText = _categoryFieldController?.text.trim() ?? '';
+    if (_selectedCategory == null || categoryText != _selectedCategory) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng chọn danh mục từ danh sách')),
+      );
       return;
     }
 
@@ -258,17 +260,72 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   const SizedBox(height: 14),
                   _FieldLabel(label: 'Danh mục'),
                   const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedCategory,
-                    hint: const Text('Chọn danh mục'),
-                    decoration: const InputDecoration(),
-                    items: _categories
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedCategory = v),
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: AppColors.textSecondary,
+                  Autocomplete<String>(
+                    initialValue: TextEditingValue(
+                      text: _selectedCategory ?? '',
+                    ),
+                    optionsBuilder: (textEditingValue) {
+                      if (textEditingValue.text.isEmpty) return _categories;
+                      return _categories.where((c) => c
+                          .toLowerCase()
+                          .contains(textEditingValue.text.toLowerCase()));
+                    },
+                    onSelected: (value) =>
+                        setState(() => _selectedCategory = value),
+                    fieldViewBuilder:
+                        (ctx, controller, focusNode, onFieldSubmitted) {
+                      _categoryFieldController = controller;
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        onChanged: (v) {
+                          if (v.isEmpty) {
+                            setState(() => _selectedCategory = null);
+                          }
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Tìm hoặc chọn danh mục...',
+                          suffixIcon: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      );
+                    },
+                    optionsViewBuilder: (ctx, onSelected, options) => Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(12),
+                        clipBehavior: Clip.antiAlias,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (_, i) {
+                              final option = options.elementAt(i);
+                              return InkWell(
+                                onTap: () => onSelected(option),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  child: Text(
+                                    option,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
