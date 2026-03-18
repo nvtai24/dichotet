@@ -494,7 +494,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   Widget _buildStatsRow() {
-    return Row(
+    return IntrinsicHeight(
+      child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _StatBox(
           label: 'Số lượng',
@@ -510,6 +512,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         const SizedBox(width: 10),
         _StatBox(label: 'Đơn vị', value: _item.unit, sub: ''),
       ],
+      ),
     );
   }
 
