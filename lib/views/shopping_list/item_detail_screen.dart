@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
@@ -838,8 +839,9 @@ class _StorePriceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -851,29 +853,19 @@ class _StorePriceRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  store.storeName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  'Cập nhật: ${store.lastUpdated}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+            child: Text(
+              store.storeName,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 _formatPrice(store.pricePerUnit),
@@ -892,9 +884,39 @@ class _StorePriceRow extends StatelessWidget {
               ),
             ],
           ),
+          if (store.hasLocation) ...[
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () => _openMaps(store.lat!, store.lon!, store.storeName),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.directions_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _openMaps(double lat, double lon, String label) async {
+    final encoded = Uri.encodeComponent(label);
+    final googleUrl = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$lat,$lon&destination_place_id=$encoded&travelmode=driving');
+    final geoUrl = Uri.parse('geo:$lat,$lon?q=$lat,$lon($encoded)');
+
+    if (await canLaunchUrl(geoUrl)) {
+      await launchUrl(geoUrl);
+    } else {
+      await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
+    }
   }
 
   String _formatPrice(int price) {
