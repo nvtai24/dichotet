@@ -703,14 +703,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   String _formatPriceShort(int price) {
-    if (price >= 1000000) {
-      final m = price / 1000000;
-      return '${m % 1 == 0 ? m.toInt() : m.toStringAsFixed(1)}M ₫';
+    if (price == 0) return '0 ₫';
+    final s = price.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
     }
-    if (price >= 1000) {
-      return '${(price / 1000).toStringAsFixed(0)}k ₫';
-    }
-    return '$price ₫';
+    return '${buf.toString()} ₫';
   }
 
   void _showAddPriceSheet() {
