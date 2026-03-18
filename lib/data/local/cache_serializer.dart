@@ -1,9 +1,7 @@
 import 'dart:convert';
-import '../../core/utils/category_style.dart';
 import '../../models/shopping_models.dart';
 
 /// Serialize / deserialize app models to/from JSON strings for Hive storage.
-/// Color stored as int (ARGB), IconData stored as codePoint int.
 class CacheSerializer {
   // ─── String list ──────────────────────────────────────────────────
 
@@ -53,9 +51,7 @@ class CacheSerializer {
 
   static Map<String, dynamic> _categoryToMap(ShoppingCategory c) => {
         'name': c.name,
-        'colorHex': CategoryStyle.colorHexFrom(c.color),
         'tag': c.tag,
-        'iconName': CategoryStyle.iconNameFrom(c.icon),
         'isExpanded': c.isExpanded,
         'items': c.items.map(_itemToMap).toList(),
       };
@@ -63,9 +59,7 @@ class CacheSerializer {
   static ShoppingCategory _categoryFromMap(Map<String, dynamic> m) =>
       ShoppingCategory(
         name: m['name'] as String,
-        color: CategoryStyle.colorFrom(m['colorHex'] as String?),
         tag: m['tag'] as String,
-        icon: CategoryStyle.iconFrom(m['iconName'] as String?),
         isExpanded: m['isExpanded'] as bool? ?? false,
         items: (m['items'] as List)
             .map((i) => _itemFromMap(i as Map<String, dynamic>))
@@ -78,8 +72,6 @@ class CacheSerializer {
         'name': i.name,
         'categoryName': i.categoryName,
         'categoryTag': i.categoryTag,
-        'categoryColorHex': CategoryStyle.colorHexFrom(i.categoryColor),
-        'categoryIconName': CategoryStyle.iconNameFrom(i.categoryIcon),
         'quantity': i.quantity,
         'unit': i.unit,
         'estimatedPrice': i.estimatedPrice,
@@ -96,8 +88,6 @@ class CacheSerializer {
         name: m['name'] as String,
         categoryName: m['categoryName'] as String,
         categoryTag: m['categoryTag'] as String,
-        categoryColor: CategoryStyle.colorFrom(m['categoryColorHex'] as String?),
-        categoryIcon: CategoryStyle.iconFrom(m['categoryIconName'] as String?),
         quantity: m['quantity'] as int,
         unit: m['unit'] as String,
         estimatedPrice: m['estimatedPrice'] as int,

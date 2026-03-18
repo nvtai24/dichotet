@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/utils/category_style.dart';
 import '../../data/dtos/budget_dto.dart';
 import '../../data/interfaces/repositories/i_budget_repository.dart';
 import '../../models/budget_models.dart';
@@ -48,8 +47,6 @@ class BudgetViewModel extends ChangeNotifier {
         .map(
           (c) => BudgetCategory(
             label: c.name,
-            icon: CategoryStyle.iconFrom(c.iconName),
-            color: CategoryStyle.colorFrom(c.colorHex),
             estimated: c.estimated,
             spent: c.spent,
           ),

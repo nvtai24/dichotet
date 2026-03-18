@@ -191,7 +191,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
       name: name,
       categoryName: _selectedCategory!,
       categoryTag: _selectedCategory!.toUpperCase(),
-      categoryColor: AppColors.primary,
       quantity: _quantity,
       unit: unit.isEmpty ? 'cái' : unit,
       estimatedPrice: price,

@@ -158,18 +158,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: _item.categoryColor.withValues(alpha: 0.12),
+                          color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: _item.categoryColor.withValues(alpha: 0.3),
+                            color: AppColors.primary.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Text(
                           _item.categoryTag,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: _item.categoryColor,
+                            color: AppColors.primary,
                             letterSpacing: 0.5,
                           ),
                         ),

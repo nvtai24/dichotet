@@ -271,19 +271,6 @@ class _CategoryAccordion extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: category.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Icon(
-                        category.icon,
-                        size: 18,
-                        color: category.color,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         category.name,

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'store_price.dart';
 import 'purchase_record.dart';
 
@@ -6,8 +5,6 @@ class ShoppingItem {
   final String name;
   final String categoryName;
   final String categoryTag;
-  final Color categoryColor;
-  final IconData categoryIcon;
   final int quantity;
   final String unit;
   final int estimatedPrice;
@@ -23,8 +20,6 @@ class ShoppingItem {
     required this.name,
     required this.categoryName,
     required this.categoryTag,
-    required this.categoryColor,
-    this.categoryIcon = Icons.category_outlined,
     required this.quantity,
     required this.unit,
     required this.estimatedPrice,

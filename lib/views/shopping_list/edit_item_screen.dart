@@ -202,8 +202,6 @@ class _EditItemScreenState extends State<EditItemScreen> {
       name: name,
       categoryName: _selectedCategory!,
       categoryTag: _selectedCategory!.toUpperCase(),
-      categoryColor: widget.item.categoryColor,
-      categoryIcon: widget.item.categoryIcon,
       quantity: _quantity,
       unit: unit.isEmpty ? 'cái' : unit,
       estimatedPrice: price,

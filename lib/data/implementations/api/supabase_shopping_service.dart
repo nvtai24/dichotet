@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/utils/category_style.dart';
 import '../../../models/shopping_models.dart';
 import '../../interfaces/api/i_shopping_service.dart';
 
@@ -23,7 +22,7 @@ class SupabaseShoppingService implements IShoppingService {
     final itemRows = await _client
         .from('shopping_items')
         .select(
-          '*, categories(category_name, icon_name, color_hex), purchase_locations(*), purchases(*, purchase_locations(location_name))',
+          '*, categories(category_name), purchase_locations(*), purchases(*, purchase_locations(location_name))',
         )
         .eq('user_id', userId)
         .eq('session_id', sessionId)
@@ -37,8 +36,6 @@ class SupabaseShoppingService implements IShoppingService {
 
       final catData = row['categories'] as Map<String, dynamic>?;
       final catName = catData?['category_name'] as String? ?? '';
-      final catColorHex = catData?['color_hex'] as String?;
-      final catIconName = catData?['icon_name'] as String?;
 
       // Parse purchase_locations thành storePrices
       final locationsRaw = row['purchase_locations'] as List<dynamic>? ?? [];
@@ -83,8 +80,6 @@ class SupabaseShoppingService implements IShoppingService {
         name: row['name'] as String,
         categoryName: catName,
         categoryTag: catName.toUpperCase(),
-        categoryColor: CategoryStyle.colorFrom(catColorHex),
-        categoryIcon: CategoryStyle.iconFrom(catIconName),
         quantity: requiredQty,
         unit: row['unit'] as String? ?? '',
         estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
@@ -104,14 +99,10 @@ class SupabaseShoppingService implements IShoppingService {
     for (final cat in catRows) {
       final catId = cat['id'] as int;
       final catName = cat['category_name'] as String;
-      final iconName = cat['icon_name'] as String?;
-      final colorHex = cat['color_hex'] as String?;
       categories.add(
         ShoppingCategory(
           name: catName,
-          color: CategoryStyle.colorFrom(colorHex),
           tag: catName.toUpperCase(),
-          icon: CategoryStyle.iconFrom(iconName),
           items: itemsByCategory[catId] ?? [],
           isExpanded: categories.isEmpty,
         ),

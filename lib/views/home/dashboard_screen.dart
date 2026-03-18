@@ -1441,7 +1441,7 @@ class _RecentItemTile extends StatelessWidget {
             width: 4,
             height: 72,
             decoration: BoxDecoration(
-              color: item.categoryColor,
+              color: AppColors.primary,
               borderRadius: const BorderRadius.horizontal(
                 left: Radius.circular(16),
               ),
@@ -1481,15 +1481,15 @@ class _RecentItemTile extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: item.categoryColor.withValues(alpha: 0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         item.categoryName,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: item.categoryColor,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),

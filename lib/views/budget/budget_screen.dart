@@ -113,8 +113,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _CategoryBudgetCard(
                   label: c.label,
-                  icon: c.icon,
-                  color: c.color,
                   estimated: c.estimated,
                   spent: c.spent,
                   progress: c.progress,
@@ -310,16 +308,12 @@ class _SummaryItem extends StatelessWidget {
 
 class _CategoryBudgetCard extends StatelessWidget {
   final String label;
-  final IconData icon;
-  final Color color;
   final int estimated;
   final int spent;
   final double progress;
 
   const _CategoryBudgetCard({
     required this.label,
-    required this.icon,
-    required this.color,
     required this.estimated,
     required this.spent,
     required this.progress,
@@ -342,15 +336,6 @@ class _CategoryBudgetCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: color),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,7 +348,7 @@ class _CategoryBudgetCard extends StatelessWidget {
                     value: progress.clamp(0.0, 1.0),
                     minHeight: 4,
                     backgroundColor: AppColors.divider,
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -379,9 +364,9 @@ class _CategoryBudgetCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'Đã chi: ${_formatPrice(spent)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 11,
-                        color: color,
+                        color: AppColors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

@@ -270,9 +270,7 @@ class ShoppingListViewModel extends ChangeNotifier {
         0,
         ShoppingCategory(
           name: categoryName,
-          color: item.categoryColor,
           tag: item.categoryTag,
-          icon: item.categoryIcon,
           items: [item],
           isExpanded: true,
         ),
