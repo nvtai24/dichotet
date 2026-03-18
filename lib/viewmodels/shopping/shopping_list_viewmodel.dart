@@ -43,18 +43,10 @@ class ShoppingListViewModel extends ChangeNotifier {
   /// Số item đã mua đủ số lượng (dùng để hiển thị "x/y mặt hàng")
   int get purchasedItems => allItems.where((i) => i.isChecked).length;
 
-  /// Tiến độ theo tổng số lượng: tổng đã mua / tổng cần mua
-  /// Ví dụ: mua 2/3 của 1 item sẽ tính là 2/3 tiến độ, không phải 0
+  /// Tiến độ theo số vật phẩm: số item đã mua đủ / tổng số item
   double get shoppingProgress {
-    final totalRequired =
-        allItems.fold<int>(0, (sum, i) => sum + i.quantity);
-    if (totalRequired == 0) return 0.0;
-    final totalPurchased = allItems.fold<int>(
-      0,
-      (sum, i) =>
-          sum + i.purchases.fold<int>(0, (s, p) => s + p.quantity),
-    );
-    return (totalPurchased / totalRequired).clamp(0.0, 1.0);
+    if (totalItems == 0) return 0.0;
+    return (purchasedItems / totalItems).clamp(0.0, 1.0);
   }
 
   int get estimatedBudget =>
