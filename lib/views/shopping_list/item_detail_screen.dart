@@ -388,7 +388,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 .asMap().entries.map((entry) {
               final i = entry.key;
               final p = entry.value;
-              final date = p.purchasedAt;
+              final raw = p.purchasedAt;
+              final date = DateTime.utc(raw.year, raw.month, raw.day, raw.hour, raw.minute, raw.second).add(const Duration(hours: 7));
               final dateStr =
                   '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} '
                   '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';

@@ -283,7 +283,8 @@ class _SessionListScreenState extends State<SessionListScreen> {
 }
 
 String _formatDate(DateTime date) {
-  return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  final vn = DateTime.utc(date.year, date.month, date.day, date.hour, date.minute, date.second).add(const Duration(hours: 7));
+  return '${vn.day.toString().padLeft(2, '0')}/${vn.month.toString().padLeft(2, '0')}/${vn.year}';
 }
 
 class _SessionCard extends StatelessWidget {

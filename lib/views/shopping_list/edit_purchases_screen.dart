@@ -309,7 +309,8 @@ class _EditPurchasesScreenState extends State<EditPurchasesScreen> {
   }
 
   Widget _buildPurchaseEntryCard(_PurchaseEntry entry, int index) {
-    final date = entry.purchasedAt;
+    final raw = entry.purchasedAt;
+    final date = DateTime.utc(raw.year, raw.month, raw.day, raw.hour, raw.minute, raw.second).add(const Duration(hours: 7));
     final dateStr =
         '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} '
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
