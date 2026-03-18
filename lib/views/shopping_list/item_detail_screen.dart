@@ -1185,7 +1185,9 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
     final name = _storeController.text.trim();
     if (name.isEmpty || _priceController.text.trim().isEmpty) return;
 
-    if (widget.existingNames.contains(name)) {
+    if (widget.existingNames.any(
+      (e) => e.toLowerCase() == name.toLowerCase(),
+    )) {
       setState(() => _storeError = 'Cửa hàng "$name" đã tồn tại');
       return;
     }
@@ -1454,7 +1456,9 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
 
     if (location == null || location.isEmpty) return;
 
-    if (_isAddingNew && _locationNames.contains(location)) {
+    if (_isAddingNew && _locationNames.any(
+      (e) => e.toLowerCase() == location.toLowerCase(),
+    )) {
       setState(() => _locationError = 'Địa điểm "$location" đã tồn tại');
       return;
     }
