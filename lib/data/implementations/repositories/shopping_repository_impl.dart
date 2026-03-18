@@ -45,6 +45,9 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   }
 
   @override
+  Future<List<StorePrice>> getStoreDetails() => _service.getStoreDetails();
+
+  @override
   Future<List<String>> getStoreNames() async {
     final cached = _cache.getStoreNames();
     if (cached != null) {

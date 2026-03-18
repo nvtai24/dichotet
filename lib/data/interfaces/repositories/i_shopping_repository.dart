@@ -5,6 +5,7 @@ abstract class IShoppingRepository {
   Future<List<ShoppingCategory>> getCategories(String sessionId);
   Future<List<String>> getCategoryNames();
   Future<List<String>> getStoreNames();
+  Future<List<StorePrice>> getStoreDetails();
   Future<void> addItem(
     ShoppingItem item,
     String categoryName,

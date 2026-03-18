@@ -21,6 +21,9 @@ class ShoppingListViewModel extends ChangeNotifier {
   List<String> _storeNames = [];
   List<String> get storeNames => _storeNames;
 
+  List<StorePrice> _storeDetails = [];
+
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -68,6 +71,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     _categories = [];
     _categoryNames = [];
     _storeNames = [];
+    _storeDetails = [];
     _searchQuery = '';
     _activeTab = 0;
     _isLoading = false;
@@ -95,10 +99,12 @@ class ShoppingListViewModel extends ChangeNotifier {
         _repository.getCategories(_sessionId!),
         _repository.getCategoryNames(),
         _repository.getStoreNames(),
+        _repository.getStoreDetails(),
       ]);
       _categories = results[0] as List<ShoppingCategory>;
       _categoryNames = results[1] as List<String>;
       _storeNames = results[2] as List<String>;
+      _storeDetails = results[3] as List<StorePrice>;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -167,7 +173,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await _repository.addItem(item, categoryName, _sessionId!);
-    // Cache already invalidated by repository
+    _syncStorePrices(item.storePrices);
   }
 
   Future<void> updateItem(
@@ -181,6 +187,7 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.updateItem(oldItem, newItem, categoryName);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _syncStorePrices(newItem.storePrices);
   }
 
   Future<void> confirmPurchase(
@@ -200,12 +207,21 @@ class ShoppingListViewModel extends ChangeNotifier {
       locationLat: locationLat,
       locationLon: locationLon,
     );
-    // item mutated in-place by service
+    if (locationName != null && locationLat != null && locationLon != null) {
+      _syncStorePrices([StorePrice(
+        storeName: locationName,
+        pricePerUnit: 0,
+        lastUpdated: '',
+        lat: locationLat,
+        lon: locationLon,
+      )]);
+    }
     notifyListeners();
   }
 
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
     await _repository.addStorePrice(item, storePrice);
+    _syncStorePrices([storePrice]);
     notifyListeners();
   }
 
@@ -298,10 +314,14 @@ class ShoppingListViewModel extends ChangeNotifier {
     _addItemToCategory(newItem, categoryName);
   }
 
-  /// Tìm StorePrice đầu tiên khớp tên trong toàn bộ items (case-insensitive).
-  /// Dùng để lấy lat/lon của store khi user chọn từ autocomplete.
+  /// Tìm StorePrice khớp tên (case-insensitive).
+  /// Ưu tiên _storeDetails (full store table với lat/lon đầy đủ),
+  /// fallback về storePrices của items trong session.
   StorePrice? findStore(String name) {
     final lower = name.toLowerCase();
+    for (final s in _storeDetails) {
+      if (s.storeName.toLowerCase() == lower) return s;
+    }
     for (final cat in _categories) {
       for (final item in cat.items) {
         for (final sp in item.storePrices) {
@@ -319,6 +339,34 @@ class ShoppingListViewModel extends ChangeNotifier {
       }
     }
     return null;
+  }
+
+  /// Cập nhật lat/lon của stores trong _storeDetails mà không cần gọi lại API.
+  void _syncStorePrices(List<StorePrice> storePrices) {
+    for (final sp in storePrices) {
+      if (sp.lat == null || sp.lon == null) continue;
+      final idx = _storeDetails.indexWhere(
+        (s) => s.storeName.toLowerCase() == sp.storeName.toLowerCase(),
+      );
+      if (idx >= 0) {
+        _storeDetails[idx] = StorePrice(
+          storeId: _storeDetails[idx].storeId,
+          storeName: _storeDetails[idx].storeName,
+          pricePerUnit: 0,
+          lastUpdated: '',
+          lat: sp.lat,
+          lon: sp.lon,
+        );
+      } else {
+        _storeDetails.add(StorePrice(
+          storeName: sp.storeName,
+          pricePerUnit: 0,
+          lastUpdated: '',
+          lat: sp.lat,
+          lon: sp.lon,
+        ));
+      }
+    }
   }
 
   void _recalcIsChecked(ShoppingItem item) {

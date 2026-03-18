@@ -1149,7 +1149,7 @@ class _AddPriceSheet extends StatefulWidget {
 }
 
 class _AddPriceSheetState extends State<_AddPriceSheet> {
-  final _storeController = TextEditingController();
+  String _storeName = '';
   final _priceController = TextEditingController();
   double? _lat;
   double? _lon;
@@ -1157,7 +1157,6 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
 
   @override
   void dispose() {
-    _storeController.dispose();
     _priceController.dispose();
     super.dispose();
   }
@@ -1167,11 +1166,8 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
       context,
       MaterialPageRoute(
         builder: (_) => LocationPickerScreen(
-          storeName: _storeController.text.trim().isNotEmpty
-              ? _storeController.text.trim()
-              : null,
-          initialLocation:
-              (_lat != null && _lon != null) ? LatLng(_lat!, _lon!) : null,
+          storeName: _storeName.isNotEmpty ? _storeName : null,
+          initialLocation: (_lat != null && _lon != null) ? LatLng(_lat!, _lon!) : null,
         ),
       ),
     );
@@ -1183,7 +1179,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
   }
 
   void _onAdd() {
-    final name = _storeController.text.trim();
+    final name = _storeName.trim();
     if (name.isEmpty || _priceController.text.trim().isEmpty) return;
 
     if (widget.existingNames.any(
@@ -1195,7 +1191,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
 
     widget.onAdd(
       StorePrice(
-        storeName: _storeController.text.trim(),
+        storeName: name,
         pricePerUnit: int.tryParse(_priceController.text.trim()) ?? 0,
         lastUpdated: 'Vừa xong',
         lat: _lat,
@@ -1243,18 +1239,66 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: TextField(
-                  controller: _storeController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(
-                    labelText: 'Tên cửa hàng',
-                    hintText: 'Ví dụ: Chợ Bến Thành',
-                    prefixIcon: const Icon(Icons.storefront_outlined, size: 20),
-                    errorText: _storeError,
-                  ),
-                  onChanged: (_) {
-                    if (_storeError != null) setState(() => _storeError = null);
+                child: Autocomplete<String>(
+                  optionsBuilder: (textEditingValue) {
+                    final allStoreNames = context.read<ShoppingListViewModel>().storeNames;
+                    if (allStoreNames.isEmpty) return const Iterable.empty();
+                    if (textEditingValue.text.isEmpty) return allStoreNames;
+                    return allStoreNames.where(
+                      (n) => n.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+                    );
                   },
+                  onSelected: (value) {
+                    final store = context.read<ShoppingListViewModel>().findStore(value);
+                    setState(() {
+                      _storeName = value;
+                      _lat = store?.lat;
+                      _lon = store?.lon;
+                      _storeError = null;
+                    });
+                  },
+                  fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: 'Tên cửa hàng',
+                        hintText: 'Ví dụ: Chợ Bến Thành',
+                        prefixIcon: const Icon(Icons.storefront_outlined, size: 20),
+                        errorText: _storeError,
+                      ),
+                      onChanged: (v) {
+                        _storeName = v;
+                        if (_storeError != null) setState(() => _storeError = null);
+                      },
+                    );
+                  },
+                  optionsViewBuilder: (ctx, onSelected, options) => Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(12),
+                      clipBehavior: Clip.antiAlias,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          itemBuilder: (_, i) {
+                            final option = options.elementAt(i);
+                            return InkWell(
+                              onTap: () => onSelected(option),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Text(option, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1400,28 +1444,22 @@ class _ConfirmPurchaseSheet extends StatefulWidget {
 class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   late final TextEditingController _qtyController;
   late final TextEditingController _priceController;
-  late final TextEditingController _newLocationController;
-  String? _selectedLocation;
-  bool _isAddingNew = false;
-  double? _newLat;
-  double? _newLon;
+  String _locationName = '';
+  double? _locationLat;
+  double? _locationLon;
   String? _locationError;
-
-  List<String> get _locationNames => widget.storeNames;
 
   @override
   void initState() {
     super.initState();
     _qtyController = TextEditingController();
     _priceController = TextEditingController();
-    _newLocationController = TextEditingController();
   }
 
   @override
   void dispose() {
     _qtyController.dispose();
     _priceController.dispose();
-    _newLocationController.dispose();
     super.dispose();
   }
 
@@ -1430,19 +1468,17 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
       context,
       MaterialPageRoute(
         builder: (_) => LocationPickerScreen(
-          storeName: _newLocationController.text.trim().isNotEmpty
-              ? _newLocationController.text.trim()
-              : null,
-          initialLocation: (_newLat != null && _newLon != null)
-              ? LatLng(_newLat!, _newLon!)
+          storeName: _locationName.isNotEmpty ? _locationName : null,
+          initialLocation: (_locationLat != null && _locationLon != null)
+              ? LatLng(_locationLat!, _locationLon!)
               : null,
         ),
       ),
     );
     if (result == null) {
-      setState(() { _newLat = null; _newLon = null; });
+      setState(() { _locationLat = null; _locationLon = null; });
     } else {
-      setState(() { _newLat = result.latitude; _newLon = result.longitude; });
+      setState(() { _locationLat = result.latitude; _locationLon = result.longitude; });
     }
   }
 
@@ -1450,21 +1486,9 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
     final qty = int.tryParse(_qtyController.text.trim());
     final price = int.tryParse(_priceController.text.trim());
     if (qty == null || qty <= 0 || price == null || price < 0) return;
+    if (_locationName.trim().isEmpty) return;
 
-    final location = _isAddingNew
-        ? _newLocationController.text.trim()
-        : _selectedLocation;
-
-    if (location == null || location.isEmpty) return;
-
-    if (_isAddingNew && _locationNames.any(
-      (e) => e.toLowerCase() == location.toLowerCase(),
-    )) {
-      setState(() => _locationError = 'Địa điểm "$location" đã tồn tại');
-      return;
-    }
-
-    await widget.onConfirm(qty, price, location, _newLat, _newLon);
+    await widget.onConfirm(qty, price, _locationName.trim(), _locationLat, _locationLon);
     if (!mounted) return;
     Navigator.pop(context);
   }
@@ -1539,121 +1563,115 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
           // ── Nơi mua ──
           _SheetLabel(label: 'Nơi mua'),
           const SizedBox(height: 8),
-          if (!_isAddingNew)
-            DropdownButtonFormField<String>(
-              initialValue: _selectedLocation,
-              decoration: const InputDecoration(
-                hintText: 'Chọn địa điểm',
-                prefixIcon: Icon(Icons.place_outlined, size: 20),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              ),
-              items: [
-                ..._locationNames.map(
-                  (name) => DropdownMenuItem(value: name, child: Text(name)),
-                ),
-                const DropdownMenuItem(
-                  value: '__add_new__',
-                  child: Row(
-                    children: [
-                      Icon(Icons.add_rounded, size: 16, color: AppColors.primary),
-                      SizedBox(width: 6),
-                      Text('Địa điểm mới...', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ],
-              onChanged: (value) {
-                if (value == '__add_new__') {
-                  setState(() { _isAddingNew = true; _selectedLocation = null; });
-                } else {
-                  setState(() => _selectedLocation = value);
-                }
-              },
-            )
-          else ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _newLocationController,
-                    decoration: InputDecoration(
-                      hintText: 'Tên địa điểm',
-                      prefixIcon: const Icon(Icons.place_outlined, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      errorText: _locationError,
-                    ),
-                    onChanged: (_) {
-                      if (_locationError != null) setState(() => _locationError = null);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Map pin button
-                GestureDetector(
-                  onTap: _pickLocation,
-                  child: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: _newLat != null ? AppColors.primary : const Color(0xFFF0F0F0),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      _newLat != null ? Icons.location_on_rounded : Icons.add_location_alt_outlined,
-                      size: 22,
-                      color: _newLat != null ? Colors.white : AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                if (_locationNames.isNotEmpty) ...[
-                  const SizedBox(width: 4),
-                  GestureDetector(
-                    onTap: () => setState(() {
-                      _isAddingNew = false;
-                      _newLocationController.clear();
-                      _newLat = null;
-                      _newLon = null;
-                    }),
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F0F0),
-                        borderRadius: BorderRadius.circular(10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Autocomplete<String>(
+                  optionsBuilder: (textEditingValue) {
+                    final names = widget.storeNames;
+                    if (names.isEmpty) return const Iterable.empty();
+                    if (textEditingValue.text.isEmpty) return names;
+                    return names.where(
+                      (n) => n.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+                    );
+                  },
+                  onSelected: (value) {
+                    final store = context.read<ShoppingListViewModel>().findStore(value);
+                    setState(() {
+                      _locationName = value;
+                      _locationLat = store?.lat;
+                      _locationLon = store?.lon;
+                      _locationError = null;
+                    });
+                  },
+                  fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Tên địa điểm',
+                        prefixIcon: const Icon(Icons.place_outlined, size: 20),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        errorText: _locationError,
                       ),
-                      child: Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                      onChanged: (v) {
+                        _locationName = v;
+                        if (_locationError != null) setState(() => _locationError = null);
+                      },
+                    );
+                  },
+                  optionsViewBuilder: (ctx, onSelected, options) => Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      elevation: 4,
+                      borderRadius: BorderRadius.circular(12),
+                      clipBehavior: Clip.antiAlias,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          itemBuilder: (_, i) {
+                            final option = options.elementAt(i);
+                            return InkWell(
+                              onTap: () => onSelected(option),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Text(option, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
-                ],
-              ],
-            ),
-            if (_newLat != null) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(6),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.location_on_rounded, size: 11, color: AppColors.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${_newLat!.toStringAsFixed(5)}, ${_newLon!.toStringAsFixed(5)}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () => setState(() { _newLat = null; _newLon = null; }),
-                      child: Icon(Icons.close_rounded, size: 11, color: AppColors.primary.withValues(alpha: 0.6)),
-                    ),
-                  ],
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: _pickLocation,
+                child: Container(
+                  width: 50, height: 50,
+                  decoration: BoxDecoration(
+                    color: _locationLat != null ? AppColors.primary : const Color(0xFFF0F0F0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _locationLat != null ? Icons.location_on_rounded : Icons.add_location_alt_outlined,
+                    size: 22,
+                    color: _locationLat != null ? Colors.white : AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],
+          ),
+          if (_locationLat != null) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.location_on_rounded, size: 11, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_locationLat!.toStringAsFixed(5)}, ${_locationLon!.toStringAsFixed(5)}',
+                    style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: () => setState(() { _locationLat = null; _locationLon = null; }),
+                    child: Icon(Icons.close_rounded, size: 11, color: AppColors.primary.withValues(alpha: 0.6)),
+                  ),
+                ],
+              ),
+            ),
           ],
           const SizedBox(height: 16),
 

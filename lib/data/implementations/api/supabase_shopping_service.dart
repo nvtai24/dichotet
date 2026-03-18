@@ -131,6 +131,25 @@ class SupabaseShoppingService implements IShoppingService {
     return names;
   }
 
+  // ─── Get Store Details (with lat/lon) ─────────────────────────────
+
+  @override
+  Future<List<StorePrice>> getStoreDetails() async {
+    final rows = await _client.from('stores').select('id, name, lat, lon').order('name');
+    return rows.map((r) {
+      final rawLat = (r['lat'] as num?)?.toDouble();
+      final rawLon = (r['lon'] as num?)?.toDouble();
+      return StorePrice(
+        storeId: (r['id'] as num?)?.toInt(),
+        storeName: r['name'] as String,
+        pricePerUnit: 0,
+        lastUpdated: '',
+        lat: (rawLat != null && rawLat != -1) ? rawLat : null,
+        lon: (rawLon != null && rawLon != -1) ? rawLon : null,
+      );
+    }).toList();
+  }
+
   // ─── Add Item ─────────────────────────────────────────────────────
 
   @override
@@ -452,10 +471,11 @@ class SupabaseShoppingService implements IShoppingService {
     double? lat,
     double? lon,
   ) async {
+    final trimmed = name.trim();
     final existing = await _client
         .from('stores')
         .select('id')
-        .ilike('name', name)
+        .ilike('name', trimmed)
         .limit(1);
 
     if (existing.isNotEmpty) {
@@ -468,7 +488,7 @@ class SupabaseShoppingService implements IShoppingService {
 
     final inserted = await _client
         .from('stores')
-        .insert({'name': name, 'lat': lat, 'lon': lon})
+        .insert({'name': trimmed, 'lat': lat, 'lon': lon})
         .select('id');
     return inserted.first['id'] as int;
   }
