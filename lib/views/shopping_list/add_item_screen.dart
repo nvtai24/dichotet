@@ -134,6 +134,19 @@ class _AddItemScreenState extends State<AddItemScreen> {
     final price = int.tryParse(_priceController.text.trim()) ?? 0;
     final note = _noteController.text.trim();
 
+    // Validate tên cửa hàng không trùng nhau
+    final storeNames = _storePriceEntries
+        .map((e) => e.storeName.trim().toLowerCase())
+        .where((n) => n.isNotEmpty)
+        .toList();
+    final uniqueNames = storeNames.toSet();
+    if (uniqueNames.length < storeNames.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tên cửa hàng không được trùng nhau')),
+      );
+      return;
+    }
+
     // Tạo danh sách store prices
     final storePrices = <StorePrice>[];
     for (final entry in _storePriceEntries) {

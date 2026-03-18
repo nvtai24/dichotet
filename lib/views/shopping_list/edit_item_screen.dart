@@ -145,6 +145,18 @@ class _EditItemScreenState extends State<EditItemScreen> {
     final price = int.tryParse(_priceController.text.trim()) ?? 0;
     final note = _noteController.text.trim();
 
+    // Validate tên cửa hàng không trùng nhau
+    final storeNamesRaw = _storePriceEntries
+        .map((e) => e.storeName.trim().toLowerCase())
+        .where((n) => n.isNotEmpty)
+        .toList();
+    if (storeNamesRaw.toSet().length < storeNamesRaw.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tên cửa hàng không được trùng nhau')),
+      );
+      return;
+    }
+
     final storePrices = <StorePrice>[];
     for (final entry in _storePriceEntries) {
       final storeName = entry.storeName;
