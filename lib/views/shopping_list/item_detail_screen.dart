@@ -744,6 +744,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       builder: (_) => _ConfirmPurchaseSheet(
         item: _item,
+        storeNames: context.read<ShoppingListViewModel>().storeNames,
         onConfirm: (qty, price, location, lat, lon) async {
           final vm = context.read<ShoppingListViewModel>();
           await vm.confirmPurchase(
@@ -1385,11 +1386,12 @@ class _PurchaseStatBox extends StatelessWidget {
 
 class _ConfirmPurchaseSheet extends StatefulWidget {
   final ShoppingItem item;
+  final List<String> storeNames;
   final Future<void> Function(
       int quantity, int price, String? locationName,
       double? lat, double? lon) onConfirm;
 
-  const _ConfirmPurchaseSheet({required this.item, required this.onConfirm});
+  const _ConfirmPurchaseSheet({required this.item, required this.storeNames, required this.onConfirm});
 
   @override
   State<_ConfirmPurchaseSheet> createState() => _ConfirmPurchaseSheetState();
@@ -1405,8 +1407,7 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   double? _newLon;
   String? _locationError;
 
-  List<String> get _locationNames =>
-      widget.item.storePrices.map((s) => s.storeName).toSet().toList();
+  List<String> get _locationNames => widget.storeNames;
 
   @override
   void initState() {

@@ -1,4 +1,5 @@
 class StorePrice {
+  final int? storeId;
   final String storeName;
   final int pricePerUnit;
   final String lastUpdated;
@@ -7,6 +8,7 @@ class StorePrice {
   final DateTime? createdAt;
 
   StorePrice({
+    this.storeId,
     required this.storeName,
     required this.pricePerUnit,
     required this.lastUpdated,

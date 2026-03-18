@@ -107,12 +107,14 @@ class CacheSerializer {
   // ─── StorePrice ───────────────────────────────────────────────────
 
   static Map<String, dynamic> _storePriceToMap(StorePrice s) => {
+        'storeId': s.storeId,
         'storeName': s.storeName,
         'pricePerUnit': s.pricePerUnit,
         'lastUpdated': s.lastUpdated,
       };
 
   static StorePrice _storePriceFromMap(Map<String, dynamic> m) => StorePrice(
+        storeId: m['storeId'] as int?,
         storeName: m['storeName'] as String,
         pricePerUnit: m['pricePerUnit'] as int,
         lastUpdated: m['lastUpdated'] as String,

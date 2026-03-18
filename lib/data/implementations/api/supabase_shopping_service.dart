@@ -15,20 +15,19 @@ class SupabaseShoppingService implements IShoppingService {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return [];
 
-    // Lấy tất cả categories
     final catRows = await _client.from('categories').select().order('id');
 
-    // Lấy items của user hiện tại theo session, kèm category name, purchase locations và purchases (kèm tên địa điểm)
     final itemRows = await _client
         .from('shopping_items')
         .select(
-          '*, categories(category_name), purchase_locations(*), purchases(*, purchase_locations(location_name))',
+          '*, categories(category_name), '
+          'item_price_references(*, stores(name, lat, lon)), '
+          'purchases(*, stores(name))',
         )
         .eq('user_id', userId)
         .eq('session_id', sessionId)
         .order('created_at', ascending: false);
 
-    // Nhóm items theo category
     final Map<int, List<ShoppingItem>> itemsByCategory = {};
     for (final row in itemRows) {
       final catId = row['category_id'] as int?;
@@ -37,27 +36,28 @@ class SupabaseShoppingService implements IShoppingService {
       final catData = row['categories'] as Map<String, dynamic>?;
       final catName = catData?['category_name'] as String? ?? '';
 
-      // Parse purchase_locations thành storePrices
-      final locationsRaw = row['purchase_locations'] as List<dynamic>? ?? [];
-      final storePrices = locationsRaw.map((loc) {
-        final m = loc as Map<String, dynamic>;
-        final rawLat = (m['lat'] as num?)?.toDouble();
-        final rawLon = (m['lon'] as num?)?.toDouble();
+      // Parse item_price_references → storePrices
+      final refsRaw = row['item_price_references'] as List<dynamic>? ?? [];
+      final storePrices = refsRaw.map((ref) {
+        final m = ref as Map<String, dynamic>;
+        final storeData = m['stores'] as Map<String, dynamic>?;
+        final rawLat = (storeData?['lat'] as num?)?.toDouble();
+        final rawLon = (storeData?['lon'] as num?)?.toDouble();
         return StorePrice(
-          storeName: m['location_name'] as String? ?? '',
-          pricePerUnit: ((m['price_per_unit'] as num?)?.toInt()) ?? 0,
+          storeId: (m['store_id'] as num?)?.toInt(),
+          storeName: storeData?['name'] as String? ?? '',
+          pricePerUnit: (m['price_per_unit'] as num?)?.toInt() ?? 0,
           lastUpdated: 'Đã lưu',
           lat: (rawLat != null && rawLat != -1) ? rawLat : null,
           lon: (rawLon != null && rawLon != -1) ? rawLon : null,
-          createdAt: DateTime.tryParse(m['created_at'] as String? ?? ''),
         );
       }).toList();
 
-      // Parse purchases (tất cả bản ghi)
+      // Parse purchases
       final purchasesRaw = row['purchases'] as List<dynamic>? ?? [];
       final purchases = purchasesRaw.map((p) {
         final m = p as Map<String, dynamic>;
-        final locData = m['purchase_locations'] as Map<String, dynamic>?;
+        final storeData = m['stores'] as Map<String, dynamic>?;
         return PurchaseRecord(
           id: (m['id'] as num?)?.toInt(),
           quantity: (m['quantity'] as num?)?.toInt() ?? 0,
@@ -65,16 +65,13 @@ class SupabaseShoppingService implements IShoppingService {
           purchasedAt:
               DateTime.tryParse(m['purchased_at'] as String? ?? '') ??
               DateTime.now(),
-          locationName: locData?['location_name'] as String?,
+          locationName: storeData?['name'] as String?,
         );
       }).toList();
 
-      // Tính isChecked dựa trên tổng quantity purchases >= quantity item
       final requiredQty = row['quantity'] as int? ?? 1;
-      final totalPurchased = purchases.fold<int>(
-        0,
-        (sum, p) => sum + p.quantity,
-      );
+      final totalPurchased =
+          purchases.fold<int>(0, (sum, p) => sum + p.quantity);
 
       final item = ShoppingItem(
         name: row['name'] as String,
@@ -94,7 +91,6 @@ class SupabaseShoppingService implements IShoppingService {
       itemsByCategory.putIfAbsent(catId, () => []).add(item);
     }
 
-    // Tạo ShoppingCategory list
     final categories = <ShoppingCategory>[];
     for (final cat in catRows) {
       final catId = cat['id'] as int;
@@ -127,13 +123,8 @@ class SupabaseShoppingService implements IShoppingService {
 
   @override
   Future<List<String>> getStoreNames() async {
-    final rows = await _client
-        .from('purchase_locations')
-        .select('location_name');
-    final names = rows
-        .map((r) => r['location_name'] as String)
-        .toSet()
-        .toList();
+    final rows = await _client.from('stores').select('name').order('name');
+    final names = rows.map((r) => r['name'] as String).toList();
     if (names.isEmpty) {
       return ['Chợ Bến Thành', 'Lotte Mart', 'Vinmart', 'Chợ địa phương'];
     }
@@ -151,13 +142,11 @@ class SupabaseShoppingService implements IShoppingService {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('Chưa đăng nhập');
 
-    // Tìm category id
     final catRows = await _client
         .from('categories')
         .select('id')
         .eq('category_name', categoryName)
         .limit(1);
-
     final categoryId = catRows.isNotEmpty ? catRows.first['id'] as int : null;
 
     final insertedRows = await _client
@@ -175,21 +164,16 @@ class SupabaseShoppingService implements IShoppingService {
         })
         .select('id');
 
-    // Insert purchase locations nếu có
     if (insertedRows.isNotEmpty && item.storePrices.isNotEmpty) {
       final itemId = insertedRows.first['id'] as int;
-      final locations = item.storePrices
-          .map(
-            (sp) => {
-              'shopping_item_id': itemId,
-              'location_name': sp.storeName,
-              'lat': sp.lat ?? -1,
-              'lon': sp.lon ?? -1,
-              'price_per_unit': sp.pricePerUnit,
-            },
-          )
-          .toList();
-      await _client.from('purchase_locations').insert(locations);
+      for (final sp in item.storePrices) {
+        final storeId = await _findOrCreateStore(sp.storeName, sp.lat, sp.lon);
+        await _client.from('item_price_references').insert({
+          'shopping_item_id': itemId,
+          'store_id': storeId,
+          'price_per_unit': sp.pricePerUnit,
+        });
+      }
     }
   }
 
@@ -204,7 +188,6 @@ class SupabaseShoppingService implements IShoppingService {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) throw Exception('Chưa đăng nhập');
 
-    // Tìm item id
     final rows = await _client
         .from('shopping_items')
         .select('id')
@@ -215,7 +198,6 @@ class SupabaseShoppingService implements IShoppingService {
 
     final itemId = rows.first['id'] as int;
 
-    // Tìm category id
     final catRows = await _client
         .from('categories')
         .select('id')
@@ -223,7 +205,6 @@ class SupabaseShoppingService implements IShoppingService {
         .limit(1);
     final categoryId = catRows.isNotEmpty ? catRows.first['id'] as int : null;
 
-    // Update shopping_items
     await _client
         .from('shopping_items')
         .update({
@@ -237,25 +218,19 @@ class SupabaseShoppingService implements IShoppingService {
         })
         .eq('id', itemId);
 
-    // Xóa purchase_locations cũ và insert mới
+    // Xóa giá tham khảo cũ, insert lại
     await _client
-        .from('purchase_locations')
+        .from('item_price_references')
         .delete()
         .eq('shopping_item_id', itemId);
 
-    if (newItem.storePrices.isNotEmpty) {
-      final locations = newItem.storePrices
-          .map(
-            (sp) => {
-              'shopping_item_id': itemId,
-              'location_name': sp.storeName,
-              'lat': sp.lat ?? -1,
-              'lon': sp.lon ?? -1,
-              'price_per_unit': sp.pricePerUnit,
-            },
-          )
-          .toList();
-      await _client.from('purchase_locations').insert(locations);
+    for (final sp in newItem.storePrices) {
+      final storeId = await _findOrCreateStore(sp.storeName, sp.lat, sp.lon);
+      await _client.from('item_price_references').insert({
+        'shopping_item_id': itemId,
+        'store_id': storeId,
+        'price_per_unit': sp.pricePerUnit,
+      });
     }
   }
 
@@ -271,7 +246,6 @@ class SupabaseShoppingService implements IShoppingService {
     double? locationLat,
     double? locationLon,
   }) async {
-    // Tìm item theo tên + user
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
 
@@ -281,50 +255,42 @@ class SupabaseShoppingService implements IShoppingService {
         .eq('name', item.name)
         .eq('user_id', userId)
         .limit(1);
-
     if (rows.isEmpty) return;
 
     final itemId = rows.first['id'] as int;
     final requiredQty = rows.first['quantity'] as int? ?? 1;
 
-    // Insert vào bảng purchases
     if (actualQuantity != null && actualPrice != null) {
-      int? locationId;
+      int? storeId;
 
-      // Tìm hoặc tạo purchase_location
       if (locationName != null && locationName.isNotEmpty) {
-        final existingLoc = await _client
-            .from('purchase_locations')
+        storeId =
+            await _findOrCreateStore(locationName, locationLat, locationLon);
+
+        // Thêm vào item_price_references nếu chưa có
+        final existingRef = await _client
+            .from('item_price_references')
             .select('id')
             .eq('shopping_item_id', itemId)
-            .eq('location_name', locationName)
+            .eq('store_id', storeId)
             .limit(1);
 
-        if (existingLoc.isNotEmpty) {
-          locationId = existingLoc.first['id'] as int;
-        } else {
-          final newLoc = await _client
-              .from('purchase_locations')
-              .insert({
-                'shopping_item_id': itemId,
-                'location_name': locationName,
-                'lat': locationLat ?? -1,
-                'lon': locationLon ?? -1,
-                'price_per_unit': actualPrice,
-              })
-              .select('id');
-          if (newLoc.isNotEmpty) {
-            locationId = newLoc.first['id'] as int;
-            // Cập nhật storePrices in-memory
-            item.storePrices.add(
-              StorePrice(
-                storeName: locationName,
-      
-                pricePerUnit: actualPrice,
-                lastUpdated: 'Đã lưu',
-              ),
-            );
-          }
+        if (existingRef.isEmpty) {
+          await _client.from('item_price_references').insert({
+            'shopping_item_id': itemId,
+            'store_id': storeId,
+            'price_per_unit': actualPrice,
+          });
+          item.storePrices.add(
+            StorePrice(
+              storeId: storeId,
+              storeName: locationName,
+              pricePerUnit: actualPrice,
+              lastUpdated: 'Đã lưu',
+              lat: locationLat,
+              lon: locationLon,
+            ),
+          );
         }
       }
 
@@ -333,9 +299,7 @@ class SupabaseShoppingService implements IShoppingService {
         'quantity': actualQuantity,
         'price_per_unit': actualPrice,
       };
-      if (locationId != null) {
-        purchaseData['purchase_location_id'] = locationId;
-      }
+      if (storeId != null) purchaseData['store_id'] = storeId;
       await _client.from('purchases').insert(purchaseData);
 
       item.purchases.add(
@@ -348,7 +312,6 @@ class SupabaseShoppingService implements IShoppingService {
       );
     }
 
-    // Recalculate: tổng quantity purchases >= quantity item
     final purchaseRows = await _client
         .from('purchases')
         .select('quantity')
@@ -378,11 +341,14 @@ class SupabaseShoppingService implements IShoppingService {
     if (rows.isEmpty) return;
 
     final itemId = rows.first['id'] as int;
-    await _client.from('purchase_locations').insert({
+    final storeId = await _findOrCreateStore(
+      storePrice.storeName,
+      storePrice.lat,
+      storePrice.lon,
+    );
+    await _client.from('item_price_references').insert({
       'shopping_item_id': itemId,
-      'location_name': storePrice.storeName,
-      'lat': storePrice.lat ?? -1,
-      'lon': storePrice.lon ?? -1,
+      'store_id': storeId,
       'price_per_unit': storePrice.pricePerUnit,
     });
   }
@@ -454,14 +420,11 @@ class SupabaseShoppingService implements IShoppingService {
 
     final itemId = rows.first['id'] as int;
 
-    // Xoá purchases liên quan
     await _client.from('purchases').delete().eq('shopping_item_id', itemId);
-    // Xoá purchase_locations liên quan
     await _client
-        .from('purchase_locations')
+        .from('item_price_references')
         .delete()
         .eq('shopping_item_id', itemId);
-    // Xoá item
     await _client.from('shopping_items').delete().eq('id', itemId);
   }
 
@@ -482,4 +445,25 @@ class SupabaseShoppingService implements IShoppingService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────
+
+  /// Tìm store theo tên, nếu chưa có thì tạo mới. Trả về store_id.
+  Future<int> _findOrCreateStore(
+    String name,
+    double? lat,
+    double? lon,
+  ) async {
+    final existing = await _client
+        .from('stores')
+        .select('id')
+        .eq('name', name)
+        .limit(1);
+
+    if (existing.isNotEmpty) return existing.first['id'] as int;
+
+    final inserted = await _client
+        .from('stores')
+        .insert({'name': name, 'lat': lat, 'lon': lon})
+        .select('id');
+    return inserted.first['id'] as int;
+  }
 }
