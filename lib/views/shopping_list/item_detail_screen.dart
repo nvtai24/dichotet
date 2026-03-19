@@ -1162,7 +1162,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
   }
 
   Future<void> _pickLocation() async {
-    final result = await Navigator.push<LatLng?>(
+    final result = await Navigator.push<LocationPickerResult?>(
       context,
       MaterialPageRoute(
         builder: (_) => LocationPickerScreen(
@@ -1171,10 +1171,11 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
         ),
       ),
     );
-    if (result == null) {
+    if (result == null) return; // cancelled (back button)
+    if (result.cleared) {
       setState(() { _lat = null; _lon = null; });
-    } else {
-      setState(() { _lat = result.latitude; _lon = result.longitude; });
+    } else if (result.location != null) {
+      setState(() { _lat = result.location!.latitude; _lon = result.location!.longitude; });
     }
   }
 
@@ -1464,7 +1465,7 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   }
 
   Future<void> _pickLocation() async {
-    final result = await Navigator.push<LatLng?>(
+    final result = await Navigator.push<LocationPickerResult?>(
       context,
       MaterialPageRoute(
         builder: (_) => LocationPickerScreen(
@@ -1475,10 +1476,11 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
         ),
       ),
     );
-    if (result == null) {
+    if (result == null) return; // cancelled (back button)
+    if (result.cleared) {
       setState(() { _locationLat = null; _locationLon = null; });
-    } else {
-      setState(() { _locationLat = result.latitude; _locationLon = result.longitude; });
+    } else if (result.location != null) {
+      setState(() { _locationLat = result.location!.latitude; _locationLon = result.location!.longitude; });
     }
   }
 

@@ -8,6 +8,21 @@ import 'package:latlong2/latlong.dart' hide Path;
 
 import '../../core/constants/app_colors.dart';
 
+// ─── Kết quả trả về từ LocationPickerScreen ────────────────────────────────
+
+class LocationPickerResult {
+  final LatLng? location;
+  final bool cleared;
+
+  const LocationPickerResult._({this.location, required this.cleared});
+
+  factory LocationPickerResult.picked(LatLng loc) =>
+      LocationPickerResult._(location: loc, cleared: false);
+
+  factory LocationPickerResult.cleared() =>
+      const LocationPickerResult._(location: null, cleared: true);
+}
+
 // ─── Model kết quả tìm kiếm ────────────────────────────────────────────────
 
 class _SearchResult {
@@ -182,7 +197,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   void _confirm() {
     if (_pickedLocation == null) { _showSnack('Chọn vị trí trước'); return; }
-    Navigator.pop(context, _pickedLocation);
+    Navigator.pop(context, LocationPickerResult.picked(_pickedLocation!));
   }
 
   // ─── Build ────────────────────────────────────────────────────────
@@ -618,7 +633,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 if (widget.initialLocation != null) ...[
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, null),
+                      onPressed: () => Navigator.pop(context, LocationPickerResult.cleared()),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),

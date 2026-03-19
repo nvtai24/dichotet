@@ -769,7 +769,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: () async {
-                  final result = await Navigator.push<LatLng?>(
+                  final result = await Navigator.push<LocationPickerResult?>(
                     context,
                     MaterialPageRoute(
                       builder: (_) => LocationPickerScreen(
@@ -778,10 +778,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       ),
                     ),
                   );
-                  if (result == null && entry.hasLocation) {
+                  if (result == null) return; // cancelled (back button)
+                  if (result.cleared) {
                     setState(() { entry.lat = null; entry.lon = null; });
-                  } else if (result != null) {
-                    setState(() { entry.lat = result.latitude; entry.lon = result.longitude; });
+                  } else if (result.location != null) {
+                    setState(() { entry.lat = result.location!.latitude; entry.lon = result.location!.longitude; });
                   }
                 },
                 child: Container(
