@@ -684,7 +684,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
 
   Widget _buildStoreEntryCard(_StorePriceEntry entry, int index) {
-    final allStoreNames = context.read<ShoppingListViewModel>().storeNames;
+    final allStoreNames = context.read<ShoppingListViewModel>().sessionStoreNames;
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),

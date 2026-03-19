@@ -41,6 +41,20 @@ class ShoppingListViewModel extends ChangeNotifier {
   List<ShoppingItem> get allItems =>
       _categories.expand((c) => c.items).toList();
 
+  /// Tên cửa hàng chỉ từ items trong phiên hiện tại (không lấy global)
+  List<String> get sessionStoreNames {
+    final seen = <String>{};
+    final names = <String>[];
+    for (final cat in _categories) {
+      for (final item in cat.items) {
+        for (final sp in item.storePrices) {
+          if (seen.add(sp.storeName)) names.add(sp.storeName);
+        }
+      }
+    }
+    return names;
+  }
+
   int get totalItems => allItems.length;
 
   /// Số item đã mua đủ số lượng (dùng để hiển thị "x/y mặt hàng")

@@ -744,7 +744,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       builder: (_) => _ConfirmPurchaseSheet(
         item: _item,
-        storeNames: context.read<ShoppingListViewModel>().storeNames,
+        storeNames: context.read<ShoppingListViewModel>().sessionStoreNames,
         onConfirm: (qty, price, location, lat, lon) async {
           final vm = context.read<ShoppingListViewModel>();
           await vm.confirmPurchase(
@@ -1242,7 +1242,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
               Expanded(
                 child: Autocomplete<String>(
                   optionsBuilder: (textEditingValue) {
-                    final allStoreNames = context.read<ShoppingListViewModel>().storeNames;
+                    final allStoreNames = context.read<ShoppingListViewModel>().sessionStoreNames;
                     if (allStoreNames.isEmpty) return const Iterable.empty();
                     if (textEditingValue.text.isEmpty) return allStoreNames;
                     return allStoreNames.where(
