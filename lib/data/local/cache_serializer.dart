@@ -111,6 +111,8 @@ class CacheSerializer {
         'storeName': s.storeName,
         'pricePerUnit': s.pricePerUnit,
         'lastUpdated': s.lastUpdated,
+        'lat': s.lat,
+        'lon': s.lon,
       };
 
   static StorePrice _storePriceFromMap(Map<String, dynamic> m) => StorePrice(
@@ -118,6 +120,8 @@ class CacheSerializer {
         storeName: m['storeName'] as String,
         pricePerUnit: m['pricePerUnit'] as int,
         lastUpdated: m['lastUpdated'] as String,
+        lat: (m['lat'] as num?)?.toDouble(),
+        lon: (m['lon'] as num?)?.toDouble(),
       );
 
   // ─── PurchaseRecord ───────────────────────────────────────────────
