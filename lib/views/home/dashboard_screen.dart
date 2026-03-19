@@ -651,7 +651,7 @@ class _OverviewSection extends StatelessWidget {
                     label: 'Giới hạn',
                     amount: _fmt(budget),
                     note: budget == 0 ? 'Chưa đặt' : 'Ngân sách',
-                    color: AppColors.primary,
+                    color: const Color(0xFF5C6BC0),
                   ),
                 ),
                 _VerticalDivider(),
@@ -660,7 +660,7 @@ class _OverviewSection extends StatelessWidget {
                     label: 'Dự tính',
                     amount: _fmt(listEstimate),
                     note: listEstimate == 0 ? 'Chưa có' : 'Từ danh sách',
-                    color: const Color(0xFF7B61FF),
+                    color: const Color(0xFFF57C00),
                   ),
                 ),
                 _VerticalDivider(),
@@ -813,9 +813,9 @@ class _BudgetProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Progress bar: đã chi vs giới hạn (hoặc dự tính nếu chưa đặt giới hạn)
     final ref = budget > 0 ? budget : (listEstimate > 0 ? listEstimate : 1);
     final spentRatio = (spent / ref).clamp(0.0, 1.0);
-    final estimateRatio = (listEstimate / ref).clamp(0.0, 1.0);
     final isSpentOver = spent > ref;
 
     return Column(
@@ -828,7 +828,7 @@ class _BudgetProgressBar extends StatelessWidget {
               height: 24,
               child: Stack(
                 children: [
-                  // Background track
+                  // Background track (= giới hạn)
                   Positioned(
                     top: 7,
                     left: 0,
@@ -841,22 +841,6 @@ class _BudgetProgressBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Estimate fill (purple, lighter)
-                  if (listEstimate > 0 && budget > 0)
-                    Positioned(
-                      top: 7,
-                      left: 0,
-                      child: Container(
-                        height: 10,
-                        width: w * estimateRatio,
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF7B61FF,
-                          ).withValues(alpha: 0.25),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                    ),
                   // Spent fill
                   Positioned(
                     top: 7,
@@ -878,11 +862,10 @@ class _BudgetProgressBar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(5),
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                (isSpentOver
-                                        ? Colors.red
-                                        : const Color(0xFF00897B))
-                                    .withValues(alpha: 0.3),
+                            color: (isSpentOver
+                                    ? Colors.red
+                                    : const Color(0xFF00897B))
+                                .withValues(alpha: 0.3),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -890,20 +873,6 @@ class _BudgetProgressBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Estimate marker pin
-                  if (listEstimate > 0 && budget > 0 && listEstimate <= budget)
-                    Positioned(
-                      left: w * estimateRatio - 1,
-                      top: 4,
-                      child: Container(
-                        width: 2,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF7B61FF),
-                          borderRadius: BorderRadius.circular(1),
-                        ),
-                      ),
-                    ),
                 ],
               ),
             );
@@ -915,23 +884,19 @@ class _BudgetProgressBar extends StatelessWidget {
           children: [
             _BarLegend(color: const Color(0xFF00897B), label: 'Đã chi'),
             const SizedBox(width: 12),
-            _BarLegend(
-              color: const Color(0xFF7B61FF).withValues(alpha: 0.5),
-              label: 'Dự tính',
-            ),
-            if (budget > 0) ...[
-              const Spacer(),
+            _BarLegend(color: const Color(0xFF5C6BC0), label: 'Giới hạn'),
+            const Spacer(),
+            if (spent > 0)
               Text(
-                budget > 0 && spent > 0
-                    ? 'Còn ${_OverviewSection._fmt(budget - spent)}'
-                    : '',
-                style: const TextStyle(
+                isSpentOver
+                    ? 'Vượt ${_OverviewSection._fmt(spent - ref)}'
+                    : 'Còn ${_OverviewSection._fmt(ref - spent)}',
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: isSpentOver ? Colors.red : AppColors.textSecondary,
                 ),
               ),
-            ],
           ],
         ),
       ],
