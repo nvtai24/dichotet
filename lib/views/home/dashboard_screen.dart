@@ -1864,27 +1864,30 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
 
       final vm = context.read<ShoppingListViewModel>();
 
-      // Gom tất cả store có vị trí hợp lệ từ storeDetails lẫn storePrices của items
+      // Chỉ lấy cửa hàng từ items trong phiên hiện tại (session-scoped)
       // lat/lon null hoặc == -1 đều coi là chưa có vị trí
       bool validCoord(double? v) => v != null && v != -1.0;
 
       final seen = <String>{};
       final storesWithLocation = <StorePrice>[];
 
-      // Ưu tiên storeDetails (dữ liệu đầy đủ từ DB)
-      for (final s in vm.storeDetails) {
-        if (validCoord(s.lat) && validCoord(s.lon)) {
-          seen.add(s.storeName.toLowerCase());
-          storesWithLocation.add(s);
-        }
-      }
-      // Fallback: storePrices trong items nếu store chưa có trong storeDetails
       for (final item in vm.allItems) {
         for (final sp in item.storePrices) {
           final key = sp.storeName.toLowerCase();
-          if (!seen.contains(key) && validCoord(sp.lat) && validCoord(sp.lon)) {
-            seen.add(key);
+          if (seen.contains(key)) continue;
+          seen.add(key);
+
+          if (validCoord(sp.lat) && validCoord(sp.lon)) {
+            // Dùng lat/lon trực tiếp từ storePrices của item
             storesWithLocation.add(sp);
+          } else {
+            // Tra cứu lat/lon từ storeDetails nếu item chưa có
+            final detail = vm.storeDetails.where(
+              (s) => s.storeName.toLowerCase() == key,
+            ).firstOrNull;
+            if (detail != null && validCoord(detail.lat) && validCoord(detail.lon)) {
+              storesWithLocation.add(detail);
+            }
           }
         }
       }
