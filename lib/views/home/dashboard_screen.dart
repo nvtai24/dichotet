@@ -44,23 +44,19 @@ class DashboardScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _ShoppingCompletionSection(
+                    _OverviewSection(
                       progress: vm.shoppingProgress,
                       message: vm.progressMessage,
                       purchased: vm.purchasedItems,
                       total: vm.totalItems,
-                    ),
-                    const SizedBox(height: 20),
-                    _BudgetSummarySection(
                       budget: vm.estimatedBudget,
                       listEstimate: vm.listEstimate,
                       spent: vm.spentBudget,
-                      progress: vm.shoppingProgress,
                     ),
                     const SizedBox(height: 20),
-                    _RecentItemsSection(items: vm.recentItems),
-                    const SizedBox(height: 20),
                     const _NearbyStoresSection(),
+                    const SizedBox(height: 20),
+                    _RecentItemsSection(items: vm.recentItems),
                   ],
                 ),
               ),
@@ -480,26 +476,49 @@ class _DotGrid extends StatelessWidget {
   );
 }
 
-// ─── Shopping Completion ───────────────────────────────────────────────────
+// ─── Overview Section (merged) ─────────────────────────────────────────────
 
-class _ShoppingCompletionSection extends StatelessWidget {
+class _OverviewSection extends StatelessWidget {
   final double progress;
   final String message;
   final int purchased;
   final int total;
+  final int budget;
+  final int listEstimate;
+  final int spent;
 
-  const _ShoppingCompletionSection({
+  const _OverviewSection({
     required this.progress,
     required this.message,
     required this.purchased,
     required this.total,
+    required this.budget,
+    required this.listEstimate,
+    required this.spent,
   });
+
+  static String _fmt(int price) {
+    if (price == 0) return '0 đ';
+    final s = price.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return '${buf.toString()} đ';
+  }
 
   @override
   Widget build(BuildContext context) {
     final percent = (progress * 100).toStringAsFixed(0);
-    final remaining = total - purchased;
     final isDone = progress >= 1.0;
+    final insights = _BudgetInsightCard.generate(
+      budget: budget,
+      listEstimate: listEstimate,
+      spent: spent,
+      progress: progress,
+    );
+    final topInsight = insights.isNotEmpty ? insights.first : null;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -508,7 +527,7 @@ class _ShoppingCompletionSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.07),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -517,6 +536,11 @@ class _ShoppingCompletionSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header ──
+          // const _SectionHeader(emoji: '📊', title: 'Tổng quan mua sắm'),
+          // const SizedBox(height: 16),
+
+          // ── Tiến độ ──
           Row(
             children: [
               Expanded(
@@ -526,12 +550,12 @@ class _ShoppingCompletionSection extends StatelessWidget {
                     const Text(
                       'Tiến độ mua sắm',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       message,
                       style: const TextStyle(
@@ -545,7 +569,7 @@ class _ShoppingCompletionSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 6,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -558,7 +582,7 @@ class _ShoppingCompletionSection extends StatelessWidget {
                 child: Text(
                   '$percent%',
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                   ),
@@ -566,22 +590,22 @@ class _ShoppingCompletionSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           LayoutBuilder(
-            builder: (context, constraints) => Stack(
+            builder: (_, constraints) => Stack(
               children: [
                 Container(
-                  height: 10,
+                  height: 8,
                   width: constraints.maxWidth,
                   decoration: BoxDecoration(
                     color: AppColors.border,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 700),
                   curve: Curves.easeOut,
-                  height: 10,
+                  height: 8,
                   width: constraints.maxWidth * progress.clamp(0.0, 1.0),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -589,11 +613,11 @@ class _ShoppingCompletionSection extends StatelessWidget {
                           ? [const Color(0xFF66BB6A), const Color(0xFF2E7D32)]
                           : [AppColors.primaryLight, AppColors.primaryDark],
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.35),
-                        blurRadius: 6,
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -602,178 +626,116 @@ class _ShoppingCompletionSection extends StatelessWidget {
               ],
             ),
           ),
-          if (total > 0) ...[
-            const SizedBox(height: 12),
-            Row(
+
+          // ── Divider ──
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(height: 1, color: AppColors.border),
+          ),
+
+          // ── Ngân sách ──
+          const Text(
+            'Ngân sách',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          IntrinsicHeight(
+            child: Row(
               children: [
-                _StatChip(
-                  icon: Icons.check_circle_outline,
-                  label: '$purchased đã mua',
-                  color: const Color(0xFF43A047),
-                ),
-                const SizedBox(width: 8),
-                if (remaining > 0)
-                  _StatChip(
-                    icon: Icons.radio_button_unchecked,
-                    label: '$remaining còn lại',
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: _BudgetStatCol(
+                    label: 'Giới hạn',
+                    amount: _fmt(budget),
+                    note: budget == 0 ? 'Chưa đặt' : 'Ngân sách',
+                    color: AppColors.primary,
                   ),
+                ),
+                _VerticalDivider(),
+                Expanded(
+                  child: _BudgetStatCol(
+                    label: 'Dự tính',
+                    amount: _fmt(listEstimate),
+                    note: listEstimate == 0 ? 'Chưa có' : 'Từ danh sách',
+                    color: const Color(0xFF7B61FF),
+                  ),
+                ),
+                _VerticalDivider(),
+                Expanded(
+                  child: _BudgetStatCol(
+                    label: 'Đã chi',
+                    amount: _fmt(spent),
+                    note: spent == 0 ? 'Chưa chi' : 'Thực tế',
+                    color: spent > budget && budget > 0
+                        ? Colors.red
+                        : const Color(0xFF00897B),
+                  ),
+                ),
               ],
+            ),
+          ),
+          if (budget > 0 || listEstimate > 0) ...[
+            const SizedBox(height: 14),
+            _BudgetProgressBar(
+              budget: budget,
+              listEstimate: listEstimate,
+              spent: spent,
+            ),
+          ],
+
+          // ── Insight ──
+          if (topInsight != null) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Divider(height: 1, color: AppColors.border),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: topInsight.color.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: topInsight.color.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(topInsight.emoji, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          topInsight.title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: topInsight.color,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          topInsight.body,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],
       ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Budget Summary ────────────────────────────────────────────────────────
-
-class _BudgetSummarySection extends StatelessWidget {
-  final int budget;
-  final int listEstimate;
-  final int spent;
-  final double progress;
-
-  const _BudgetSummarySection({
-    required this.budget,
-    required this.listEstimate,
-    required this.spent,
-    required this.progress,
-  });
-
-  static String fmt(int price) {
-    if (price == 0) return '0 đ';
-    final s = price.toString();
-    final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-      buf.write(s[i]);
-    }
-    return '${buf.toString()} đ';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final insights = _BudgetInsightCard.generate(
-      budget: budget,
-      listEstimate: listEstimate,
-      spent: spent,
-      progress: progress,
-    );
-
-    return Column(
-      children: [
-        // ── Unified budget card ──
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _SectionHeader(emoji: '💰', title: 'Tổng quan ngân sách'),
-              const SizedBox(height: 16),
-
-              // ── 3 stat columns ──
-              IntrinsicHeight(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _BudgetStatCol(
-                        label: 'Ngân sách',
-                        amount: fmt(budget),
-                        note: budget == 0 ? 'Chưa đặt' : 'Giới hạn',
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    _VerticalDivider(),
-                    Expanded(
-                      child: _BudgetStatCol(
-                        label: 'Dự tính',
-                        amount: fmt(listEstimate),
-                        note: listEstimate == 0 ? 'Chưa có' : 'Từ danh sách',
-                        color: const Color(0xFF7B61FF),
-                      ),
-                    ),
-                    _VerticalDivider(),
-                    Expanded(
-                      child: _BudgetStatCol(
-                        label: 'Đã chi',
-                        amount: fmt(spent),
-                        note: spent == 0 ? 'Chưa chi' : 'Thực tế',
-                        color: spent > budget && budget > 0
-                            ? Colors.red
-                            : const Color(0xFF00897B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── Multi-color progress bar ──
-              if (budget > 0 || listEstimate > 0) ...[
-                const SizedBox(height: 16),
-                _BudgetProgressBar(
-                  budget: budget,
-                  listEstimate: listEstimate,
-                  spent: spent,
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-        // ── Insight card ──
-        _BudgetInsightCard(insights: insights),
-      ],
     );
   }
 }
@@ -961,7 +923,7 @@ class _BudgetProgressBar extends StatelessWidget {
               const Spacer(),
               Text(
                 budget > 0 && spent > 0
-                    ? 'Còn ${_BudgetSummarySection.fmt(budget - spent)}'
+                    ? 'Còn ${_OverviewSection._fmt(budget - spent)}'
                     : '',
                 style: const TextStyle(
                   fontSize: 11,
@@ -1023,7 +985,7 @@ class _BudgetInsightCard extends StatelessWidget {
   final List<_Insight> insights;
   const _BudgetInsightCard({required this.insights});
 
-  static String _fmt(int v) => _BudgetSummarySection.fmt(v);
+  static String _fmt(int v) => _OverviewSection._fmt(v);
 
   static List<_Insight> generate({
     required int budget,
@@ -1301,7 +1263,7 @@ class _RecentItemsSection extends StatelessWidget {
   final List<ShoppingItem> items;
   const _RecentItemsSection({required this.items});
 
-  static String _fmt(int price) => _BudgetSummarySection.fmt(price);
+  static String _fmt(int price) => _OverviewSection._fmt(price);
 
   @override
   Widget build(BuildContext context) {
@@ -1860,8 +1822,12 @@ double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
   const r = 6371000.0; // Earth radius in meters
   final dLat = (lat2 - lat1) * pi / 180;
   final dLon = (lon2 - lon1) * pi / 180;
-  final a = sin(dLat / 2) * sin(dLat / 2) +
-      cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLon / 2) * sin(dLon / 2);
+  final a =
+      sin(dLat / 2) * sin(dLat / 2) +
+      cos(lat1 * pi / 180) *
+          cos(lat2 * pi / 180) *
+          sin(dLon / 2) *
+          sin(dLon / 2);
   return r * 2 * atan2(sqrt(a), sqrt(1 - a));
 }
 
@@ -1899,7 +1865,10 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (mounted) {
-          setState(() { _loading = false; _error = 'Vui lòng bật GPS để xem cửa hàng gần đây'; });
+          setState(() {
+            _loading = false;
+            _error = 'Vui lòng bật GPS để xem cửa hàng gần đây';
+          });
         }
         return;
       }
@@ -1908,9 +1877,13 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         if (mounted) {
-          setState(() { _loading = false; _error = 'Cần quyền truy cập vị trí'; });
+          setState(() {
+            _loading = false;
+            _error = 'Cần quyền truy cập vị trí';
+          });
         }
         return;
       }
@@ -1925,20 +1898,37 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
       if (!mounted) return;
 
       final vm = context.read<ShoppingListViewModel>();
-      final storesWithLocation = vm.storeDetails.where((s) => s.hasLocation).toList();
+      final storesWithLocation = vm.storeDetails
+          .where((s) => s.hasLocation)
+          .toList();
       final allItems = vm.allItems;
 
       final List<_NearbyStoreData> result = [];
       for (final store in storesWithLocation) {
-        final dist = _haversineDistance(pos.latitude, pos.longitude, store.lat!, store.lon!);
+        final dist = _haversineDistance(
+          pos.latitude,
+          pos.longitude,
+          store.lat!,
+          store.lon!,
+        );
         final pendingItems = allItems
-            .where((item) =>
-                !item.isChecked &&
-                item.storePrices.any(
-                  (sp) => sp.storeName.toLowerCase() == store.storeName.toLowerCase(),
-                ))
+            .where(
+              (item) =>
+                  !item.isChecked &&
+                  item.storePrices.any(
+                    (sp) =>
+                        sp.storeName.toLowerCase() ==
+                        store.storeName.toLowerCase(),
+                  ),
+            )
             .toList();
-        result.add(_NearbyStoreData(store: store, pendingItems: pendingItems, distanceMeters: dist));
+        result.add(
+          _NearbyStoreData(
+            store: store,
+            pendingItems: pendingItems,
+            distanceMeters: dist,
+          ),
+        );
       }
 
       result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
@@ -1951,7 +1941,10 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() { _loading = false; _error = 'Không thể lấy vị trí hiện tại'; });
+        setState(() {
+          _loading = false;
+          _error = 'Không thể lấy vị trí hiện tại';
+        });
       }
     }
   }
@@ -1968,11 +1961,18 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
               ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
                 )
               : GestureDetector(
                   onTap: _load,
-                  child: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.refresh_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
                 ),
         ),
         const SizedBox(height: 12),
@@ -1999,7 +1999,9 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
                 }),
                 onItemTap: (item) => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => ItemDetailScreen(item: item)),
+                  MaterialPageRoute(
+                    builder: (_) => ItemDetailScreen(item: item),
+                  ),
                 ),
               ),
             );
@@ -2022,18 +2024,39 @@ class _NearbyStoresError extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
-          const Icon(Icons.location_off_outlined, size: 32, color: AppColors.textHint),
+          const Icon(
+            Icons.location_off_outlined,
+            size: 32,
+            color: AppColors.textHint,
+          ),
           const SizedBox(height: 8),
-          Text(message, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary), textAlign: TextAlign.center),
+          Text(
+            message,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 10),
           TextButton(
             onPressed: onRetry,
-            child: const Text('Thử lại', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Thử lại',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -2050,13 +2073,21 @@ class _NearbyStoresEmpty extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: const Center(
         child: Text(
           'Chưa có cửa hàng nào có vị trí.\nHãy thêm vị trí cho cửa hàng trong danh sách mua sắm.',
-          style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+          style: TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
           textAlign: TextAlign.center,
         ),
       ),
@@ -2092,7 +2123,11 @@ class _NearbyStoreCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
@@ -2116,7 +2151,11 @@ class _NearbyStoreCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(Icons.storefront_rounded, size: 18, color: _rankColor),
+                    child: Icon(
+                      Icons.storefront_rounded,
+                      size: 18,
+                      color: _rankColor,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -2150,7 +2189,10 @@ class _NearbyStoreCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: _rankColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -2168,7 +2210,11 @@ class _NearbyStoreCard extends StatelessWidget {
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: AppColors.textSecondary),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -2178,7 +2224,9 @@ class _NearbyStoreCard extends StatelessWidget {
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: _buildItemList(),
-            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            crossFadeState: isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 220),
           ),
         ],
@@ -2198,7 +2246,12 @@ class _NearbyStoreCard extends StatelessWidget {
     }
     return Column(
       children: [
-        Divider(height: 1, indent: 14, endIndent: 14, color: AppColors.divider.withValues(alpha: 0.5)),
+        Divider(
+          height: 1,
+          indent: 14,
+          endIndent: 14,
+          color: AppColors.divider.withValues(alpha: 0.5),
+        ),
         ...data.pendingItems.asMap().entries.map((e) {
           final isLast = e.key == data.pendingItems.length - 1;
           final item = e.value;
@@ -2207,7 +2260,10 @@ class _NearbyStoreCard extends StatelessWidget {
               InkWell(
                 onTap: () => onItemTap(item),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       AppNetworkImage(
@@ -2235,18 +2291,30 @@ class _NearbyStoreCard extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               '${item.quantity} ${item.unit} · ${item.categoryName}',
-                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textHint),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: AppColors.textHint,
+                      ),
                     ],
                   ),
                 ),
               ),
               if (!isLast)
-                Divider(height: 1, indent: 64, endIndent: 14, color: AppColors.divider.withValues(alpha: 0.4)),
+                Divider(
+                  height: 1,
+                  indent: 64,
+                  endIndent: 14,
+                  color: AppColors.divider.withValues(alpha: 0.4),
+                ),
             ],
           );
         }),
