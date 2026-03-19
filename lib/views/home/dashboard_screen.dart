@@ -1898,13 +1898,38 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
       if (!mounted) return;
 
       final vm = context.read<ShoppingListViewModel>();
-      final storesWithLocation = vm.storeDetails
-          .where((s) => s.hasLocation)
-          .toList();
+
+      // Gom tất cả store có vị trí hợp lệ từ storeDetails lẫn storePrices của items
+      // lat/lon null hoặc == -1 đều coi là chưa có vị trí
+      bool validCoord(double? v) => v != null && v != -1.0;
+
+      final seen = <String>{};
+      final storesWithLocation = <StorePrice>[];
+
+      // Ưu tiên storeDetails (dữ liệu đầy đủ từ DB)
+      for (final s in vm.storeDetails) {
+        if (validCoord(s.lat) && validCoord(s.lon)) {
+          seen.add(s.storeName.toLowerCase());
+          storesWithLocation.add(s);
+        }
+      }
+      // Fallback: storePrices trong items nếu store chưa có trong storeDetails
+      for (final item in vm.allItems) {
+        for (final sp in item.storePrices) {
+          final key = sp.storeName.toLowerCase();
+          if (!seen.contains(key) && validCoord(sp.lat) && validCoord(sp.lon)) {
+            seen.add(key);
+            storesWithLocation.add(sp);
+          }
+        }
+      }
+
       final allItems = vm.allItems;
 
       final List<_NearbyStoreData> result = [];
       for (final store in storesWithLocation) {
+        // Double-check trước khi dùng, tránh null-assertion fail
+        if (!validCoord(store.lat) || !validCoord(store.lon)) continue;
         final dist = _haversineDistance(
           pos.latitude,
           pos.longitude,
