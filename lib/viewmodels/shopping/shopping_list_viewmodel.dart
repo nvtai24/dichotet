@@ -22,7 +22,7 @@ class ShoppingListViewModel extends ChangeNotifier {
   List<String> get storeNames => _storeNames;
 
   List<StorePrice> _storeDetails = [];
-
+  List<StorePrice> get storeDetails => _storeDetails;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

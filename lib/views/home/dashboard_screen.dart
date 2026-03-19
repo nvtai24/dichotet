@@ -1,14 +1,18 @@
+import 'dart:math' show sin, cos, sqrt, atan2, pi;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/home/dashboard_viewmodel.dart';
+import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import '../main_screen.dart';
 import '../shopping_list/add_item_screen.dart';
+import '../shopping_list/item_detail_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -55,6 +59,8 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     _RecentItemsSection(items: vm.recentItems),
+                    const SizedBox(height: 20),
+                    const _NearbyStoresSection(),
                   ],
                 ),
               ),
@@ -1831,6 +1837,419 @@ class _LegendDot extends StatelessWidget {
           label,
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
+      ],
+    );
+  }
+}
+
+// ─── Nearby Stores ─────────────────────────────────────────────────────────
+
+class _NearbyStoreData {
+  final StorePrice store;
+  final List<ShoppingItem> pendingItems;
+  final double distanceMeters;
+
+  const _NearbyStoreData({
+    required this.store,
+    required this.pendingItems,
+    required this.distanceMeters,
+  });
+}
+
+double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
+  const r = 6371000.0; // Earth radius in meters
+  final dLat = (lat2 - lat1) * pi / 180;
+  final dLon = (lon2 - lon1) * pi / 180;
+  final a = sin(dLat / 2) * sin(dLat / 2) +
+      cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLon / 2) * sin(dLon / 2);
+  return r * 2 * atan2(sqrt(a), sqrt(1 - a));
+}
+
+String _formatDistance(double meters) {
+  if (meters < 1000) return '${meters.round()} m';
+  return '${(meters / 1000).toStringAsFixed(1)} km';
+}
+
+class _NearbyStoresSection extends StatefulWidget {
+  const _NearbyStoresSection();
+
+  @override
+  State<_NearbyStoresSection> createState() => _NearbyStoresSectionState();
+}
+
+class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
+  List<_NearbyStoreData> _stores = [];
+  bool _loading = true;
+  String? _error;
+  final Set<int> _expanded = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          setState(() { _loading = false; _error = 'Vui lòng bật GPS để xem cửa hàng gần đây'; });
+        }
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          setState(() { _loading = false; _error = 'Cần quyền truy cập vị trí'; });
+        }
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      if (!mounted) return;
+
+      final vm = context.read<ShoppingListViewModel>();
+      final storesWithLocation = vm.storeDetails.where((s) => s.hasLocation).toList();
+      final allItems = vm.allItems;
+
+      final List<_NearbyStoreData> result = [];
+      for (final store in storesWithLocation) {
+        final dist = _haversineDistance(pos.latitude, pos.longitude, store.lat!, store.lon!);
+        final pendingItems = allItems
+            .where((item) =>
+                !item.isChecked &&
+                item.storePrices.any(
+                  (sp) => sp.storeName.toLowerCase() == store.storeName.toLowerCase(),
+                ))
+            .toList();
+        result.add(_NearbyStoreData(store: store, pendingItems: pendingItems, distanceMeters: dist));
+      }
+
+      result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+
+      if (mounted) {
+        setState(() {
+          _stores = result.take(3).toList();
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() { _loading = false; _error = 'Không thể lấy vị trí hiện tại'; });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          emoji: '📍',
+          title: 'Cửa hàng gần đây',
+          trailing: _loading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                )
+              : GestureDetector(
+                  onTap: _load,
+                  child: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.primary),
+                ),
+        ),
+        const SizedBox(height: 12),
+        if (_error != null)
+          _NearbyStoresError(message: _error!, onRetry: _load)
+        else if (!_loading && _stores.isEmpty)
+          _NearbyStoresEmpty()
+        else if (!_loading)
+          ...List.generate(_stores.length, (i) {
+            final data = _stores[i];
+            final isExpanded = _expanded.contains(i);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _NearbyStoreCard(
+                data: data,
+                rank: i + 1,
+                isExpanded: isExpanded,
+                onToggle: () => setState(() {
+                  if (isExpanded) {
+                    _expanded.remove(i);
+                  } else {
+                    _expanded.add(i);
+                  }
+                }),
+                onItemTap: (item) => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ItemDetailScreen(item: item)),
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+}
+
+class _NearbyStoresError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _NearbyStoresError({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.location_off_outlined, size: 32, color: AppColors.textHint),
+          const SizedBox(height: 8),
+          Text(message, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary), textAlign: TextAlign.center),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Thử lại', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NearbyStoresEmpty extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: const Center(
+        child: Text(
+          'Chưa có cửa hàng nào có vị trí.\nHãy thêm vị trí cho cửa hàng trong danh sách mua sắm.',
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+class _NearbyStoreCard extends StatelessWidget {
+  final _NearbyStoreData data;
+  final int rank;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final ValueChanged<ShoppingItem> onItemTap;
+
+  const _NearbyStoreCard({
+    required this.data,
+    required this.rank,
+    required this.isExpanded,
+    required this.onToggle,
+    required this.onItemTap,
+  });
+
+  Color get _rankColor {
+    if (rank == 1) return const Color(0xFF43A047);
+    if (rank == 2) return AppColors.primary;
+    return const Color(0xFF7B61FF);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header – always visible
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.vertical(
+              top: const Radius.circular(16),
+              bottom: isExpanded ? Radius.zero : const Radius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _rankColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(Icons.storefront_rounded, size: 18, color: _rankColor),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data.store.storeName,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          data.pendingItems.isEmpty
+                              ? 'Đã mua hết ở đây'
+                              : '${data.pendingItems.length} món cần mua',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: data.pendingItems.isEmpty
+                                ? const Color(0xFF43A047)
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _rankColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _formatDistance(data.distanceMeters),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _rankColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Expandable item list
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: _buildItemList(),
+            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemList() {
+    if (data.pendingItems.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
+        child: Text(
+          'Không còn món cần mua ở cửa hàng này.',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        Divider(height: 1, indent: 14, endIndent: 14, color: AppColors.divider.withValues(alpha: 0.5)),
+        ...data.pendingItems.asMap().entries.map((e) {
+          final isLast = e.key == data.pendingItems.length - 1;
+          final item = e.value;
+          return Column(
+            children: [
+              InkWell(
+                onTap: () => onItemTap(item),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(
+                    children: [
+                      AppNetworkImage(
+                        url: item.imageUrl,
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.name,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${item.quantity} ${item.unit} · ${item.categoryName}',
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textHint),
+                    ],
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Divider(height: 1, indent: 64, endIndent: 14, color: AppColors.divider.withValues(alpha: 0.4)),
+            ],
+          );
+        }),
       ],
     );
   }
