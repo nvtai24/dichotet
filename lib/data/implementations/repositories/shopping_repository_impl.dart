@@ -45,7 +45,19 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   }
 
   @override
-  Future<List<StorePrice>> getStoreDetails() => _service.getStoreDetails();
+  Future<List<StorePrice>> getStoreDetails() async {
+    final cached = _cache.getStoreDetails();
+    if (cached != null) {
+      // Return cache immediately, refresh in background
+      _service.getStoreDetails().then((fresh) {
+        _cache.saveStoreDetails(CacheSerializer.encodeStoreDetails(fresh));
+      }).catchError((_) {});
+      return CacheSerializer.decodeStoreDetails(cached);
+    }
+    final result = await _service.getStoreDetails();
+    _cache.saveStoreDetails(CacheSerializer.encodeStoreDetails(result));
+    return result;
+  }
 
   @override
   Future<List<String>> getStoreNames() async {
@@ -68,12 +80,17 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
       ShoppingItem item, String categoryName, String sessionId) async {
     await _service.addItem(item, categoryName, sessionId);
     _cache.invalidateShoppingData(sessionId);
+    _cache.invalidateStoreNames();
+    _cache.invalidateStoreDetails();
   }
 
   @override
   Future<void> updateItem(
-      ShoppingItem oldItem, ShoppingItem newItem, String categoryName) =>
-      _service.updateItem(oldItem, newItem, categoryName);
+      ShoppingItem oldItem, ShoppingItem newItem, String categoryName) async {
+    await _service.updateItem(oldItem, newItem, categoryName);
+    _cache.invalidateStoreNames();
+    _cache.invalidateStoreDetails();
+  }
 
   @override
   Future<void> updateItemPurchaseStatus(
@@ -96,8 +113,10 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
       );
 
   @override
-  Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) =>
-      _service.addStorePrice(item, storePrice);
+  Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
+    await _service.addStorePrice(item, storePrice);
+    _cache.invalidateStoreNames();
+  }
 
   @override
   Future<void> updatePurchase(

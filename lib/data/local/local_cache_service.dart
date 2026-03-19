@@ -29,6 +29,12 @@ class LocalCacheService {
   // ─── Store names ───────────────────────────────────────────────────
   void saveStoreNames(String json) => _box.put('store_names', json);
   String? getStoreNames() => _box.get('store_names');
+  void invalidateStoreNames() => _box.delete('store_names');
+
+  // ─── Store details (with lat/lon) ──────────────────────────────────
+  void saveStoreDetails(String json) => _box.put('store_details', json);
+  String? getStoreDetails() => _box.get('store_details');
+  void invalidateStoreDetails() => _box.delete('store_details');
 
   void clear() => _box.clear();
 }

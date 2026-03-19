@@ -207,6 +207,7 @@ class ShoppingListViewModel extends ChangeNotifier {
       locationLat: locationLat,
       locationLon: locationLon,
     );
+    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     if (locationName != null && locationLat != null && locationLon != null) {
       _syncStorePrices([StorePrice(
         storeName: locationName,
@@ -221,6 +222,7 @@ class ShoppingListViewModel extends ChangeNotifier {
 
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
     await _repository.addStorePrice(item, storePrice);
+    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _syncStorePrices([storePrice]);
     notifyListeners();
   }
@@ -249,6 +251,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     }
 
     await _repository.updatePurchase(purchaseId, quantity, pricePerUnit);
+    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
   }
 
   Future<void> deletePurchase(int purchaseId, {bool reload = true}) async {
@@ -261,6 +264,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     }
 
     await _repository.deletePurchase(purchaseId);
+    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
   }
 
   Future<void> recalculatePurchaseStatus(ShoppingItem item) async {

@@ -104,6 +104,16 @@ class CacheSerializer {
             .toList(),
       );
 
+  // ─── StoreDetails list ────────────────────────────────────────────
+
+  static String encodeStoreDetails(List<StorePrice> stores) =>
+      jsonEncode(stores.map(_storePriceToMap).toList());
+
+  static List<StorePrice> decodeStoreDetails(String json) =>
+      (jsonDecode(json) as List)
+          .map((m) => _storePriceFromMap(m as Map<String, dynamic>))
+          .toList();
+
   // ─── StorePrice ───────────────────────────────────────────────────
 
   static Map<String, dynamic> _storePriceToMap(StorePrice s) => {
