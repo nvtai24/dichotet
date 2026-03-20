@@ -354,9 +354,8 @@ class SettingsScreen extends StatelessWidget {
                     else
                       ...members.map((SessionMember m) {
                         final isMe = m.userId == sessionVM.currentUserId;
-                        final displayText = m.displayName != null
-                            ? '${m.displayName}${isMe ? ' (Bạn)' : ''}'
-                            : (isMe ? '(Bạn)' : 'Thành viên');
+                        final name = m.displayName ?? (isMe ? 'Bạn' : 'Thành viên');
+                        final displayText = isMe ? '$name (Bạn)' : name;
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
@@ -380,7 +379,10 @@ class SettingsScreen extends StatelessWidget {
                                 fontSize: 14, fontWeight: FontWeight.w500),
                           ),
                           subtitle: Text(
-                            m.isOwner ? 'Chủ phiên' : 'Thành viên',
+                            [
+                              m.isOwner ? 'Chủ phiên' : 'Thành viên',
+                              if (m.email != null) '(${m.email})',
+                            ].join(' '),
                             style: const TextStyle(
                                 fontSize: 12, color: AppColors.textHint),
                           ),

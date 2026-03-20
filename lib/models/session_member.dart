@@ -5,6 +5,7 @@ class SessionMember {
   final String role; // 'owner' | 'member'
   final DateTime joinedAt;
   final String? displayName;
+  final String? email;
 
   SessionMember({
     required this.id,
@@ -13,6 +14,7 @@ class SessionMember {
     required this.role,
     required this.joinedAt,
     this.displayName,
+    this.email,
   });
 
   bool get isOwner => role == 'owner';

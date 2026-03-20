@@ -165,41 +165,30 @@ class SupabaseSessionService implements ISessionService {
     final ownerInRows = allUserIds.contains(ownerUserId);
 
     final fetchIds = {...allUserIds, ownerUserId}.toList();
-    final Map<String, Map<String, dynamic>> profileMap = {};
-    if (fetchIds.isNotEmpty) {
-      final profiles = await _client
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .inFilter('id', fetchIds);
-      for (final p in profiles) {
-        profileMap[p['id'] as String] = p;
-      }
-    }
+    final profileMap = await _fetchProfileMap(fetchIds);
 
-    String nameFrom(String uid) {
-      final p = profileMap[uid];
-      final fn = (p?['first_name'] as String? ?? '').trim();
-      final ln = (p?['last_name'] as String? ?? '').trim();
-      return '$fn $ln'.trim();
-    }
-
-    final members = rows.map((r) {
+    SessionMember memberFrom(Map<String, dynamic> r, String role) {
       final userId = r['user_id'] as String;
-      final name = nameFrom(userId);
+      final p = profileMap[userId];
       return SessionMember(
         id: r['id'] as String,
         sessionId: r['session_id'] as String,
         userId: userId,
-        role: r['role'] as String,
+        role: role,
         joinedAt:
             DateTime.tryParse(r['joined_at'] as String? ?? '') ?? DateTime.now(),
-        displayName: name.isEmpty ? null : name,
+        displayName: p?['name'],
+        email: p?['email'],
       );
-    }).toList();
+    }
+
+    final members = rows
+        .map((r) => memberFrom(r, r['role'] as String))
+        .toList();
 
     // If owner wasn't in session_members, inject them at the top
     if (!ownerInRows) {
-      final name = nameFrom(ownerUserId);
+      final p = profileMap[ownerUserId];
       members.insert(
         0,
         SessionMember(
@@ -208,7 +197,8 @@ class SupabaseSessionService implements ISessionService {
           userId: ownerUserId,
           role: 'owner',
           joinedAt: DateTime.now(),
-          displayName: name.isEmpty ? null : name,
+          displayName: p?['name'],
+          email: p?['email'],
         ),
       );
     }
@@ -280,22 +270,15 @@ class SupabaseSessionService implements ISessionService {
         .limit(limit);
 
     final userIds = rows.map((r) => r['user_id'] as String).toSet().toList();
-    final Map<String, String> nameMap = {};
-    if (userIds.isNotEmpty) {
-      final profiles = await _client
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .inFilter('id', userIds);
-      for (final p in profiles) {
-        final fn = p['first_name'] as String? ?? '';
-        final ln = p['last_name'] as String? ?? '';
-        final name = '$fn $ln'.trim();
-        nameMap[p['id'] as String] = name.isEmpty ? '' : name;
-      }
-    }
+    final profileMap = await _fetchProfileMap(userIds);
 
     return rows.map((r) {
       final uid = r['user_id'] as String;
+      final p = profileMap[uid];
+      final meta = (r['metadata'] as Map<String, dynamic>?) ?? {};
+      // Use profile name, fallback to snapshot stored at write time
+      final name = p?['name'];
+      final actor = name?.isNotEmpty == true ? name : meta['_actor'] as String?;
       return SessionActionLog(
         id: r['id'] as String,
         sessionId: r['session_id'] as String,
@@ -303,17 +286,34 @@ class SupabaseSessionService implements ISessionService {
         actionType: r['action_type'] as String,
         itemName: r['item_name'] as String?,
         itemId: r['item_id'] as int?,
-        metadata: (r['metadata'] as Map<String, dynamic>?) ?? {},
+        metadata: meta,
         createdAt: DateTime.parse(r['created_at'] as String),
-        userDisplayName: () {
-          final fromProfile = nameMap[uid];
-          if (fromProfile != null && fromProfile.isNotEmpty) return fromProfile;
-          // Fallback: snapshot stored at write time
-          final meta = (r['metadata'] as Map<String, dynamic>?) ?? {};
-          final actor = meta['_actor'] as String?;
-          return (actor != null && actor.isNotEmpty) ? actor : null;
-        }(),
+        userDisplayName: actor,
       );
     }).toList();
+  }
+
+  /// Fetches profiles (name + email) for given user IDs via SECURITY DEFINER RPC.
+  Future<Map<String, Map<String, String?>>> _fetchProfileMap(
+      List<String> userIds) async {
+    final result = <String, Map<String, String?>>{};
+    if (userIds.isEmpty) return result;
+    try {
+      final rows = await _client.rpc(
+        'get_profiles_with_email',
+        params: {'user_ids': userIds},
+      ) as List;
+      for (final r in rows) {
+        final id = r['id'] as String;
+        final fn = (r['first_name'] as String? ?? '').trim();
+        final ln = (r['last_name'] as String? ?? '').trim();
+        final name = '$fn $ln'.trim();
+        result[id] = {
+          'name': name.isEmpty ? null : name,
+          'email': r['email'] as String?,
+        };
+      }
+    } catch (_) {}
+    return result;
   }
 }
