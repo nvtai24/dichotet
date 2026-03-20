@@ -181,6 +181,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
 
   void _showShareDialog(ShoppingSession session) async {
     final sessionVM = context.read<SessionViewModel>();
+    final currentIsOwner = session.isOwnedBy(sessionVM.currentUserId ?? '');
     String? code = session.joinCode;
     bool isGenerating = code == null;
     List<SessionMember> members = [];
@@ -265,7 +266,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
                         member: m,
                         currentUserId: sessionVM.currentUserId,
                         onRemove:
-                            m.isOwner || m.userId == sessionVM.currentUserId
+                            !currentIsOwner || m.isOwner
                             ? null
                             : () async {
                                 await sessionVM.removeMember(
@@ -339,54 +340,6 @@ class _SessionListScreenState extends State<SessionListScreen> {
               );
             },
             child: const Text('Lưu'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmDelete(ShoppingSession session) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Xóa phiên mua sắm'),
-        content: Text('Bạn có chắc muốn xóa "${session.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await context.read<SessionViewModel>().deleteSession(session.id);
-            },
-            child: const Text('Xóa'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmLeave(ShoppingSession session) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rời phiên'),
-        content: Text('Bạn có chắc muốn rời phiên "${session.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await context.read<SessionViewModel>().leaveSession(session.id);
-            },
-            child: const Text('Rời phiên'),
           ),
         ],
       ),
@@ -509,8 +462,6 @@ class _SessionListScreenState extends State<SessionListScreen> {
                 isOwner: isOwner,
                 onTap: () => _openSession(session),
                 onEdit: isOwner ? () => _showEditDialog(session) : null,
-                onDelete: isOwner ? () => _confirmDelete(session) : null,
-                onLeave: isOwner ? null : () => _confirmLeave(session),
                 onShare: isOwner ? () => _showShareDialog(session) : null,
               );
 
@@ -735,8 +686,6 @@ class _SessionCard extends StatelessWidget {
   final bool isOwner;
   final VoidCallback onTap;
   final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-  final VoidCallback? onLeave;
   final VoidCallback? onShare;
 
   const _SessionCard({
@@ -744,8 +693,6 @@ class _SessionCard extends StatelessWidget {
     required this.isOwner,
     required this.onTap,
     this.onEdit,
-    this.onDelete,
-    this.onLeave,
     this.onShare,
   });
 
@@ -897,18 +844,14 @@ class _SessionCard extends StatelessWidget {
                   onSelected: (value) {
                     if (value == 'share') onShare?.call();
                     if (value == 'edit') onEdit?.call();
-                    if (value == 'delete') onDelete?.call();
                   },
                   itemBuilder: (_) => [
                     const PopupMenuItem(
                       value: 'share',
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.share_outlined,
-                            size: 18,
-                            color: AppColors.primary,
-                          ),
+                          Icon(Icons.share_outlined,
+                              size: 18, color: AppColors.primary),
                           SizedBox(width: 10),
                           Text('Chia sẻ'),
                         ],
@@ -918,40 +861,14 @@ class _SessionCard extends StatelessWidget {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.edit_outlined,
-                            size: 18,
-                            color: AppColors.textSecondary,
-                          ),
+                          Icon(Icons.edit_outlined,
+                              size: 18, color: AppColors.textSecondary),
                           SizedBox(width: 10),
                           Text('Chỉnh sửa'),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.delete_outline,
-                            size: 18,
-                            color: AppColors.error,
-                          ),
-                          SizedBox(width: 10),
-                          Text('Xóa', style: TextStyle(color: AppColors.error)),
-                        ],
-                      ),
-                    ),
                   ],
-                )
-              else
-                IconButton(
-                  onPressed: onLeave,
-                  icon: const Icon(Icons.exit_to_app_rounded),
-                  color: AppColors.error,
-                  iconSize: 20,
-                  splashRadius: 20,
-                  tooltip: 'Rời phiên',
                 ),
             ],
           ),

@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_network_image.dart';
+import '../../models/shopping_models.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
 import '../auth/reset_password_screen.dart';
@@ -130,6 +132,48 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
 
+          // ── Phiên hiện tại ────────────────────────────────────────
+          Builder(builder: (context) {
+            final sessionVM = context.watch<SessionViewModel>();
+            final session = sessionVM.selectedSession;
+            if (session == null) return const SizedBox.shrink();
+
+            final isOwner =
+                session.isOwnedBy(sessionVM.currentUserId ?? '');
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionHeader(label: 'Phiên hiện tại'),
+                _SettingsGroup(
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.people_outline,
+                      label: 'Thành viên',
+                      subtitle: 'Xem danh sách người tham gia phiên',
+                      onTap: () => _showMembersSheet(
+                          context, sessionVM, session.id, isOwner),
+                    ),
+                    _SettingsTile(
+                      icon: isOwner
+                          ? Icons.delete_outline
+                          : Icons.exit_to_app_rounded,
+                      label: isOwner ? 'Xóa phiên' : 'Rời phiên',
+                      subtitle: isOwner
+                          ? 'Xóa vĩnh viễn "${session.name}"'
+                          : 'Rời khỏi "${session.name}"',
+                      iconColor: AppColors.error,
+                      labelColor: AppColors.error,
+                      onTap: () => isOwner
+                          ? _confirmDeleteSession(context, sessionVM)
+                          : _confirmLeaveSession(context, sessionVM),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }),
+
           // ── Logout ────────────────────────────────────────────────
           const SizedBox(height: 8),
           Padding(
@@ -228,6 +272,185 @@ class SettingsScreen extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMembersSheet(BuildContext context, SessionViewModel sessionVM,
+      String sessionId, bool currentIsOwner) async {
+    List<SessionMember> members = [];
+    bool loading = true;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) {
+          if (loading) {
+            Future.microtask(() async {
+              final m = await sessionVM.getSessionMembers(sessionId);
+              if (!ctx.mounted) return;
+              setState(() {
+                members = m;
+                loading = false;
+              });
+            });
+          }
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.divider,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Thành viên (${loading ? '...' : members.length})',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (loading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else
+                  ...members.map((SessionMember m) {
+                    final isMe = m.userId == sessionVM.currentUserId;
+                    final name =
+                        m.displayName ?? (isMe ? 'Bạn' : 'Thành viên');
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: m.isOwner
+                            ? AppColors.primary.withValues(alpha: 0.12)
+                            : AppColors.textHint.withValues(alpha: 0.15),
+                        child: Icon(
+                          m.isOwner
+                              ? Icons.star_rounded
+                              : Icons.person_rounded,
+                          size: 18,
+                          color: m.isOwner
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      title: Text(
+                        '$name${isMe ? ' (Bạn)' : ''}',
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        m.isOwner ? 'Chủ phiên' : 'Thành viên',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppColors.textHint),
+                      ),
+                      trailing: currentIsOwner && !m.isOwner
+                          ? IconButton(
+                              icon: const Icon(Icons.remove_circle_outline,
+                                  size: 20, color: AppColors.error),
+                              onPressed: () async {
+                                await sessionVM.removeMember(
+                                    sessionId, m.userId);
+                                final updated = await sessionVM
+                                    .getSessionMembers(sessionId);
+                                if (!ctx.mounted) return;
+                                setState(() => members = updated);
+                              },
+                            )
+                          : null,
+                    );
+                  }),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _confirmDeleteSession(
+      BuildContext context, SessionViewModel sessionVM) {
+    final session = sessionVM.selectedSession;
+    if (session == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa phiên mua sắm'),
+        content: Text('Bạn có chắc muốn xóa "${session.name}"?\nHành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await sessionVM.deleteSession(session.id);
+              if (context.mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SessionListScreen()),
+                );
+              }
+            },
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmLeaveSession(
+      BuildContext context, SessionViewModel sessionVM) {
+    final session = sessionVM.selectedSession;
+    if (session == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rời phiên'),
+        content: Text('Bạn có chắc muốn rời phiên "${session.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await sessionVM.leaveSession(session.id);
+              if (context.mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SessionListScreen()),
+                );
+              }
+            },
+            child: const Text('Rời phiên'),
           ),
         ],
       ),
