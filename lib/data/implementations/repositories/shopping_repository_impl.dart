@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import '../../../models/shopping_models.dart';
 import '../../interfaces/api/i_shopping_service.dart';
 import '../../interfaces/repositories/i_shopping_repository.dart';
@@ -17,12 +17,13 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   Future<List<ShoppingCategory>> getCategories(String sessionId) async {
     final cached = _cache.getShoppingData(sessionId);
     if (cached != null) {
-      // Return cache only — no background refresh to avoid race conditions
-      // with Realtime invalidation (stale background writes overwrite fresh data)
-      return CacheSerializer.decodeCategories(cached);
+      // Decode on a separate isolate — avoids blocking UI thread
+      return compute(CacheSerializer.decodeCategories, cached);
     }
     final result = await _service.getCategories(sessionId);
-    _cache.saveShoppingData(sessionId, CacheSerializer.encodeCategories(result));
+    // Encode on isolate before saving to cache
+    final encoded = await compute(CacheSerializer.encodeCategories, result);
+    _cache.saveShoppingData(sessionId, encoded);
     return result;
   }
 
