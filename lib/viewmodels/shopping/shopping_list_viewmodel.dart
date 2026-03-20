@@ -190,13 +190,12 @@ class ShoppingListViewModel extends ChangeNotifier {
       final results = await Future.wait([
         _repository.getCategories(_sessionId!),
         _repository.getCategoryNames(),
-        _repository.getStoreNames(),
         _repository.getStoreDetails(),
       ]);
       _categories = results[0] as List<ShoppingCategory>;
       _categoryNames = results[1] as List<String>;
-      _storeNames = results[2] as List<String>;
-      _storeDetails = results[3] as List<StorePrice>;
+      _storeDetails = results[2] as List<StorePrice>;
+      _storeNames = _storeDetails.map((s) => s.storeName).toList();
     } catch (e) {
       _error = e.toString();
     } finally {

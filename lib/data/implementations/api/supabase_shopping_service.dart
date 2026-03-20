@@ -12,15 +12,13 @@ class SupabaseShoppingService implements IShoppingService {
 
   @override
   Future<List<ShoppingCategory>> getCategories(String sessionId) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) return [];
+    if (_client.auth.currentUser == null) return [];
 
-    final catRows = await _client.from('categories').select().order('id');
-
+    // Single query — categories joined inline, no separate round trip
     final itemRows = await _client
         .from('shopping_items')
         .select(
-          '*, categories(category_name), '
+          '*, categories(id, category_name), '
           'item_price_references(*, stores(name, lat, lon)), '
           'purchases(*, stores(name))',
         )
@@ -28,14 +26,16 @@ class SupabaseShoppingService implements IShoppingService {
         .order('created_at', ascending: false);
 
     final Map<int, List<ShoppingItem>> itemsByCategory = {};
+    final Map<int, String> catNameById = {};
+
     for (final row in itemRows) {
-      final catId = row['category_id'] as int?;
+      final catId = (row['category_id'] as num?)?.toInt();
       if (catId == null) continue;
 
       final catData = row['categories'] as Map<String, dynamic>?;
       final catName = catData?['category_name'] as String? ?? '';
+      catNameById.putIfAbsent(catId, () => catName);
 
-      // Parse item_price_references → storePrices
       final refsRaw = row['item_price_references'] as List<dynamic>? ?? [];
       final storePrices = refsRaw.map((ref) {
         final m = ref as Map<String, dynamic>;
@@ -52,7 +52,6 @@ class SupabaseShoppingService implements IShoppingService {
         );
       }).toList();
 
-      // Parse purchases
       final purchasesRaw = row['purchases'] as List<dynamic>? ?? [];
       final purchases = purchasesRaw.map((p) {
         final m = p as Map<String, dynamic>;
@@ -61,51 +60,42 @@ class SupabaseShoppingService implements IShoppingService {
           id: (m['id'] as num?)?.toInt(),
           quantity: (m['quantity'] as num?)?.toInt() ?? 0,
           pricePerUnit: (m['price_per_unit'] as num?)?.toInt() ?? 0,
-          purchasedAt:
-              DateTime.tryParse(m['purchased_at'] as String? ?? '') ??
-              DateTime.now(),
+          purchasedAt: DateTime.tryParse(m['purchased_at'] as String? ?? '') ?? DateTime.now(),
           locationName: storeData?['name'] as String?,
         );
       }).toList();
 
       final requiredQty = row['quantity'] as int? ?? 1;
-      final totalPurchased =
-          purchases.fold<int>(0, (sum, p) => sum + p.quantity);
+      final totalPurchased = purchases.fold<int>(0, (sum, p) => sum + p.quantity);
 
-      final item = ShoppingItem(
+      itemsByCategory.putIfAbsent(catId, () => []).add(ShoppingItem(
         id: (row['id'] as num?)?.toInt(),
         name: row['name'] as String,
         categoryName: catName,
         categoryTag: catName.toUpperCase(),
         quantity: requiredQty,
         unit: row['unit'] as String? ?? '',
-        estimatedPrice: ((row['est_price_per_unit'] as num?)?.toInt()) ?? 0,
+        estimatedPrice: (row['est_price_per_unit'] as num?)?.toInt() ?? 0,
         note: row['note'] as String?,
         imageUrl: row['image_url'] as String?,
         createdAt: DateTime.tryParse(row['created_at'] as String? ?? ''),
         isChecked: totalPurchased >= requiredQty,
         storePrices: storePrices,
         purchases: purchases,
-      );
-
-      itemsByCategory.putIfAbsent(catId, () => []).add(item);
+      ));
     }
 
-    final categories = <ShoppingCategory>[];
-    for (final cat in catRows) {
-      final catId = cat['id'] as int;
-      final catName = cat['category_name'] as String;
-      categories.add(
+    // Sort categories by their DB id to preserve consistent ordering
+    final sortedIds = catNameById.keys.toList()..sort();
+    return [
+      for (var i = 0; i < sortedIds.length; i++)
         ShoppingCategory(
-          name: catName,
-          tag: catName.toUpperCase(),
-          items: itemsByCategory[catId] ?? [],
-          isExpanded: categories.isEmpty,
+          name: catNameById[sortedIds[i]]!,
+          tag: catNameById[sortedIds[i]]!.toUpperCase(),
+          items: itemsByCategory[sortedIds[i]] ?? [],
+          isExpanded: i == 0,
         ),
-      );
-    }
-
-    return categories;
+    ];
   }
 
   // ─── Get Category Names ───────────────────────────────────────────
@@ -214,24 +204,19 @@ class SupabaseShoppingService implements IShoppingService {
         .limit(1);
     final categoryId = catRows.isNotEmpty ? catRows.first['id'] as int : null;
 
-    await _client
-        .from('shopping_items')
-        .update({
-          'name': newItem.name,
-          'category_id': categoryId,
-          'quantity': newItem.quantity,
-          'unit': newItem.unit,
-          'est_price_per_unit': newItem.estimatedPrice,
-          'note': newItem.note,
-          'image_url': newItem.imageUrl,
-        })
-        .eq('id', itemId);
-
-    // Xóa giá tham khảo cũ, insert lại
-    await _client
-        .from('item_price_references')
-        .delete()
-        .eq('shopping_item_id', itemId);
+    // Parallel: update item + delete old price refs
+    await Future.wait([
+      _client.from('shopping_items').update({
+        'name': newItem.name,
+        'category_id': categoryId,
+        'quantity': newItem.quantity,
+        'unit': newItem.unit,
+        'est_price_per_unit': newItem.estimatedPrice,
+        'note': newItem.note,
+        'image_url': newItem.imageUrl,
+      }).eq('id', itemId),
+      _client.from('item_price_references').delete().eq('shopping_item_id', itemId),
+    ]);
 
     for (final sp in newItem.storePrices) {
       final storeId = await _findOrCreateStore(sp.storeName, sp.lat, sp.lon);
@@ -311,16 +296,8 @@ class SupabaseShoppingService implements IShoppingService {
       );
     }
 
-    final purchaseRows = await _client
-        .from('purchases')
-        .select('quantity')
-        .eq('shopping_item_id', itemId);
-
-    final totalPurchased = purchaseRows.fold<int>(
-      0,
-      (sum, r) => sum + ((r['quantity'] as num?)?.toInt() ?? 0),
-    );
-
+    // Recalculate from in-memory — no extra round trip needed
+    final totalPurchased = item.purchases.fold<int>(0, (sum, p) => sum + p.quantity);
     item.isChecked = totalPurchased >= requiredQty;
   }
 
@@ -391,11 +368,11 @@ class SupabaseShoppingService implements IShoppingService {
     if (item.id == null) return;
     final itemId = item.id!;
 
-    await _client.from('purchases').delete().eq('shopping_item_id', itemId);
-    await _client
-        .from('item_price_references')
-        .delete()
-        .eq('shopping_item_id', itemId);
+    // Parallel: delete child rows first, then the item
+    await Future.wait([
+      _client.from('purchases').delete().eq('shopping_item_id', itemId),
+      _client.from('item_price_references').delete().eq('shopping_item_id', itemId),
+    ]);
     await _client.from('shopping_items').delete().eq('id', itemId);
   }
 
