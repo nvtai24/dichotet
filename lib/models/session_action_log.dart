@@ -8,6 +8,7 @@ class SessionActionLog {
   final Map<String, dynamic> metadata;
   final DateTime createdAt;
   final String? userDisplayName;
+  final String? userImageUrl;
 
   const SessionActionLog({
     required this.id,
@@ -19,6 +20,7 @@ class SessionActionLog {
     required this.metadata,
     required this.createdAt,
     this.userDisplayName,
+    this.userImageUrl,
   });
 
   /// Human-readable description of the action

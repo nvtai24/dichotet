@@ -149,8 +149,8 @@ class _LogTile extends StatelessWidget {
     return ListTile(
       leading: _Avatar(
         name: log.userDisplayName,
+        imageUrl: log.userImageUrl,
         isMe: isMe,
-        actionType: log.actionType,
       ),
       title: Text(
         log.description,
@@ -177,21 +177,28 @@ class _LogTile extends StatelessWidget {
 
 class _Avatar extends StatelessWidget {
   final String? name;
+  final String? imageUrl;
   final bool isMe;
-  final String actionType;
 
-  const _Avatar({this.name, required this.isMe, required this.actionType});
+  const _Avatar({this.name, this.imageUrl, required this.isMe});
 
   @override
   Widget build(BuildContext context) {
     final color = isMe ? const Color(0xFFE53935) : Colors.blueGrey;
-    final initials = _initials(name);
+
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return CircleAvatar(
+        radius: 20,
+        backgroundImage: NetworkImage(imageUrl!),
+        backgroundColor: color.withValues(alpha: 0.15),
+      );
+    }
 
     return CircleAvatar(
       radius: 20,
       backgroundColor: color.withValues(alpha: 0.15),
       child: Text(
-        initials,
+        _initials(name),
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,

@@ -236,11 +236,12 @@ class SupabaseSessionService implements ISessionService {
         metadata: meta,
         createdAt: DateTime.parse(r['created_at'] as String),
         userDisplayName: actor,
+        userImageUrl: p?['imageUrl'],
       );
     }).toList();
   }
 
-  /// Fetches profiles (name + email) for given user IDs via SECURITY DEFINER RPC.
+  /// Fetches profiles (name + email + imageUrl) for given user IDs via SECURITY DEFINER RPC.
   Future<Map<String, Map<String, String?>>> _fetchProfileMap(
       List<String> userIds) async {
     final result = <String, Map<String, String?>>{};
@@ -258,6 +259,7 @@ class SupabaseSessionService implements ISessionService {
         result[id] = {
           'name': name.isEmpty ? null : name,
           'email': r['email'] as String?,
+          'imageUrl': r['image_url'] as String?,
         };
       }
     } catch (_) {}

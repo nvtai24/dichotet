@@ -37,7 +37,7 @@ class SupabaseAuthService implements IAuthService {
       throw AuthException('Đăng ký không thành công. Vui lòng thử lại.');
     }
 
-    return _mapUser(user);
+    return _mapUserWithProfile(user);
   }
 
   // ─── Sign In ──────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ class SupabaseAuthService implements IAuthService {
       throw AuthException('Đăng nhập không thành công.');
     }
 
-    return _mapUser(user);
+    return _mapUserWithProfile(user);
   }
 
   // ─── Sign Out ─────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ class SupabaseAuthService implements IAuthService {
   Future<Profile?> getCurrentUser() async {
     final user = _client.auth.currentUser;
     if (user == null) return null;
-    return _mapUser(user);
+    return _mapUserWithProfile(user);
   }
 
   @override
@@ -125,18 +125,35 @@ class SupabaseAuthService implements IAuthService {
       throw AuthException('Đăng nhập Google không thành công.');
     }
 
-    return _mapUser(user);
+    return _mapUserWithProfile(user);
   }
 
   // ─── Helper ───────────────────────────────────────────────────────
 
-  Profile _mapUser(User user) {
-    final meta = user.userMetadata ?? {};
-    return Profile(
-      id: user.id,
-      firstName: meta['first_name'] as String?,
-      lastName: meta['last_name'] as String?,
-      email: user.email,
-    );
+  /// Fetch full profile from DB (includes image_url). Falls back to userMetadata.
+  Future<Profile> _mapUserWithProfile(User user) async {
+    try {
+      final data = await _client
+          .from('profiles')
+          .select('first_name, last_name, phone, image_url')
+          .eq('id', user.id)
+          .single();
+      return Profile(
+        id: user.id,
+        firstName: data['first_name'] as String?,
+        lastName: data['last_name'] as String?,
+        email: user.email,
+        phone: data['phone'] as String?,
+        imageUrl: data['image_url'] as String?,
+      );
+    } catch (_) {
+      final meta = user.userMetadata ?? {};
+      return Profile(
+        id: user.id,
+        firstName: meta['first_name'] as String?,
+        lastName: meta['last_name'] as String?,
+        email: user.email,
+      );
+    }
   }
 }
