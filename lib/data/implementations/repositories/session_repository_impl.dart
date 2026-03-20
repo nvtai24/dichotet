@@ -29,7 +29,7 @@ class SessionRepositoryImpl implements ISessionRepository {
   @override
   Future<ShoppingSession> createSession(String name, double budget) async {
     final session = await _service.createSession(name, budget);
-    _cache.invalidateSessions(); // ViewModel updates in-memory; cache refreshed next load
+    _cache.invalidateSessions();
     return session;
   }
 
@@ -46,4 +46,32 @@ class SessionRepositoryImpl implements ISessionRepository {
     await _service.deleteSession(sessionId);
     _cache.invalidateSessions();
   }
+
+  @override
+  Future<String> generateJoinCode(String sessionId) async {
+    final code = await _service.generateJoinCode(sessionId);
+    _cache.invalidateSessions();
+    return code;
+  }
+
+  @override
+  Future<ShoppingSession> joinByCode(String code) async {
+    final session = await _service.joinByCode(code);
+    _cache.invalidateSessions();
+    return session;
+  }
+
+  @override
+  Future<void> leaveSession(String sessionId) async {
+    await _service.leaveSession(sessionId);
+    _cache.invalidateSessions();
+  }
+
+  @override
+  Future<List<SessionMember>> getSessionMembers(String sessionId) =>
+      _service.getSessionMembers(sessionId);
+
+  @override
+  Future<void> removeMember(String sessionId, String userId) =>
+      _service.removeMember(sessionId, userId);
 }

@@ -27,6 +27,8 @@ class CacheSerializer {
         'budget': s.budget,
         'isActive': s.isActive,
         'createdAt': s.createdAt.toIso8601String(),
+        'joinCode': s.joinCode,
+        'isShared': s.isShared,
       };
 
   static ShoppingSession _sessionFromMap(Map<String, dynamic> m) =>
@@ -37,6 +39,8 @@ class CacheSerializer {
         budget: (m['budget'] as num).toDouble(),
         isActive: m['isActive'] as bool? ?? true,
         createdAt: DateTime.parse(m['createdAt'] as String),
+        joinCode: m['joinCode'] as String?,
+        isShared: m['isShared'] as bool? ?? false,
       );
 
   // ─── ShoppingCategory ─────────────────────────────────────────────

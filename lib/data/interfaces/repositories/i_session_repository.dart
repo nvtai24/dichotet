@@ -9,4 +9,9 @@ abstract class ISessionRepository {
     double budget,
   );
   Future<void> deleteSession(String sessionId);
+  Future<String> generateJoinCode(String sessionId);
+  Future<ShoppingSession> joinByCode(String code);
+  Future<void> leaveSession(String sessionId);
+  Future<List<SessionMember>> getSessionMembers(String sessionId);
+  Future<void> removeMember(String sessionId, String userId);
 }

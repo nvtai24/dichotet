@@ -5,6 +5,8 @@ class ShoppingSession {
   final double budget;
   final bool isActive;
   final DateTime createdAt;
+  final String? joinCode;
+  final bool isShared;
 
   ShoppingSession({
     required this.id,
@@ -13,5 +15,9 @@ class ShoppingSession {
     required this.budget,
     this.isActive = true,
     required this.createdAt,
+    this.joinCode,
+    this.isShared = false,
   });
+
+  bool isOwnedBy(String userId) => this.userId == userId;
 }

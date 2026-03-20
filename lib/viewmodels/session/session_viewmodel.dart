@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/interfaces/repositories/i_session_repository.dart';
 import '../../models/shopping_models.dart';
 
@@ -18,6 +19,8 @@ class SessionViewModel extends ChangeNotifier {
 
   ShoppingSession? _selectedSession;
   ShoppingSession? get selectedSession => _selectedSession;
+
+  String? get currentUserId => Supabase.instance.client.auth.currentUser?.id;
 
   Future<void> loadSessions() async {
     _isLoading = true;
@@ -74,4 +77,47 @@ class SessionViewModel extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  // ─── Sharing ───────────────────────────────────────────────────────────
+
+  Future<String> generateJoinCode(String sessionId) async {
+    final code = await _repository.generateJoinCode(sessionId);
+    final idx = _sessions.indexWhere((s) => s.id == sessionId);
+    if (idx != -1) {
+      final s = _sessions[idx];
+      _sessions[idx] = ShoppingSession(
+        id: s.id,
+        userId: s.userId,
+        name: s.name,
+        budget: s.budget,
+        isActive: s.isActive,
+        createdAt: s.createdAt,
+        joinCode: code,
+        isShared: true,
+      );
+      notifyListeners();
+    }
+    return code;
+  }
+
+  Future<void> joinByCode(String code) async {
+    final session = await _repository.joinByCode(code);
+    if (!_sessions.any((s) => s.id == session.id)) {
+      _sessions.insert(0, session);
+      notifyListeners();
+    }
+  }
+
+  Future<void> leaveSession(String sessionId) async {
+    await _repository.leaveSession(sessionId);
+    _sessions.removeWhere((s) => s.id == sessionId);
+    if (_selectedSession?.id == sessionId) _selectedSession = null;
+    notifyListeners();
+  }
+
+  Future<List<SessionMember>> getSessionMembers(String sessionId) =>
+      _repository.getSessionMembers(sessionId);
+
+  Future<void> removeMember(String sessionId, String userId) =>
+      _repository.removeMember(sessionId, userId);
 }

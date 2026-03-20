@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/interfaces/repositories/i_shopping_repository.dart';
 import '../../models/shopping_models.dart';
 
@@ -11,6 +12,8 @@ class ShoppingListViewModel extends ChangeNotifier {
 
   String? _sessionId;
   String? get sessionId => _sessionId;
+
+  RealtimeChannel? _realtimeChannel;
 
   List<ShoppingCategory> _categories = [];
   List<ShoppingCategory> get categories => _categories;
@@ -81,6 +84,7 @@ class ShoppingListViewModel extends ChangeNotifier {
   // ─── Session ────────────────────────────────────────────────────────
 
   void reset() {
+    _unsubscribeRealtime();
     _sessionId = null;
     _categories = [];
     _categoryNames = [];
@@ -97,7 +101,37 @@ class ShoppingListViewModel extends ChangeNotifier {
     if (_sessionId == sessionId) return;
     _sessionId = sessionId;
     _categories = [];
+    _subscribeRealtime();
     notifyListeners();
+  }
+
+  void _subscribeRealtime() {
+    _realtimeChannel?.unsubscribe();
+    if (_sessionId == null) return;
+    _realtimeChannel = Supabase.instance.client
+        .channel('shopping:$_sessionId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'shopping_items',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'session_id',
+            value: _sessionId!,
+          ),
+          callback: (_) {
+            if (_sessionId != null) {
+              _repository.invalidateSessionCache(_sessionId!);
+              loadData();
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  void _unsubscribeRealtime() {
+    _realtimeChannel?.unsubscribe();
+    _realtimeChannel = null;
   }
 
   // ─── Load (cache-first via repository) ──────────────────────────────
