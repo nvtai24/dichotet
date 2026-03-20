@@ -55,6 +55,16 @@ class SessionActionLog {
         return '$actor đã tham gia phiên';
       case 'leave_session':
         return '$actor đã rời phiên';
+      case 'update_purchase':
+        final store = metadata['store'] as String?;
+        final price = metadata['price'] as int?;
+        if (store != null && price != null) {
+          return '$actor đã sửa thông tin mua "${itemName ?? ''}" tại $store · ${_fmt(price)}đ';
+        }
+        return '$actor đã sửa thông tin mua "${itemName ?? 'sản phẩm'}"';
+      case 'remove_member':
+        final name = metadata['removed_name'] as String?;
+        return '$actor đã xóa${name != null ? ' $name' : ' thành viên'} khỏi phiên';
       default:
         return '$actor thực hiện thao tác';
     }

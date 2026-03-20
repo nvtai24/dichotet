@@ -272,6 +272,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
                                 await sessionVM.removeMember(
                                   session.id,
                                   m.userId,
+                                  displayName: m.displayName,
                                 );
                                 final updated = await sessionVM
                                     .getSessionMembers(session.id);

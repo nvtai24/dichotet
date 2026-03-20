@@ -386,7 +386,8 @@ class SettingsScreen extends StatelessWidget {
                                   size: 20, color: AppColors.error),
                               onPressed: () async {
                                 await sessionVM.removeMember(
-                                    sessionId, m.userId);
+                                    sessionId, m.userId,
+                                    displayName: m.displayName);
                                 final updated = await sessionVM
                                     .getSessionMembers(sessionId);
                                 if (!ctx.mounted) return;

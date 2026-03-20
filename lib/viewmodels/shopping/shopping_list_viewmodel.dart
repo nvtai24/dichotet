@@ -301,6 +301,12 @@ class ShoppingListViewModel extends ChangeNotifier {
     await _repository.addStorePrice(item, storePrice);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _syncStorePrices([storePrice]);
+    _logAction('add_price',
+        itemName: item.name,
+        metadata: {
+          'store': storePrice.storeName,
+          'price': storePrice.pricePerUnit,
+        });
     notifyListeners();
   }
 
@@ -329,19 +335,34 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.updatePurchase(purchaseId, quantity, pricePerUnit);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    if (item != null) {
+      final purchase = item.purchases.firstWhere((p) => p.id == purchaseId,
+          orElse: () => item.purchases.first);
+      _logAction('update_purchase',
+          itemName: item.name,
+          metadata: {
+            'store': purchase.locationName,
+            'price': pricePerUnit,
+          });
+    }
   }
 
   Future<void> deletePurchase(int purchaseId, {bool reload = true}) async {
-    // Optimistic: remove in-memory
+    // Capture item name before optimistic remove
     final item = _findItemByPurchaseId(purchaseId);
-    if (item != null) {
-      item.purchases.removeWhere((p) => p.id == purchaseId);
-      _recalcIsChecked(item);
-      notifyListeners();
-    }
+    final itemName = item?.name;
+    final purchase = item?.purchases.firstWhere((p) => p.id == purchaseId,
+        orElse: () => item.purchases.first);
+
+    item?.purchases.removeWhere((p) => p.id == purchaseId);
+    if (item != null) _recalcIsChecked(item);
+    notifyListeners();
 
     await _repository.deletePurchase(purchaseId);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _logAction('uncheck_item',
+        itemName: itemName,
+        metadata: {'store': purchase?.locationName});
   }
 
   Future<void> recalculatePurchaseStatus(ShoppingItem item) async {

@@ -100,15 +100,31 @@ class SessionViewModel extends ChangeNotifier {
     return code;
   }
 
+  void _logAction(
+    String sessionId,
+    String actionType, {
+    Map<String, dynamic>? metadata,
+  }) {
+    _repository
+        .addLog(
+          sessionId: sessionId,
+          actionType: actionType,
+          metadata: metadata,
+        )
+        .catchError((_) {});
+  }
+
   Future<void> joinByCode(String code) async {
     final session = await _repository.joinByCode(code);
     if (!_sessions.any((s) => s.id == session.id)) {
       _sessions.insert(0, session);
       notifyListeners();
     }
+    _logAction(session.id, 'join_session');
   }
 
   Future<void> leaveSession(String sessionId) async {
+    _logAction(sessionId, 'leave_session');
     await _repository.leaveSession(sessionId);
     _sessions.removeWhere((s) => s.id == sessionId);
     if (_selectedSession?.id == sessionId) _selectedSession = null;
@@ -118,8 +134,12 @@ class SessionViewModel extends ChangeNotifier {
   Future<List<SessionMember>> getSessionMembers(String sessionId) =>
       _repository.getSessionMembers(sessionId);
 
-  Future<void> removeMember(String sessionId, String userId) =>
-      _repository.removeMember(sessionId, userId);
+  Future<void> removeMember(
+      String sessionId, String userId, {String? displayName}) async {
+    _logAction(sessionId, 'remove_member',
+        metadata: {'removed_user_id': userId, 'removed_name': displayName});
+    await _repository.removeMember(sessionId, userId);
+  }
 
   Future<List<SessionActionLog>> getActionLogs(String sessionId) =>
       _repository.getActionLogs(sessionId);
