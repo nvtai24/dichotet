@@ -391,6 +391,31 @@ class SettingsScreen extends StatelessWidget {
                                       size: 20,
                                       color: AppColors.error),
                                   onPressed: () async {
+                                    final name = m.displayName ?? 'thành viên này';
+                                    final confirmed = await showDialog<bool>(
+                                      context: ctx,
+                                      builder: (dCtx) => AlertDialog(
+                                        title: const Text('Xóa thành viên'),
+                                        content: Text(
+                                            'Bạn có chắc muốn xóa $name khỏi phiên không?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(dCtx, false),
+                                            child: const Text('Hủy'),
+                                          ),
+                                          FilledButton(
+                                            style: FilledButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.error),
+                                            onPressed: () =>
+                                                Navigator.pop(dCtx, true),
+                                            child: const Text('Xóa'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirmed != true) return;
                                     await sessionVM.removeMember(
                                         sessionId, m.userId,
                                         displayName: m.displayName);
