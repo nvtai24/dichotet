@@ -5,7 +5,7 @@ import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'item_detail_screen.dart';
-import '../session/action_log_screen.dart';
+import '../../core/widgets/session_app_bar.dart';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -33,7 +33,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      appBar: const SessionAppBar(title: 'Danh Sách Mua Sắm Tết', backgroundColor: Colors.white),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -100,55 +100,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0.5,
-      leadingWidth: 48,
-      leading: const Padding(
-        padding: EdgeInsets.only(left: 16),
-        child: Icon(
-          Icons.calendar_today_outlined,
-          size: 20,
-          color: AppColors.primary,
-        ),
-      ),
-      title: const Text(
-        'Danh Sách Mua Sắm Tết',
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w700,
-          fontSize: 17,
-        ),
-      ),
-      centerTitle: true,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: IconButton(
-            icon: const Icon(
-              Icons.tune_outlined,
-              size: 22,
-              color: AppColors.primary,
-            ),
-            onPressed: () {},
-          ),
-        ),
-        IconButton(
-          icon: const Icon(
-            Icons.history_rounded,
-            size: 22,
-            color: AppColors.primary,
-          ),
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ActionLogScreen()),
-          ),
-        ),
-        const SizedBox(width: 4),
-      ],
-    );
-  }
 
   Widget _buildSearchBar() {
     final vm = context.read<ShoppingListViewModel>();

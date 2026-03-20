@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/session_app_bar.dart';
 import '../../viewmodels/budget/budget_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
 
@@ -126,23 +126,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-        ),
-        title: const Text(
-          'Ngân sách',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 17,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: const SessionAppBar(title: 'Ngân sách'),
       body: body,
     );
   }
