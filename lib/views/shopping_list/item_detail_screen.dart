@@ -28,18 +28,36 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     _item = widget.item;
   }
 
-  ShoppingItem? _findItemByName(String name) {
+  /// Find item by id (preferred) or name from vm categories.
+  ShoppingItem? _findFreshItem({int? id, String? name}) {
     final vm = context.read<ShoppingListViewModel>();
     for (final cat in vm.categories) {
       for (final item in cat.items) {
-        if (item.name == name) return item;
+        if (id != null && item.id == id) return item;
+        if (id == null && name != null && item.name == name) return item;
       }
     }
     return null;
   }
 
+  /// Sync _item with the latest data from the viewmodel.
+  void _syncFromVm(ShoppingListViewModel vm) {
+    for (final cat in vm.categories) {
+      for (final item in cat.items) {
+        if (_item.id != null && item.id == _item.id) {
+          _item = item;
+          return;
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Keep _item fresh whenever vm reloads (realtime, broadcast, etc.)
+    final vm = context.watch<ShoppingListViewModel>();
+    _syncFromVm(vm);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -74,7 +92,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   ),
                 );
                 if (result != null && mounted) {
-                  final updated = _findItemByName(result);
+                  final updated = _findFreshItem(id: _item.id, name: result);
                   if (updated != null) {
                     setState(() => _item = updated);
                   } else {
@@ -315,7 +333,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       ),
                     );
                     if (result == true && mounted) {
-                      final updated = _findItemByName(_item.name);
+                      final updated = _findFreshItem(id: _item.id, name: _item.name);
                       if (updated != null) {
                         setState(() => _item = updated);
                       } else {
@@ -757,12 +775,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           );
           await vm.forceRefresh();
           if (!mounted) return;
-          final updated = _findItemByName(_item.name);
-          if (updated != null) {
-            setState(() => _item = updated);
-          } else {
-            setState(() {});
-          }
+          final updated = _findFreshItem(id: _item.id, name: _item.name);
+          if (updated != null) setState(() => _item = updated);
         },
       ),
     );

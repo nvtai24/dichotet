@@ -234,6 +234,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     }
 
     final newItem = ShoppingItem(
+      id: widget.item.id,
       name: name,
       categoryName: _selectedCategory!,
       categoryTag: _selectedCategory!.toUpperCase(),
