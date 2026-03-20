@@ -338,8 +338,9 @@ class SettingsScreen extends StatelessWidget {
                 else
                   ...members.map((SessionMember m) {
                     final isMe = m.userId == sessionVM.currentUserId;
-                    final name =
-                        m.displayName ?? (isMe ? 'Bạn' : 'Thành viên');
+                    final displayText = m.displayName != null
+                        ? '${m.displayName}${isMe ? ' (Bạn)' : ''}'
+                        : (isMe ? '(Bạn)' : 'Thành viên');
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
@@ -358,7 +359,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        '$name${isMe ? ' (Bạn)' : ''}',
+                        displayText,
                         style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w500),
                       ),
@@ -565,7 +566,6 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final Color? iconColor;
   final Color? labelColor;
-  final Widget? trailing;
   final VoidCallback onTap;
 
   const _SettingsTile({
@@ -574,7 +574,6 @@ class _SettingsTile extends StatelessWidget {
     required this.subtitle,
     this.iconColor,
     this.labelColor,
-    this.trailing,
     required this.onTap,
   });
 
@@ -620,12 +619,11 @@ class _SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            trailing ??
-                const Icon(
-                  Icons.chevron_right,
-                  size: 18,
-                  color: AppColors.textHint,
-                ),
+            const Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: AppColors.textHint,
+            ),
           ],
         ),
       ),

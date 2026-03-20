@@ -149,18 +149,32 @@ class SupabaseSessionService implements ISessionService {
   Future<List<SessionMember>> getSessionMembers(String sessionId) async {
     final rows = await _client
         .from('session_members')
-        .select('id, session_id, user_id, role, joined_at, profiles(first_name, last_name)')
+        .select('id, session_id, user_id, role, joined_at')
         .eq('session_id', sessionId);
 
+    // Fetch profiles separately (session_members.user_id → auth.users, not profiles directly)
+    final userIds = rows.map((r) => r['user_id'] as String).toList();
+    final Map<String, Map<String, dynamic>> profileMap = {};
+    if (userIds.isNotEmpty) {
+      final profiles = await _client
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .inFilter('id', userIds);
+      for (final p in profiles) {
+        profileMap[p['id'] as String] = p;
+      }
+    }
+
     return rows.map((r) {
-      final profile = r['profiles'] as Map<String, dynamic>?;
+      final userId = r['user_id'] as String;
+      final profile = profileMap[userId];
       final firstName = profile?['first_name'] as String? ?? '';
       final lastName = profile?['last_name'] as String? ?? '';
       final name = '$firstName $lastName'.trim();
       return SessionMember(
         id: r['id'] as String,
         sessionId: r['session_id'] as String,
-        userId: r['user_id'] as String,
+        userId: userId,
         role: r['role'] as String,
         joinedAt:
             DateTime.tryParse(r['joined_at'] as String? ?? '') ?? DateTime.now(),
