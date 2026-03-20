@@ -106,31 +106,22 @@ class SupabaseSessionService implements ISessionService {
 
   @override
   Future<ShoppingSession> joinByCode(String code) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('Chưa đăng nhập');
+    if (_client.auth.currentUser == null) throw Exception('Chưa đăng nhập');
 
-    final rows = await _client
+    // RPC bypasses RLS — finds session by join_code and inserts into session_members
+    final sessionId = await _client.rpc(
+      'join_session_by_code',
+      params: {'p_code': code.toUpperCase().trim()},
+    ) as String;
+
+    // Now that we're a member, RLS allows us to read the session
+    final row = await _client
         .from('shopping_sessions')
         .select()
-        .eq('join_code', code.toUpperCase().trim())
-        .limit(1);
+        .eq('id', sessionId)
+        .single();
 
-    if (rows.isEmpty) throw Exception('Mã không hợp lệ');
-
-    final session = _sessionFromRow(rows.first);
-
-    if (session.userId == userId) {
-      throw Exception('Đây là phiên của bạn');
-    }
-
-    // Upsert to handle re-joining gracefully
-    await _client.from('session_members').upsert({
-      'session_id': session.id,
-      'user_id': userId,
-      'role': 'member',
-    }, onConflict: 'session_id,user_id');
-
-    return session;
+    return _sessionFromRow(row);
   }
 
   @override
