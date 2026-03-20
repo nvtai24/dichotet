@@ -138,79 +138,26 @@ class SupabaseSessionService implements ISessionService {
 
   @override
   Future<List<SessionMember>> getSessionMembers(String sessionId) async {
-    // Fetch session to know who the owner is
-    final sessionRow = await _client
-        .from('shopping_sessions')
-        .select('user_id')
-        .eq('id', sessionId)
-        .single();
-    final ownerUserId = sessionRow['user_id'] as String;
+    final rows = await _client.rpc(
+      'get_session_members_with_profiles',
+      params: {'p_session_id': sessionId},
+    ) as List;
 
-    // Best-effort: ensure owner is in session_members (may fail for non-owners due to RLS)
-    try {
-      await _client.from('session_members').upsert({
-        'session_id': sessionId,
-        'user_id': ownerUserId,
-        'role': 'owner',
-      }, onConflict: 'session_id,user_id');
-    } catch (_) {}
-
-    final rows = await _client
-        .from('session_members')
-        .select('id, session_id, user_id, role, joined_at')
-        .eq('session_id', sessionId);
-
-    // Collect all user IDs; if owner not in rows, add them manually
-    final allUserIds = rows.map((r) => r['user_id'] as String).toSet();
-    final ownerInRows = allUserIds.contains(ownerUserId);
-
-    final fetchIds = {...allUserIds, ownerUserId}.toList();
-    final profileMap = await _fetchProfileMap(fetchIds);
-
-    SessionMember memberFrom(Map<String, dynamic> r, String role) {
-      final userId = r['user_id'] as String;
-      final p = profileMap[userId];
+    return rows.map((r) {
+      final fn = (r['first_name'] as String? ?? '').trim();
+      final ln = (r['last_name'] as String? ?? '').trim();
+      final name = '$fn $ln'.trim();
       return SessionMember(
         id: r['id'] as String,
-        sessionId: r['session_id'] as String,
-        userId: userId,
-        role: role,
-        joinedAt:
-            DateTime.tryParse(r['joined_at'] as String? ?? '') ?? DateTime.now(),
-        displayName: p?['name'],
-        email: p?['email'],
+        sessionId: sessionId,
+        userId: r['user_id'] as String,
+        role: r['role'] as String,
+        joinedAt: DateTime.tryParse(r['joined_at'] as String? ?? '') ??
+            DateTime.now(),
+        displayName: name.isEmpty ? null : name,
+        email: r['email'] as String?,
       );
-    }
-
-    final members = rows
-        .map((r) => memberFrom(r, r['role'] as String))
-        .toList();
-
-    // If owner wasn't in session_members, inject them at the top
-    if (!ownerInRows) {
-      final p = profileMap[ownerUserId];
-      members.insert(
-        0,
-        SessionMember(
-          id: 'owner-synthetic',
-          sessionId: sessionId,
-          userId: ownerUserId,
-          role: 'owner',
-          joinedAt: DateTime.now(),
-          displayName: p?['name'],
-          email: p?['email'],
-        ),
-      );
-    }
-
-    // Sort: owner first, then rest by joinedAt
-    members.sort((a, b) {
-      if (a.isOwner && !b.isOwner) return -1;
-      if (!a.isOwner && b.isOwner) return 1;
-      return a.joinedAt.compareTo(b.joinedAt);
-    });
-
-    return members;
+    }).toList();
   }
 
   @override
