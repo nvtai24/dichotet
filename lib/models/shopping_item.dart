@@ -2,6 +2,7 @@ import 'store_price.dart';
 import 'purchase_record.dart';
 
 class ShoppingItem {
+  final int? id;
   final String name;
   final String categoryName;
   final String categoryTag;
@@ -17,6 +18,7 @@ class ShoppingItem {
   bool isChecked;
 
   ShoppingItem({
+    this.id,
     required this.name,
     required this.categoryName,
     required this.categoryTag,

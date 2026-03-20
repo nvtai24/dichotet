@@ -17,14 +17,10 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   Future<List<ShoppingCategory>> getCategories(String sessionId) async {
     final cached = _cache.getShoppingData(sessionId);
     if (cached != null) {
-      // Return cache immediately, refresh in background
-      _service.getCategories(sessionId).then((fresh) {
-        _cache.saveShoppingData(
-            sessionId, CacheSerializer.encodeCategories(fresh));
-      }).catchError((_) {});
+      // Return cache only — no background refresh to avoid race conditions
+      // with Realtime invalidation (stale background writes overwrite fresh data)
       return CacheSerializer.decodeCategories(cached);
     }
-    // Cache miss: fetch from API and store
     final result = await _service.getCategories(sessionId);
     _cache.saveShoppingData(sessionId, CacheSerializer.encodeCategories(result));
     return result;

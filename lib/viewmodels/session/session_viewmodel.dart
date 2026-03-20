@@ -22,6 +22,49 @@ class SessionViewModel extends ChangeNotifier {
 
   String? get currentUserId => Supabase.instance.client.auth.currentUser?.id;
 
+  // ─── Session-level Realtime ─────────────────────────────────────────────
+  final Map<String, RealtimeChannel> _sessionChannels = {};
+
+  /// Subscribe to session-level events (name/budget changes, member changes).
+  /// Call this when a session is opened.
+  void subscribeToSession(String sessionId) {
+    if (_sessionChannels.containsKey(sessionId)) return;
+    final channel = Supabase.instance.client
+        .channel('session:$sessionId')
+        .onBroadcast(
+          event: 'session_changed',
+          callback: (_) async {
+            // Reload sessions so name/budget reflects the update
+            final updated = await _repository.getSessions().catchError((_) => _sessions);
+            _sessions = updated;
+            if (_selectedSession?.id == sessionId) {
+              final fresh = _sessions.where((s) => s.id == sessionId).firstOrNull;
+              if (fresh != null) _selectedSession = fresh;
+            }
+            notifyListeners();
+          },
+        )
+        .onBroadcast(
+          event: 'session_deleted',
+          callback: (_) {
+            _sessions.removeWhere((s) => s.id == sessionId);
+            if (_selectedSession?.id == sessionId) _selectedSession = null;
+            notifyListeners();
+          },
+        )
+        .subscribe();
+    _sessionChannels[sessionId] = channel;
+  }
+
+  void unsubscribeFromSession(String sessionId) {
+    _sessionChannels.remove(sessionId)?.unsubscribe();
+  }
+
+  void _broadcastSession(String sessionId, String event) {
+    _sessionChannels[sessionId]
+        ?.sendBroadcastMessage(event: event, payload: {});
+  }
+
   Future<void> loadSessions() async {
     _isLoading = true;
     _error = null;
@@ -47,6 +90,7 @@ class SessionViewModel extends ChangeNotifier {
 
   void selectSession(ShoppingSession session) {
     _selectedSession = session;
+    subscribeToSession(session.id);
     notifyListeners();
   }
 
@@ -67,14 +111,15 @@ class SessionViewModel extends ChangeNotifier {
     if (idx != -1) _sessions[idx] = updated;
     if (_selectedSession?.id == sessionId) _selectedSession = updated;
     notifyListeners();
+    _broadcastSession(sessionId, 'session_changed');
   }
 
   Future<void> deleteSession(String sessionId) async {
+    _broadcastSession(sessionId, 'session_deleted');
     await _repository.deleteSession(sessionId);
     _sessions.removeWhere((s) => s.id == sessionId);
-    if (_selectedSession?.id == sessionId) {
-      _selectedSession = null;
-    }
+    if (_selectedSession?.id == sessionId) _selectedSession = null;
+    unsubscribeFromSession(sessionId);
     notifyListeners();
   }
 
@@ -121,14 +166,17 @@ class SessionViewModel extends ChangeNotifier {
       notifyListeners();
     }
     _logAction(session.id, 'join_session');
+    _broadcastSession(session.id, 'session_changed');
     return session;
   }
 
   Future<void> leaveSession(String sessionId) async {
     _logAction(sessionId, 'leave_session');
+    _broadcastSession(sessionId, 'session_changed');
     await _repository.leaveSession(sessionId);
     _sessions.removeWhere((s) => s.id == sessionId);
     if (_selectedSession?.id == sessionId) _selectedSession = null;
+    unsubscribeFromSession(sessionId);
     notifyListeners();
   }
 
@@ -140,6 +188,7 @@ class SessionViewModel extends ChangeNotifier {
     _logAction(sessionId, 'remove_member',
         metadata: {'removed_user_id': userId, 'removed_name': displayName});
     await _repository.removeMember(sessionId, userId);
+    _broadcastSession(sessionId, 'session_changed');
   }
 
   Future<List<SessionActionLog>> getActionLogs(String sessionId) =>

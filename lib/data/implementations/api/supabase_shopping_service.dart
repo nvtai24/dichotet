@@ -73,6 +73,7 @@ class SupabaseShoppingService implements IShoppingService {
           purchases.fold<int>(0, (sum, p) => sum + p.quantity);
 
       final item = ShoppingItem(
+        id: (row['id'] as num?)?.toInt(),
         name: row['name'] as String,
         categoryName: catName,
         categoryTag: catName.toUpperCase(),
@@ -203,18 +204,8 @@ class SupabaseShoppingService implements IShoppingService {
     ShoppingItem newItem,
     String categoryName,
   ) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('Chưa đăng nhập');
-
-    final rows = await _client
-        .from('shopping_items')
-        .select('id')
-        .eq('name', oldItem.name)
-        .eq('user_id', userId)
-        .limit(1);
-    if (rows.isEmpty) throw Exception('Không tìm thấy sản phẩm');
-
-    final itemId = rows.first['id'] as int;
+    if (oldItem.id == null) throw Exception('Không tìm thấy sản phẩm');
+    final itemId = oldItem.id!;
 
     final catRows = await _client
         .from('categories')
@@ -264,19 +255,9 @@ class SupabaseShoppingService implements IShoppingService {
     double? locationLat,
     double? locationLon,
   }) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) return;
-
-    final rows = await _client
-        .from('shopping_items')
-        .select('id, quantity')
-        .eq('name', item.name)
-        .eq('user_id', userId)
-        .limit(1);
-    if (rows.isEmpty) return;
-
-    final itemId = rows.first['id'] as int;
-    final requiredQty = rows.first['quantity'] as int? ?? 1;
+    if (item.id == null) return;
+    final itemId = item.id!;
+    final requiredQty = item.quantity;
 
     if (actualQuantity != null && actualPrice != null) {
       int? storeId;
@@ -347,18 +328,8 @@ class SupabaseShoppingService implements IShoppingService {
 
   @override
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) return;
-
-    final rows = await _client
-        .from('shopping_items')
-        .select('id')
-        .eq('name', item.name)
-        .eq('user_id', userId)
-        .limit(1);
-    if (rows.isEmpty) return;
-
-    final itemId = rows.first['id'] as int;
+    if (item.id == null) return;
+    final itemId = item.id!;
     final storeId = await _findOrCreateStore(
       storePrice.storeName,
       storePrice.lat,
@@ -396,17 +367,9 @@ class SupabaseShoppingService implements IShoppingService {
 
   @override
   Future<void> recalculatePurchaseStatus(ShoppingItem item) async {
-    final userId = _client.auth.currentUser!.id;
-    final rows = await _client
-        .from('shopping_items')
-        .select('id, quantity')
-        .eq('user_id', userId)
-        .eq('name', item.name)
-        .limit(1);
-    if (rows.isEmpty) return;
-
-    final itemId = rows.first['id'] as int;
-    final requiredQty = rows.first['quantity'] as int? ?? 1;
+    if (item.id == null) return;
+    final itemId = item.id!;
+    final requiredQty = item.quantity;
 
     final purchaseRows = await _client
         .from('purchases')
@@ -425,18 +388,8 @@ class SupabaseShoppingService implements IShoppingService {
 
   @override
   Future<void> deleteItem(ShoppingItem item) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) throw Exception('Chưa đăng nhập');
-
-    final rows = await _client
-        .from('shopping_items')
-        .select('id')
-        .eq('name', item.name)
-        .eq('user_id', userId)
-        .limit(1);
-    if (rows.isEmpty) return;
-
-    final itemId = rows.first['id'] as int;
+    if (item.id == null) return;
+    final itemId = item.id!;
 
     await _client.from('purchases').delete().eq('shopping_item_id', itemId);
     await _client

@@ -73,6 +73,7 @@ class CacheSerializer {
   // ─── ShoppingItem ─────────────────────────────────────────────────
 
   static Map<String, dynamic> _itemToMap(ShoppingItem i) => {
+        'id': i.id,
         'name': i.name,
         'categoryName': i.categoryName,
         'categoryTag': i.categoryTag,
@@ -89,6 +90,7 @@ class CacheSerializer {
       };
 
   static ShoppingItem _itemFromMap(Map<String, dynamic> m) => ShoppingItem(
+        id: m['id'] as int?,
         name: m['name'] as String,
         categoryName: m['categoryName'] as String,
         categoryTag: m['categoryTag'] as String,
