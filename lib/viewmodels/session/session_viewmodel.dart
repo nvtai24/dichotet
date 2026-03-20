@@ -98,6 +98,8 @@ class SessionViewModel extends ChangeNotifier {
     final session = await _repository.createSession(name, budget);
     _sessions.insert(0, session);
     notifyListeners();
+    _logAction(session.id, 'create_session',
+        metadata: {'name': name, 'budget': budget.toInt()});
     return session;
   }
 
@@ -111,6 +113,8 @@ class SessionViewModel extends ChangeNotifier {
     if (idx != -1) _sessions[idx] = updated;
     if (_selectedSession?.id == sessionId) _selectedSession = updated;
     notifyListeners();
+    _logAction(sessionId, 'update_session',
+        metadata: {'name': name, 'budget': budget.toInt()});
     _broadcastSession(sessionId, 'session_changed');
   }
 
@@ -142,6 +146,7 @@ class SessionViewModel extends ChangeNotifier {
       );
       notifyListeners();
     }
+    _logAction(sessionId, 'generate_join_code');
     return code;
   }
 

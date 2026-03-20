@@ -53,6 +53,18 @@ class SessionActionLog {
           return '$actor thêm giá "${itemName ?? ''}" tại $store: ${_fmt(price)}đ';
         }
         return '$actor thêm giá cho "${itemName ?? 'sản phẩm'}"';
+      case 'create_session':
+        final name = metadata['name'] as String?;
+        return '$actor đã tạo phiên${name != null ? ' "$name"' : ''}';
+      case 'update_session':
+        final name = metadata['name'] as String?;
+        final budget = metadata['budget'] as int?;
+        if (name != null && budget != null) {
+          return '$actor đã cập nhật phiên "$name" · ngân sách ${_fmt(budget)}đ';
+        }
+        return '$actor đã cập nhật thông tin phiên';
+      case 'generate_join_code':
+        return '$actor đã tạo mã mời tham gia phiên';
       case 'join_session':
         return '$actor đã tham gia phiên';
       case 'leave_session':
