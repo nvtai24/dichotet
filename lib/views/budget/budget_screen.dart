@@ -239,9 +239,9 @@ class _BudgetSummaryCard extends StatelessWidget {
               ),
               Expanded(
                 child: _SummaryItem(
-                  label: 'Còn lại',
-                  amount: _formatPrice(remaining),
-                  color: AppColors.goldLight,
+                  label: remaining < 0 ? 'Vượt' : 'Còn lại',
+                  amount: _formatPrice(remaining.abs()),
+                  color: remaining < 0 ? const Color(0xFFFF6B6B) : AppColors.goldLight,
                 ),
               ),
             ],
