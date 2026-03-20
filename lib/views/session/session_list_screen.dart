@@ -144,15 +144,10 @@ class _SessionListScreenState extends State<SessionListScreen> {
                       final messenger = ScaffoldMessenger.of(context);
                       setDialogState(() => isLoading = true);
                       try {
-                        await vm.joinByCode(code);
+                        final session = await vm.joinByCode(code);
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
-                        messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text('Đã tham gia phiên thành công'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
+                        _openSession(session);
                       } catch (e) {
                         setDialogState(() => isLoading = false);
                         messenger.showSnackBar(

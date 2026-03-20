@@ -114,13 +114,14 @@ class SessionViewModel extends ChangeNotifier {
         .catchError((_) {});
   }
 
-  Future<void> joinByCode(String code) async {
+  Future<ShoppingSession> joinByCode(String code) async {
     final session = await _repository.joinByCode(code);
     if (!_sessions.any((s) => s.id == session.id)) {
       _sessions.insert(0, session);
       notifyListeners();
     }
     _logAction(session.id, 'join_session');
+    return session;
   }
 
   Future<void> leaveSession(String sessionId) async {

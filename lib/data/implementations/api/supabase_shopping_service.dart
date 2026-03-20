@@ -24,7 +24,6 @@ class SupabaseShoppingService implements IShoppingService {
           'item_price_references(*, stores(name, lat, lon)), '
           'purchases(*, stores(name))',
         )
-        .eq('user_id', userId)
         .eq('session_id', sessionId)
         .order('created_at', ascending: false);
 

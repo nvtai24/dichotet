@@ -132,25 +132,45 @@ class ShoppingListViewModel extends ChangeNotifier {
   void _subscribeRealtime() {
     _realtimeChannel?.unsubscribe();
     if (_sessionId == null) return;
+    final sid = _sessionId!;
+
+    void reload() {
+      if (_sessionId == sid) {
+        _repository.invalidateSessionCache(sid);
+        loadData();
+      }
+    }
+
     _realtimeChannel = Supabase.instance.client
-        .channel('shopping:$_sessionId')
+        .channel('shopping:$sid')
+        // Broadcast: cross-user updates (reliable on both mobile + browser)
+        .onBroadcast(
+          event: 'data_changed',
+          callback: (_) => reload(),
+        )
+        // Postgres Changes: fallback for own-device changes
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'shopping_items',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'session_id',
-            value: _sessionId!,
-          ),
-          callback: (_) {
-            if (_sessionId != null) {
-              _repository.invalidateSessionCache(_sessionId!);
-              loadData();
-            }
+          callback: (payload) {
+            final record = payload.newRecord.isNotEmpty
+                ? payload.newRecord
+                : payload.oldRecord;
+            final eventSession = record['session_id']?.toString();
+            if (eventSession == sid) reload();
           },
         )
         .subscribe();
+  }
+
+  /// Broadcast a data-changed signal to all members in this session.
+  /// Uses the already-subscribed channel so the message is actually delivered.
+  void _broadcastChange() {
+    _realtimeChannel?.sendBroadcastMessage(
+      event: 'data_changed',
+      payload: {},
+    );
   }
 
   void _unsubscribeRealtime() {
@@ -247,6 +267,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     await _repository.addItem(item, categoryName, _sessionId!);
     _logAction('add_item', itemName: item.name);
     _syncStorePrices(item.storePrices);
+    _broadcastChange();
   }
 
   Future<void> updateItem(
@@ -263,6 +284,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     _logAction('update_item', itemName: newItem.name,
         metadata: oldItem.name != newItem.name ? {'old_name': oldItem.name} : null);
     _syncStorePrices(newItem.storePrices);
+    _broadcastChange();
   }
 
   Future<void> confirmPurchase(
@@ -283,6 +305,7 @@ class ShoppingListViewModel extends ChangeNotifier {
       locationLon: locationLon,
     );
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _broadcastChange();
     _logAction('check_item', itemName: item.name,
         metadata: {'store': locationName, 'price': price});
     if (locationName != null && locationLat != null && locationLon != null) {
@@ -301,6 +324,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     await _repository.addStorePrice(item, storePrice);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _syncStorePrices([storePrice]);
+    _broadcastChange();
     _logAction('add_price',
         itemName: item.name,
         metadata: {
@@ -335,6 +359,7 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.updatePurchase(purchaseId, quantity, pricePerUnit);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _broadcastChange();
     if (item != null) {
       final purchase = item.purchases.firstWhere((p) => p.id == purchaseId,
           orElse: () => item.purchases.first);
@@ -360,6 +385,7 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.deletePurchase(purchaseId);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _broadcastChange();
     _logAction('uncheck_item',
         itemName: itemName,
         metadata: {'store': purchase?.locationName});
@@ -384,6 +410,7 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.deleteItem(item);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _broadcastChange();
     _logAction('delete_item', itemName: item.name);
   }
 

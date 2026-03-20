@@ -42,7 +42,7 @@ final IShoppingRepository shoppingRepository = ShoppingRepositoryImpl(
 final IProfileRepository profileRepository = ProfileRepositoryImpl(
   profileService,
 );
-final IAuthRepository authRepository = AuthRepositoryImpl(authService);
+final IAuthRepository authRepository = AuthRepositoryImpl(authService, localCacheService);
 final ISessionRepository sessionRepository = SessionRepositoryImpl(
   sessionService,
   localCacheService,

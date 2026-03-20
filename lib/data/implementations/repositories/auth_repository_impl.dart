@@ -1,11 +1,13 @@
 import '../../../models/profile.dart';
 import '../../interfaces/api/i_auth_service.dart';
 import '../../interfaces/repositories/i_auth_repository.dart';
+import '../../local/local_cache_service.dart';
 
 class AuthRepositoryImpl implements IAuthRepository {
   final IAuthService _service;
+  final LocalCacheService _cache;
 
-  AuthRepositoryImpl(this._service);
+  AuthRepositoryImpl(this._service, this._cache);
 
   @override
   Future<Profile> signUp({
@@ -27,7 +29,10 @@ class AuthRepositoryImpl implements IAuthRepository {
       _service.signIn(email: email, password: password);
 
   @override
-  Future<void> signOut() => _service.signOut();
+  Future<void> signOut() async {
+    await _service.signOut();
+    _cache.clear();
+  }
 
   @override
   Future<void> sendPasswordReset({required String email}) =>
