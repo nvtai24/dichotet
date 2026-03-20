@@ -147,6 +147,18 @@ class SupabaseSessionService implements ISessionService {
 
   @override
   Future<List<SessionMember>> getSessionMembers(String sessionId) async {
+    // Ensure owner is always in session_members (for sessions created before sharing feature)
+    final sessionRow = await _client
+        .from('shopping_sessions')
+        .select('user_id')
+        .eq('id', sessionId)
+        .single();
+    await _client.from('session_members').upsert({
+      'session_id': sessionId,
+      'user_id': sessionRow['user_id'] as String,
+      'role': 'owner',
+    }, onConflict: 'session_id,user_id');
+
     final rows = await _client
         .from('session_members')
         .select('id, session_id, user_id, role, joined_at')
