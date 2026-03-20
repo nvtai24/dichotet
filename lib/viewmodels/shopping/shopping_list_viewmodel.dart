@@ -143,23 +143,9 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     _realtimeChannel = Supabase.instance.client
         .channel('shopping:$sid')
-        // Broadcast: cross-user updates (reliable on both mobile + browser)
         .onBroadcast(
           event: 'data_changed',
           callback: (_) => reload(),
-        )
-        // Postgres Changes: fallback for own-device changes
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'shopping_items',
-          callback: (payload) {
-            final record = payload.newRecord.isNotEmpty
-                ? payload.newRecord
-                : payload.oldRecord;
-            final eventSession = record['session_id']?.toString();
-            if (eventSession == sid) reload();
-          },
         )
         .subscribe();
   }
