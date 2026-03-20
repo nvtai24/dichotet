@@ -157,7 +157,9 @@ class _SessionListScreenState extends State<SessionListScreen> {
                         setDialogState(() => isLoading = false);
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text(e.toString().replaceAll('Exception: ', '')),
+                            content: Text(
+                              e.toString().replaceAll('Exception: ', ''),
+                            ),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -222,8 +224,10 @@ class _SessionListScreenState extends State<SessionListScreen> {
                 children: [
                   const Text(
                     'Chia sẻ mã này với người thân để cùng mua sắm',
-                    style:
-                        TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -256,20 +260,25 @@ class _SessionListScreenState extends State<SessionListScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ...members.map((m) => _MemberTile(
-                          member: m,
-                          currentUserId: sessionVM.currentUserId,
-                          onRemove: m.isOwner || m.userId == sessionVM.currentUserId
-                              ? null
-                              : () async {
-                                  await sessionVM.removeMember(
-                                      session.id, m.userId);
-                                  final updated = await sessionVM
-                                      .getSessionMembers(session.id);
-                                  if (!ctx.mounted) return;
-                                  setDialogState(() => members = updated);
-                                },
-                        )),
+                    ...members.map(
+                      (m) => _MemberTile(
+                        member: m,
+                        currentUserId: sessionVM.currentUserId,
+                        onRemove:
+                            m.isOwner || m.userId == sessionVM.currentUserId
+                            ? null
+                            : () async {
+                                await sessionVM.removeMember(
+                                  session.id,
+                                  m.userId,
+                                );
+                                final updated = await sessionVM
+                                    .getSessionMembers(session.id);
+                                if (!ctx.mounted) return;
+                                setDialogState(() => members = updated);
+                              },
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -324,10 +333,10 @@ class _SessionListScreenState extends State<SessionListScreen> {
 
               Navigator.pop(ctx);
               await context.read<SessionViewModel>().updateSession(
-                    session.id,
-                    name,
-                    budget,
-                  );
+                session.id,
+                name,
+                budget,
+              );
             },
             child: const Text('Lưu'),
           ),
@@ -472,8 +481,8 @@ class _SessionListScreenState extends State<SessionListScreen> {
                   Text(
                     'Chưa có phiên mua sắm nào',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -486,13 +495,16 @@ class _SessionListScreenState extends State<SessionListScreen> {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            itemCount: vm.sessions.length,
-            itemBuilder: (context, index) {
-              final session = vm.sessions[index];
-              final isOwner = session.isOwnedBy(vm.currentUserId ?? '');
-              return _SessionCard(
+          final currentUserId = vm.currentUserId ?? '';
+          final ownSessions = vm.sessions
+              .where((s) => s.isOwnedBy(currentUserId))
+              .toList();
+          final sharedSessions = vm.sessions
+              .where((s) => !s.isOwnedBy(currentUserId))
+              .toList();
+
+          Widget buildCard(ShoppingSession session, bool isOwner) =>
+              _SessionCard(
                 session: session,
                 isOwner: isOwner,
                 onTap: () => _openSession(session),
@@ -501,7 +513,36 @@ class _SessionListScreenState extends State<SessionListScreen> {
                 onLeave: isOwner ? null : () => _confirmLeave(session),
                 onShare: isOwner ? () => _showShareDialog(session) : null,
               );
-            },
+
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            children: [
+              // ── Phiên của bạn ──
+              _SectionHeader(
+                icon: Icons.person_rounded,
+                label: 'Phiên của bạn',
+                count: ownSessions.length,
+              ),
+              if (ownSessions.isEmpty)
+                const _EmptySection(message: 'Nhấn + để tạo phiên mới')
+              else
+                ...ownSessions.map((s) => buildCard(s, true)),
+
+              const SizedBox(height: 8),
+
+              // ── Được chia sẻ ──
+              _SectionHeader(
+                icon: Icons.people_rounded,
+                label: 'Được chia sẻ với bạn',
+                count: sharedSessions.length,
+              ),
+              if (sharedSessions.isEmpty)
+                const _EmptySection(
+                  message: 'Nhấn biểu tượng 👥 trên AppBar để tham gia',
+                )
+              else
+                ...sharedSessions.map((s) => buildCard(s, false)),
+            ],
           );
         },
       ),
@@ -600,12 +641,90 @@ class _MemberTile extends StatelessWidget {
   }
 }
 
+// ─── Section widgets ──────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int count;
+
+  const _SectionHeader({
+    required this.icon,
+    required this.label,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, top: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.textSecondary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptySection extends StatelessWidget {
+  final String message;
+
+  const _EmptySection({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(color: AppColors.textHint, fontSize: 13),
+      ),
+    );
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 String _formatDate(DateTime date) {
   final vn = DateTime.utc(
-          date.year, date.month, date.day, date.hour, date.minute, date.second)
-      .add(const Duration(hours: 7));
+    date.year,
+    date.month,
+    date.day,
+    date.hour,
+    date.minute,
+    date.second,
+  ).add(const Duration(hours: 7));
   return '${vn.day.toString().padLeft(2, '0')}/${vn.month.toString().padLeft(2, '0')}/${vn.year}';
 }
 
@@ -638,8 +757,9 @@ class _SessionCard extends StatelessWidget {
         ? AppColors.success.withValues(alpha: 0.1)
         : AppColors.divider.withValues(alpha: 0.5);
     final statusText = isActive ? 'Đang thực hiện' : 'Đã hoàn thành';
-    final statusIcon =
-        isActive ? Icons.timelapse_rounded : Icons.check_circle_outline;
+    final statusIcon = isActive
+        ? Icons.timelapse_rounded
+        : Icons.check_circle_outline;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -674,8 +794,9 @@ class _SessionCard extends StatelessWidget {
                       isActive
                           ? Icons.shopping_cart_rounded
                           : Icons.shopping_cart_outlined,
-                      color:
-                          isActive ? AppColors.primary : AppColors.textSecondary,
+                      color: isActive
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
                       size: 24,
                     ),
                   ),
@@ -689,11 +810,13 @@ class _SessionCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.blue,
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.white, width: 1.5),
+                          border: Border.all(color: Colors.white, width: 1.5),
                         ),
-                        child: const Icon(Icons.people,
-                            size: 9, color: Colors.white),
+                        child: const Icon(
+                          Icons.people,
+                          size: 9,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                 ],
@@ -709,9 +832,7 @@ class _SessionCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             session.name,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w600,
                                   color: isActive
@@ -722,48 +843,6 @@ class _SessionCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (!isOwner)
-                          Container(
-                            margin: const EdgeInsets.only(left: 6),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'Được mời',
-                              style: TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        if (session.isShared && isOwner)
-                          Container(
-                            margin: const EdgeInsets.only(left: 6),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.people,
-                                    size: 10, color: AppColors.primary),
-                                SizedBox(width: 3),
-                                Text(
-                                  'Đã chia sẻ',
-                                  style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                          ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -771,7 +850,9 @@ class _SessionCard extends StatelessWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: statusBg,
                             borderRadius: BorderRadius.circular(6),
@@ -808,8 +889,11 @@ class _SessionCard extends StatelessWidget {
               // Actions
               if (isOwner)
                 PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert,
-                      color: AppColors.textHint, size: 20),
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: AppColors.textHint,
+                    size: 20,
+                  ),
                   onSelected: (value) {
                     if (value == 'share') onShare?.call();
                     if (value == 'edit') onEdit?.call();
@@ -818,31 +902,45 @@ class _SessionCard extends StatelessWidget {
                   itemBuilder: (_) => [
                     const PopupMenuItem(
                       value: 'share',
-                      child: Row(children: [
-                        Icon(Icons.share_outlined,
-                            size: 18, color: AppColors.primary),
-                        SizedBox(width: 10),
-                        Text('Chia sẻ'),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.share_outlined,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: 10),
+                          Text('Chia sẻ'),
+                        ],
+                      ),
                     ),
                     const PopupMenuItem(
                       value: 'edit',
-                      child: Row(children: [
-                        Icon(Icons.edit_outlined,
-                            size: 18, color: AppColors.textSecondary),
-                        SizedBox(width: 10),
-                        Text('Chỉnh sửa'),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: AppColors.textSecondary,
+                          ),
+                          SizedBox(width: 10),
+                          Text('Chỉnh sửa'),
+                        ],
+                      ),
                     ),
                     const PopupMenuItem(
                       value: 'delete',
-                      child: Row(children: [
-                        Icon(Icons.delete_outline,
-                            size: 18, color: AppColors.error),
-                        SizedBox(width: 10),
-                        Text('Xóa',
-                            style: TextStyle(color: AppColors.error)),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: AppColors.error,
+                          ),
+                          SizedBox(width: 10),
+                          Text('Xóa', style: TextStyle(color: AppColors.error)),
+                        ],
+                      ),
                     ),
                   ],
                 )
