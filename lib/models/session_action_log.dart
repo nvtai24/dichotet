@@ -23,45 +23,31 @@ class SessionActionLog {
     this.userImageUrl,
   });
 
-  /// Human-readable description of the action
+  String get actor => userDisplayName ?? 'Người dùng';
+
+  /// Short one-liner: who did what
   String get description {
-    final actor = userDisplayName ?? 'Người dùng';
     switch (actionType) {
       case 'add_item':
         return '$actor đã thêm "${itemName ?? 'sản phẩm'}"';
       case 'update_item':
         final oldName = metadata['old_name'] as String?;
-        if (oldName != null && oldName != itemName) {
-          return '$actor đã sửa "$oldName" → "${itemName ?? ''}"';
-        }
+        if (oldName != null) return '$actor đã đổi tên "$oldName" → "$itemName"';
         return '$actor đã sửa "${itemName ?? 'sản phẩm'}"';
       case 'delete_item':
         return '$actor đã xóa "${itemName ?? 'sản phẩm'}"';
       case 'check_item':
-        final store = metadata['store'] as String?;
-        final price = metadata['price'] as int?;
-        if (store != null && price != null) {
-          return '$actor đã mua "${itemName ?? ''}" tại $store · ${_fmt(price)}đ';
-        }
-        return '$actor đã đánh dấu mua "${itemName ?? 'sản phẩm'}"';
+        return '$actor đã mua "${itemName ?? 'sản phẩm'}"';
       case 'uncheck_item':
         return '$actor bỏ đánh dấu "${itemName ?? 'sản phẩm'}"';
       case 'add_price':
-        final store = metadata['store'] as String?;
-        final price = metadata['price'] as int?;
-        if (store != null && price != null) {
-          return '$actor thêm giá "${itemName ?? ''}" tại $store: ${_fmt(price)}đ';
-        }
         return '$actor thêm giá cho "${itemName ?? 'sản phẩm'}"';
+      case 'update_purchase':
+        return '$actor sửa thông tin mua "${itemName ?? 'sản phẩm'}"';
       case 'create_session':
         final name = metadata['name'] as String?;
         return '$actor đã tạo phiên${name != null ? ' "$name"' : ''}';
       case 'update_session':
-        final name = metadata['name'] as String?;
-        final budget = metadata['budget'] as int?;
-        if (name != null && budget != null) {
-          return '$actor đã cập nhật phiên "$name" · ngân sách ${_fmt(budget)}đ';
-        }
         return '$actor đã cập nhật thông tin phiên';
       case 'generate_join_code':
         return '$actor đã tạo mã mời tham gia phiên';
@@ -69,18 +55,107 @@ class SessionActionLog {
         return '$actor đã tham gia phiên';
       case 'leave_session':
         return '$actor đã rời phiên';
-      case 'update_purchase':
-        final store = metadata['store'] as String?;
-        final price = metadata['price'] as int?;
-        if (store != null && price != null) {
-          return '$actor đã sửa thông tin mua "${itemName ?? ''}" tại $store · ${_fmt(price)}đ';
-        }
-        return '$actor đã sửa thông tin mua "${itemName ?? 'sản phẩm'}"';
       case 'remove_member':
         final name = metadata['removed_name'] as String?;
         return '$actor đã xóa${name != null ? ' $name' : ' thành viên'} khỏi phiên';
       default:
         return '$actor thực hiện thao tác';
+    }
+  }
+
+  /// Extra detail line shown below description (null = no detail)
+  String? get detail {
+    switch (actionType) {
+      case 'add_item':
+        final parts = <String>[];
+        final cat = metadata['category'] as String?;
+        final qty = metadata['quantity'] as int?;
+        final unit = metadata['unit'] as String?;
+        final price = metadata['est_price'] as int?;
+        final note = metadata['note'] as String?;
+        if (cat != null) parts.add(cat);
+        if (qty != null) parts.add('$qty ${unit ?? 'cái'}');
+        if (price != null && price > 0) parts.add('~${_fmt(price)}đ/${unit ?? 'đv'}');
+        if (note != null) parts.add('Ghi chú: $note');
+        return parts.isEmpty ? null : parts.join(' · ');
+
+      case 'update_item':
+        final changes = <String>[];
+        final oldQty = metadata['old_qty'] as int?;
+        final newQty = metadata['new_qty'] as int?;
+        final oldPrice = metadata['old_price'] as int?;
+        final newPrice = metadata['new_price'] as int?;
+        final oldCat = metadata['old_category'] as String?;
+        final newCat = metadata['new_category'] as String?;
+        final unit = metadata['unit'] as String? ?? '';
+        if (oldQty != null && newQty != null) {
+          changes.add('SL: $oldQty → $newQty $unit');
+        }
+        if (oldPrice != null && newPrice != null) {
+          changes.add('Giá: ${_fmt(oldPrice)} → ${_fmt(newPrice)}đ');
+        }
+        if (oldCat != null && newCat != null) {
+          changes.add('Danh mục: $oldCat → $newCat');
+        }
+        return changes.isEmpty ? null : changes.join(' · ');
+
+      case 'delete_item':
+        final parts = <String>[];
+        final cat = metadata['category'] as String?;
+        final qty = metadata['quantity'] as int?;
+        final unit = metadata['unit'] as String?;
+        if (cat != null) parts.add(cat);
+        if (qty != null) parts.add('$qty ${unit ?? 'cái'}');
+        return parts.isEmpty ? null : parts.join(' · ');
+
+      case 'check_item':
+        final parts = <String>[];
+        final store = metadata['store'] as String?;
+        final qty = metadata['quantity'] as int?;
+        final unit = metadata['unit'] as String?;
+        final price = metadata['price'] as int?;
+        if (store != null) parts.add(store);
+        if (qty != null) parts.add('$qty ${unit ?? 'cái'}');
+        if (price != null) parts.add('${_fmt(price)}đ/${unit ?? 'đv'}');
+        return parts.isEmpty ? null : parts.join(' · ');
+
+      case 'uncheck_item':
+        final store = metadata['store'] as String?;
+        return store != null ? 'Tại $store' : null;
+
+      case 'add_price':
+        final store = metadata['store'] as String?;
+        final price = metadata['price'] as int?;
+        final unit = metadata['unit'] as String?;
+        if (store == null && price == null) return null;
+        final parts = <String>[];
+        if (store != null) parts.add(store);
+        if (price != null && price > 0) {
+          parts.add('${_fmt(price)}đ/${unit ?? 'đv'}');
+        }
+        return parts.join(' · ');
+
+      case 'update_purchase':
+        final parts = <String>[];
+        final store = metadata['store'] as String?;
+        final qty = metadata['quantity'] as int?;
+        final unit = metadata['unit'] as String?;
+        final price = metadata['price'] as int?;
+        if (store != null) parts.add(store);
+        if (qty != null) parts.add('$qty ${unit ?? 'cái'}');
+        if (price != null) parts.add('${_fmt(price)}đ/${unit ?? 'đv'}');
+        return parts.isEmpty ? null : parts.join(' · ');
+
+      case 'update_session':
+        final name = metadata['name'] as String?;
+        final budget = metadata['budget'] as int?;
+        final parts = <String>[];
+        if (name != null) parts.add('Tên: "$name"');
+        if (budget != null) parts.add('Ngân sách: ${_fmt(budget)}đ');
+        return parts.isEmpty ? null : parts.join(' · ');
+
+      default:
+        return null;
     }
   }
 

@@ -250,7 +250,13 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await _repository.addItem(item, categoryName, _sessionId!);
-    _logAction('add_item', itemName: item.name);
+    _logAction('add_item', itemName: item.name, metadata: {
+      'category': categoryName,
+      'quantity': item.quantity,
+      'unit': item.unit,
+      if (item.estimatedPrice > 0) 'est_price': item.estimatedPrice,
+      if (item.note != null && item.note!.isNotEmpty) 'note': item.note,
+    });
     _syncStorePrices(item.storePrices);
     _broadcastChange();
   }
@@ -266,8 +272,22 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.updateItem(oldItem, newItem, categoryName);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
-    _logAction('update_item', itemName: newItem.name,
-        metadata: oldItem.name != newItem.name ? {'old_name': oldItem.name} : null);
+    final changes = <String, dynamic>{};
+    if (oldItem.name != newItem.name) changes['old_name'] = oldItem.name;
+    if (oldItem.quantity != newItem.quantity) {
+      changes['old_qty'] = oldItem.quantity;
+      changes['new_qty'] = newItem.quantity;
+    }
+    if (oldItem.estimatedPrice != newItem.estimatedPrice) {
+      changes['old_price'] = oldItem.estimatedPrice;
+      changes['new_price'] = newItem.estimatedPrice;
+    }
+    if (oldItem.categoryName != categoryName) {
+      changes['old_category'] = oldItem.categoryName;
+      changes['new_category'] = categoryName;
+    }
+    changes['unit'] = newItem.unit;
+    _logAction('update_item', itemName: newItem.name, metadata: changes);
     _syncStorePrices(newItem.storePrices);
     _broadcastChange();
   }
@@ -291,8 +311,12 @@ class ShoppingListViewModel extends ChangeNotifier {
     );
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
-    _logAction('check_item', itemName: item.name,
-        metadata: {'store': locationName, 'price': price});
+    _logAction('check_item', itemName: item.name, metadata: {
+      if (locationName != null) 'store': locationName,
+      'price': price,
+      'quantity': quantity,
+      'unit': item.unit,
+    });
     if (locationName != null && locationLat != null && locationLon != null) {
       _syncStorePrices([StorePrice(
         storeName: locationName,
@@ -310,12 +334,11 @@ class ShoppingListViewModel extends ChangeNotifier {
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _syncStorePrices([storePrice]);
     _broadcastChange();
-    _logAction('add_price',
-        itemName: item.name,
-        metadata: {
-          'store': storePrice.storeName,
-          'price': storePrice.pricePerUnit,
-        });
+    _logAction('add_price', itemName: item.name, metadata: {
+      'store': storePrice.storeName,
+      'price': storePrice.pricePerUnit,
+      'unit': item.unit,
+    });
     notifyListeners();
   }
 
@@ -348,12 +371,12 @@ class ShoppingListViewModel extends ChangeNotifier {
     if (item != null) {
       final purchase = item.purchases.firstWhere((p) => p.id == purchaseId,
           orElse: () => item.purchases.first);
-      _logAction('update_purchase',
-          itemName: item.name,
-          metadata: {
-            'store': purchase.locationName,
-            'price': pricePerUnit,
-          });
+      _logAction('update_purchase', itemName: item.name, metadata: {
+        'store': purchase.locationName,
+        'price': pricePerUnit,
+        'quantity': quantity,
+        'unit': item.unit,
+      });
     }
   }
 
@@ -371,9 +394,10 @@ class ShoppingListViewModel extends ChangeNotifier {
     await _repository.deletePurchase(purchaseId);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
-    _logAction('uncheck_item',
-        itemName: itemName,
-        metadata: {'store': purchase?.locationName});
+    _logAction('uncheck_item', itemName: itemName, metadata: {
+      'store': purchase?.locationName,
+      'unit': item?.unit,
+    });
   }
 
   Future<void> recalculatePurchaseStatus(ShoppingItem item) async {
@@ -396,7 +420,11 @@ class ShoppingListViewModel extends ChangeNotifier {
     await _repository.deleteItem(item);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
-    _logAction('delete_item', itemName: item.name);
+    _logAction('delete_item', itemName: item.name, metadata: {
+      'category': item.categoryName,
+      'quantity': item.quantity,
+      'unit': item.unit,
+    });
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────

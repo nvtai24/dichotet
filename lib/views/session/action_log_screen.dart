@@ -130,7 +130,7 @@ class _ActionLogScreenState extends State<ActionLogScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: _logs.length,
-      separatorBuilder: (_, _) =>
+      separatorBuilder: (context, _) =>
           const Divider(height: 1, indent: 64, endIndent: 16),
       itemBuilder: (_, i) => _LogTile(log: _logs[i]),
     );
@@ -146,6 +146,7 @@ class _LogTile extends StatelessWidget {
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
     final isMe = log.userId == currentUserId;
 
+    final detail = log.detail;
     return ListTile(
       leading: _Avatar(
         name: log.userDisplayName,
@@ -156,10 +157,27 @@ class _LogTile extends StatelessWidget {
         log.description,
         style: const TextStyle(fontSize: 14),
       ),
-      subtitle: Text(
-        _formatTime(log.createdAt),
-        style: const TextStyle(fontSize: 12, color: Colors.black45),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (detail != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                detail,
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.only(top: detail != null ? 2 : 0),
+            child: Text(
+              _formatTime(log.createdAt),
+              style: const TextStyle(fontSize: 11, color: Colors.black38),
+            ),
+          ),
+        ],
       ),
+      isThreeLine: detail != null,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
