@@ -20,6 +20,15 @@ class SessionViewModel extends ChangeNotifier {
   ShoppingSession? _selectedSession;
   ShoppingSession? get selectedSession => _selectedSession;
 
+  /// Non-null when the current user was removed from a session.
+  /// UI should react by navigating to SessionListScreen, then call [clearKicked].
+  String? _kickedFromSessionId;
+  String? get kickedFromSessionId => _kickedFromSessionId;
+
+  void clearKicked() {
+    _kickedFromSessionId = null;
+  }
+
   String? get currentUserId => Supabase.instance.client.auth.currentUser?.id;
 
   // ─── Session-level Realtime ─────────────────────────────────────────────
@@ -52,6 +61,19 @@ class SessionViewModel extends ChangeNotifier {
             notifyListeners();
           },
         )
+        .onBroadcast(
+          event: 'member_removed',
+          callback: (payload) {
+            final removedId = payload['userId'] as String?;
+            if (removedId == null) return;
+            if (removedId == currentUserId) {
+              _sessions.removeWhere((s) => s.id == sessionId);
+              if (_selectedSession?.id == sessionId) _selectedSession = null;
+              _kickedFromSessionId = sessionId;
+              notifyListeners();
+            }
+          },
+        )
         .subscribe();
     _sessionChannels[sessionId] = channel;
   }
@@ -60,9 +82,10 @@ class SessionViewModel extends ChangeNotifier {
     _sessionChannels.remove(sessionId)?.unsubscribe();
   }
 
-  void _broadcastSession(String sessionId, String event) {
+  void _broadcastSession(String sessionId, String event,
+      [Map<String, dynamic> payload = const {}]) {
     _sessionChannels[sessionId]
-        ?.sendBroadcastMessage(event: event, payload: {});
+        ?.sendBroadcastMessage(event: event, payload: payload);
   }
 
   Future<void> loadSessions() async {
@@ -193,7 +216,7 @@ class SessionViewModel extends ChangeNotifier {
     _logAction(sessionId, 'remove_member',
         metadata: {'removed_user_id': userId, 'removed_name': displayName});
     await _repository.removeMember(sessionId, userId);
-    _broadcastSession(sessionId, 'session_changed');
+    _broadcastSession(sessionId, 'member_removed', {'userId': userId});
   }
 
   Future<List<SessionActionLog>> getActionLogs(String sessionId) =>

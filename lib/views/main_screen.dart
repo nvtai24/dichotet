@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/constants/app_colors.dart';
+import '../viewmodels/session/session_viewmodel.dart';
+import '../viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'home/dashboard_screen.dart';
 import 'shopping_list/shopping_list_screen.dart';
 import 'shopping_list/add_item_screen.dart';
 import 'budget/budget_screen.dart';
 import 'settings/settings_screen.dart';
+import 'session/session_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,6 +19,36 @@ class MainScreen extends StatefulWidget {
 
 class MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SessionViewModel>().addListener(_onSessionChanged);
+    });
+  }
+
+  @override
+  void dispose() {
+    context.read<SessionViewModel>().removeListener(_onSessionChanged);
+    super.dispose();
+  }
+
+  void _onSessionChanged() {
+    final sessionVM = context.read<SessionViewModel>();
+    if (sessionVM.kickedFromSessionId != null) {
+      sessionVM.clearKicked();
+      context.read<ShoppingListViewModel>().reset();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bạn đã bị xóa khỏi phiên mua sắm')),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const SessionListScreen()),
+        (route) => false,
+      );
+    }
+  }
 
   void switchToTab(int index) {
     setState(() => _currentIndex = index);
