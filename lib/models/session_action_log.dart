@@ -23,7 +23,7 @@ class SessionActionLog {
 
   /// Human-readable description of the action
   String get description {
-    final actor = userDisplayName ?? 'Ai đó';
+    final actor = userDisplayName ?? 'Người dùng';
     switch (actionType) {
       case 'add_item':
         return '$actor đã thêm "${itemName ?? 'sản phẩm'}"';

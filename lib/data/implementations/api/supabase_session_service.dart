@@ -138,42 +138,54 @@ class SupabaseSessionService implements ISessionService {
 
   @override
   Future<List<SessionMember>> getSessionMembers(String sessionId) async {
-    // Ensure owner is always in session_members (for sessions created before sharing feature)
+    // Fetch session to know who the owner is
     final sessionRow = await _client
         .from('shopping_sessions')
         .select('user_id')
         .eq('id', sessionId)
         .single();
-    await _client.from('session_members').upsert({
-      'session_id': sessionId,
-      'user_id': sessionRow['user_id'] as String,
-      'role': 'owner',
-    }, onConflict: 'session_id,user_id');
+    final ownerUserId = sessionRow['user_id'] as String;
+
+    // Best-effort: ensure owner is in session_members (may fail for non-owners due to RLS)
+    try {
+      await _client.from('session_members').upsert({
+        'session_id': sessionId,
+        'user_id': ownerUserId,
+        'role': 'owner',
+      }, onConflict: 'session_id,user_id');
+    } catch (_) {}
 
     final rows = await _client
         .from('session_members')
         .select('id, session_id, user_id, role, joined_at')
         .eq('session_id', sessionId);
 
-    // Fetch profiles separately (session_members.user_id → auth.users, not profiles directly)
-    final userIds = rows.map((r) => r['user_id'] as String).toList();
+    // Collect all user IDs; if owner not in rows, add them manually
+    final allUserIds = rows.map((r) => r['user_id'] as String).toSet();
+    final ownerInRows = allUserIds.contains(ownerUserId);
+
+    final fetchIds = {...allUserIds, ownerUserId}.toList();
     final Map<String, Map<String, dynamic>> profileMap = {};
-    if (userIds.isNotEmpty) {
+    if (fetchIds.isNotEmpty) {
       final profiles = await _client
           .from('profiles')
           .select('id, first_name, last_name')
-          .inFilter('id', userIds);
+          .inFilter('id', fetchIds);
       for (final p in profiles) {
         profileMap[p['id'] as String] = p;
       }
     }
 
-    return rows.map((r) {
+    String nameFrom(String uid) {
+      final p = profileMap[uid];
+      final fn = (p?['first_name'] as String? ?? '').trim();
+      final ln = (p?['last_name'] as String? ?? '').trim();
+      return '$fn $ln'.trim();
+    }
+
+    final members = rows.map((r) {
       final userId = r['user_id'] as String;
-      final profile = profileMap[userId];
-      final firstName = profile?['first_name'] as String? ?? '';
-      final lastName = profile?['last_name'] as String? ?? '';
-      final name = '$firstName $lastName'.trim();
+      final name = nameFrom(userId);
       return SessionMember(
         id: r['id'] as String,
         sessionId: r['session_id'] as String,
@@ -184,6 +196,31 @@ class SupabaseSessionService implements ISessionService {
         displayName: name.isEmpty ? null : name,
       );
     }).toList();
+
+    // If owner wasn't in session_members, inject them at the top
+    if (!ownerInRows) {
+      final name = nameFrom(ownerUserId);
+      members.insert(
+        0,
+        SessionMember(
+          id: 'owner-synthetic',
+          sessionId: sessionId,
+          userId: ownerUserId,
+          role: 'owner',
+          joinedAt: DateTime.now(),
+          displayName: name.isEmpty ? null : name,
+        ),
+      );
+    }
+
+    // Sort: owner first, then rest by joinedAt
+    members.sort((a, b) {
+      if (a.isOwner && !b.isOwner) return -1;
+      if (!a.isOwner && b.isOwner) return 1;
+      return a.joinedAt.compareTo(b.joinedAt);
+    });
+
+    return members;
   }
 
   @override
@@ -205,13 +242,28 @@ class SupabaseSessionService implements ISessionService {
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
+
+    // Snapshot actor name so it's always available when reading logs
+    final enriched = Map<String, dynamic>.from(metadata ?? {});
+    try {
+      final profile = await _client
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', userId)
+          .single();
+      final fn = (profile['first_name'] as String? ?? '').trim();
+      final ln = (profile['last_name'] as String? ?? '').trim();
+      final name = '$fn $ln'.trim();
+      if (name.isNotEmpty) enriched['_actor'] = name;
+    } catch (_) {}
+
     await _client.from('session_action_logs').insert({
       'session_id': sessionId,
       'user_id': userId,
       'action_type': actionType,
       'item_id': itemId,
       'item_name': itemName,
-      'metadata': metadata ?? {},
+      'metadata': enriched,
     });
   }
 
@@ -253,7 +305,14 @@ class SupabaseSessionService implements ISessionService {
         itemId: r['item_id'] as int?,
         metadata: (r['metadata'] as Map<String, dynamic>?) ?? {},
         createdAt: DateTime.parse(r['created_at'] as String),
-        userDisplayName: nameMap[uid]?.isEmpty == true ? null : nameMap[uid],
+        userDisplayName: () {
+          final fromProfile = nameMap[uid];
+          if (fromProfile != null && fromProfile.isNotEmpty) return fromProfile;
+          // Fallback: snapshot stored at write time
+          final meta = (r['metadata'] as Map<String, dynamic>?) ?? {};
+          final actor = meta['_actor'] as String?;
+          return (actor != null && actor.isNotEmpty) ? actor : null;
+        }(),
       );
     }).toList();
   }

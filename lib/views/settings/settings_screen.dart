@@ -291,9 +291,9 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showMembersSheet(BuildContext context, SessionViewModel sessionVM,
-      String sessionId, bool currentIsOwner) async {
-    List<SessionMember> members = [];
-    bool loading = true;
+      String sessionId, bool currentIsOwner) {
+    // Load once, outside builder to avoid infinite rebuild loop
+    final future = sessionVM.getSessionMembers(sessionId);
 
     showModalBottomSheet(
       context: context,
@@ -303,102 +303,110 @@ class SettingsScreen extends StatelessWidget {
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) {
-          if (loading) {
-            Future.microtask(() async {
-              final m = await sessionVM.getSessionMembers(sessionId);
-              if (!ctx.mounted) return;
-              setState(() {
-                members = m;
-                loading = false;
-              });
-            });
-          }
+          return FutureBuilder<List<SessionMember>>(
+            future: future,
+            builder: (ctx, snapshot) {
+              final members = snapshot.data ?? [];
+              final loading =
+                  snapshot.connectionState == ConnectionState.waiting;
 
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.divider,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Thành viên (${loading ? '...' : members.length})',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (loading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else
-                  ...members.map((SessionMember m) {
-                    final isMe = m.userId == sessionVM.currentUserId;
-                    final displayText = m.displayName != null
-                        ? '${m.displayName}${isMe ? ' (Bạn)' : ''}'
-                        : (isMe ? '(Bạn)' : 'Thành viên');
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: m.isOwner
-                            ? AppColors.primary.withValues(alpha: 0.12)
-                            : AppColors.textHint.withValues(alpha: 0.15),
-                        child: Icon(
-                          m.isOwner
-                              ? Icons.star_rounded
-                              : Icons.person_rounded,
-                          size: 18,
-                          color: m.isOwner
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.divider,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      title: Text(
-                        displayText,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Thành viên (${loading ? '...' : members.length})',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
-                      subtitle: Text(
-                        m.isOwner ? 'Chủ phiên' : 'Thành viên',
-                        style: const TextStyle(
-                            fontSize: 12, color: AppColors.textHint),
-                      ),
-                      trailing: currentIsOwner && !m.isOwner
-                          ? IconButton(
-                              icon: const Icon(Icons.remove_circle_outline,
-                                  size: 20, color: AppColors.error),
-                              onPressed: () async {
-                                await sessionVM.removeMember(
-                                    sessionId, m.userId,
-                                    displayName: m.displayName);
-                                final updated = await sessionVM
-                                    .getSessionMembers(sessionId);
-                                if (!ctx.mounted) return;
-                                setState(() => members = updated);
-                              },
-                            )
-                          : null,
-                    );
-                  }),
-              ],
-            ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (loading)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (snapshot.hasError)
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Không thể tải danh sách thành viên',
+                          style: TextStyle(color: AppColors.error),
+                        ),
+                      )
+                    else
+                      ...members.map((SessionMember m) {
+                        final isMe = m.userId == sessionVM.currentUserId;
+                        final displayText = m.displayName != null
+                            ? '${m.displayName}${isMe ? ' (Bạn)' : ''}'
+                            : (isMe ? '(Bạn)' : 'Thành viên');
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: m.isOwner
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : AppColors.textHint.withValues(alpha: 0.15),
+                            child: Icon(
+                              m.isOwner
+                                  ? Icons.star_rounded
+                                  : Icons.person_rounded,
+                              size: 18,
+                              color: m.isOwner
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                          title: Text(
+                            displayText,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                          subtitle: Text(
+                            m.isOwner ? 'Chủ phiên' : 'Thành viên',
+                            style: const TextStyle(
+                                fontSize: 12, color: AppColors.textHint),
+                          ),
+                          trailing: currentIsOwner && !m.isOwner
+                              ? IconButton(
+                                  icon: const Icon(
+                                      Icons.remove_circle_outline,
+                                      size: 20,
+                                      color: AppColors.error),
+                                  onPressed: () async {
+                                    await sessionVM.removeMember(
+                                        sessionId, m.userId,
+                                        displayName: m.displayName);
+                                    if (!ctx.mounted) return;
+                                    Navigator.pop(ctx);
+                                    _showMembersSheet(context, sessionVM,
+                                        sessionId, currentIsOwner);
+                                  },
+                                )
+                              : null,
+                        );
+                      }),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
