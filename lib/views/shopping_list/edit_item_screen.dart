@@ -80,8 +80,15 @@ class _EditItemScreenState extends State<EditItemScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final file = await ImagePicker().pickImage(source: source, imageQuality: 80);
-    if (file != null) setState(() { _selectedImage = file; _removeImage = false; });
+    final file = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 80,
+    );
+    if (file != null)
+      setState(() {
+        _selectedImage = file;
+        _removeImage = false;
+      });
   }
 
   void _showImageSourceSheet() {
@@ -96,31 +103,54 @@ class _EditItemScreenState extends State<EditItemScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
-                color: AppColors.divider, borderRadius: BorderRadius.circular(2),
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 12),
-            const Text('Chọn ảnh sản phẩm',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            const Text(
+              'Chọn ảnh sản phẩm',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
+              leading: const Icon(
+                Icons.camera_alt_outlined,
+                color: AppColors.primary,
+              ),
               title: const Text('Chụp ảnh'),
-              onTap: () { Navigator.pop(context); _pickImage(ImageSource.camera); },
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: AppColors.primary,
+              ),
               title: const Text('Chọn từ thư viện'),
-              onTap: () { Navigator.pop(context); _pickImage(ImageSource.gallery); },
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
             ),
-            if (_selectedImage != null || (_currentImageUrl != null && !_removeImage))
+            if (_selectedImage != null ||
+                (_currentImageUrl != null && !_removeImage))
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Xoá ảnh', style: TextStyle(color: Colors.red)),
+                title: const Text(
+                  'Xoá ảnh',
+                  style: TextStyle(color: Colors.red),
+                ),
                 onTap: () {
-                  setState(() { _selectedImage = null; _removeImage = true; });
+                  setState(() {
+                    _selectedImage = null;
+                    _removeImage = true;
+                  });
                   Navigator.pop(context);
                 },
               ),
@@ -192,9 +222,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
         imageUrl = await vm.uploadItemImage(bytes, fileName);
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi upload ảnh: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi upload ảnh: $e')));
         setState(() => _isUploadingImage = false);
         return;
       }
@@ -269,32 +299,34 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     ),
                     optionsBuilder: (textEditingValue) {
                       if (textEditingValue.text.isEmpty) return _categories;
-                      return _categories.where((c) => c
-                          .toLowerCase()
-                          .contains(textEditingValue.text.toLowerCase()));
+                      return _categories.where(
+                        (c) => c.toLowerCase().contains(
+                          textEditingValue.text.toLowerCase(),
+                        ),
+                      );
                     },
                     onSelected: (value) =>
                         setState(() => _selectedCategory = value),
                     fieldViewBuilder:
                         (ctx, controller, focusNode, onFieldSubmitted) {
-                      _categoryFieldController = controller;
-                      return TextField(
-                        controller: controller,
-                        focusNode: focusNode,
-                        onChanged: (v) {
-                          if (v.isEmpty) {
-                            setState(() => _selectedCategory = null);
-                          }
+                          _categoryFieldController = controller;
+                          return TextField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            onChanged: (v) {
+                              if (v.isEmpty) {
+                                setState(() => _selectedCategory = null);
+                              }
+                            },
+                            decoration: const InputDecoration(
+                              hintText: 'Tìm hoặc chọn danh mục...',
+                              suffixIcon: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          );
                         },
-                        decoration: const InputDecoration(
-                          hintText: 'Tìm hoặc chọn danh mục...',
-                          suffixIcon: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      );
-                    },
                     optionsViewBuilder: (ctx, onSelected, options) => Align(
                       alignment: Alignment.topLeft,
                       child: Material(
@@ -420,26 +452,29 @@ class _EditItemScreenState extends State<EditItemScreen> {
                             ),
                           )
                         : (_currentImageUrl != null && !_removeImage)
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  _currentImageUrl!,
-                                  width: double.infinity,
-                                  height: 180,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder: (_, child, progress) =>
-                                      progress == null
-                                          ? child
-                                          : const SizedBox(
-                                              height: 180,
-                                              child: Center(
-                                                child: CircularProgressIndicator(strokeWidth: 2),
-                                              ),
-                                            ),
-                                  errorBuilder: (_, __, _) => _buildImagePlaceholder(),
-                                ),
-                              )
-                            : _buildImagePlaceholder(),
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              _currentImageUrl!,
+                              width: double.infinity,
+                              height: 180,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (_, child, progress) =>
+                                  progress == null
+                                  ? child
+                                  : const SizedBox(
+                                      height: 180,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
+                              errorBuilder: (_, __, _) =>
+                                  _buildImagePlaceholder(),
+                            ),
+                          )
+                        : _buildImagePlaceholder(),
                   ),
                   if (_selectedImage != null ||
                       (_currentImageUrl != null && !_removeImage)) ...[
@@ -603,8 +638,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.add_photo_alternate_outlined,
-              size: 36, color: AppColors.primary.withValues(alpha: 0.6)),
+          Icon(
+            Icons.add_photo_alternate_outlined,
+            size: 36,
+            color: AppColors.primary.withValues(alpha: 0.6),
+          ),
           const SizedBox(height: 8),
           Text(
             'Thêm ảnh sản phẩm',
@@ -682,9 +720,10 @@ class _EditItemScreenState extends State<EditItemScreen> {
     });
   }
 
-
   Widget _buildStoreEntryCard(_StorePriceEntry entry, int index) {
-    final allStoreNames = context.read<ShoppingListViewModel>().sessionStoreNames;
+    final allStoreNames = context
+        .read<ShoppingListViewModel>()
+        .sessionStoreNames;
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -712,7 +751,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: const Icon(Icons.storefront_outlined, size: 14, color: AppColors.primary),
+                child: const Icon(
+                  Icons.storefront_outlined,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
               ),
               const SizedBox(width: 7),
               Text(
@@ -746,11 +789,15 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     if (allStoreNames.isEmpty) return const Iterable.empty();
                     if (textEditingValue.text.isEmpty) return allStoreNames;
                     return allStoreNames.where(
-                      (n) => n.toLowerCase().contains(textEditingValue.text.toLowerCase()),
+                      (n) => n.toLowerCase().contains(
+                        textEditingValue.text.toLowerCase(),
+                      ),
                     );
                   },
                   onSelected: (value) {
-                    final store = context.read<ShoppingListViewModel>().findStore(value);
+                    final store = context
+                        .read<ShoppingListViewModel>()
+                        .findStore(value);
                     setState(() {
                       entry.storeName = value;
                       entry.lat = store?.lat;
@@ -763,7 +810,10 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       focusNode: focusNode,
                       decoration: const InputDecoration(
                         hintText: 'Tên cửa hàng / chợ',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                       ),
                       onChanged: (v) => entry.storeName = v,
                     );
@@ -785,8 +835,17 @@ class _EditItemScreenState extends State<EditItemScreen> {
                             return InkWell(
                               onTap: () => onSelected(option),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                child: Text(option, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  option,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
                               ),
                             );
                           },
@@ -803,28 +862,45 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => LocationPickerScreen(
-                        storeName: entry.storeName.isNotEmpty ? entry.storeName : null,
-                        initialLocation: entry.hasLocation ? LatLng(entry.lat!, entry.lon!) : null,
+                        storeName: entry.storeName.isNotEmpty
+                            ? entry.storeName
+                            : null,
+                        initialLocation: entry.hasLocation
+                            ? LatLng(entry.lat!, entry.lon!)
+                            : null,
                       ),
                     ),
                   );
                   if (result == null) return; // cancelled (back button)
                   if (result.cleared) {
-                    setState(() { entry.lat = null; entry.lon = null; });
+                    setState(() {
+                      entry.lat = null;
+                      entry.lon = null;
+                    });
                   } else if (result.location != null) {
-                    setState(() { entry.lat = result.location!.latitude; entry.lon = result.location!.longitude; });
+                    setState(() {
+                      entry.lat = result.location!.latitude;
+                      entry.lon = result.location!.longitude;
+                    });
                   }
                 },
                 child: Container(
-                  width: 44, height: 44,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: entry.hasLocation ? AppColors.primary : const Color(0xFFF0F0F0),
+                    color: entry.hasLocation
+                        ? AppColors.primary
+                        : const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
-                    entry.hasLocation ? Icons.location_on_rounded : Icons.add_location_alt_outlined,
+                    entry.hasLocation
+                        ? Icons.location_on_rounded
+                        : Icons.add_location_alt_outlined,
                     size: 20,
-                    color: entry.hasLocation ? Colors.white : AppColors.textSecondary,
+                    color: entry.hasLocation
+                        ? Colors.white
+                        : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -841,16 +917,31 @@ class _EditItemScreenState extends State<EditItemScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.location_on_rounded, size: 11, color: AppColors.primary),
+                  const Icon(
+                    Icons.location_on_rounded,
+                    size: 11,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${entry.lat!.toStringAsFixed(5)}, ${entry.lon!.toStringAsFixed(5)}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   GestureDetector(
-                    onTap: () => setState(() { entry.lat = null; entry.lon = null; }),
-                    child: Icon(Icons.close_rounded, size: 11, color: AppColors.primary.withValues(alpha: 0.6)),
+                    onTap: () => setState(() {
+                      entry.lat = null;
+                      entry.lon = null;
+                    }),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 11,
+                      color: AppColors.primary.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ),
@@ -864,8 +955,15 @@ class _EditItemScreenState extends State<EditItemScreen> {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: const InputDecoration(
               hintText: 'Giá / đơn vị',
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              prefixIcon: Icon(Icons.sell_outlined, size: 18, color: AppColors.textSecondary),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              prefixIcon: Icon(
+                Icons.sell_outlined,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
               suffixIcon: Padding(
                 padding: EdgeInsets.only(right: 12),
                 child: Text(
