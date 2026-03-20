@@ -14,4 +14,17 @@ abstract class ISessionService {
   Future<void> leaveSession(String sessionId);
   Future<List<SessionMember>> getSessionMembers(String sessionId);
   Future<void> removeMember(String sessionId, String userId);
+
+  Future<void> addLog({
+    required String sessionId,
+    required String actionType,
+    int? itemId,
+    String? itemName,
+    Map<String, dynamic>? metadata,
+  });
+
+  Future<List<SessionActionLog>> getActionLogs(
+    String sessionId, {
+    int limit = 50,
+  });
 }

@@ -1,12 +1,36 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/interfaces/repositories/i_shopping_repository.dart';
+import '../../data/interfaces/repositories/i_session_repository.dart';
 import '../../models/shopping_models.dart';
 
 class ShoppingListViewModel extends ChangeNotifier {
   final IShoppingRepository _repository;
+  final ISessionRepository? _sessionRepository;
 
-  ShoppingListViewModel(this._repository);
+  ShoppingListViewModel(this._repository, {ISessionRepository? sessionRepository})
+      : _sessionRepository = sessionRepository;
+
+  // Fire-and-forget: log an action without breaking the main flow
+  void _logAction(
+    String actionType, {
+    int? itemId,
+    String? itemName,
+    Map<String, dynamic>? metadata,
+  }) {
+    final sid = _sessionId;
+    final repo = _sessionRepository;
+    if (sid == null || repo == null) return;
+    repo
+        .addLog(
+          sessionId: sid,
+          actionType: actionType,
+          itemId: itemId,
+          itemName: itemName,
+          metadata: metadata,
+        )
+        .catchError((_) {});
+  }
 
   // ─── State ──────────────────────────────────────────────────────────
 
@@ -221,6 +245,7 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await _repository.addItem(item, categoryName, _sessionId!);
+    _logAction('add_item', itemName: item.name);
     _syncStorePrices(item.storePrices);
   }
 
@@ -235,6 +260,8 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.updateItem(oldItem, newItem, categoryName);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _logAction('update_item', itemName: newItem.name,
+        metadata: oldItem.name != newItem.name ? {'old_name': oldItem.name} : null);
     _syncStorePrices(newItem.storePrices);
   }
 
@@ -256,6 +283,8 @@ class ShoppingListViewModel extends ChangeNotifier {
       locationLon: locationLon,
     );
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _logAction('check_item', itemName: item.name,
+        metadata: {'store': locationName, 'price': price});
     if (locationName != null && locationLat != null && locationLon != null) {
       _syncStorePrices([StorePrice(
         storeName: locationName,
@@ -334,6 +363,7 @@ class ShoppingListViewModel extends ChangeNotifier {
 
     await _repository.deleteItem(item);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _logAction('delete_item', itemName: item.name);
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────

@@ -74,4 +74,27 @@ class SessionRepositoryImpl implements ISessionRepository {
   @override
   Future<void> removeMember(String sessionId, String userId) =>
       _service.removeMember(sessionId, userId);
+
+  @override
+  Future<void> addLog({
+    required String sessionId,
+    required String actionType,
+    int? itemId,
+    String? itemName,
+    Map<String, dynamic>? metadata,
+  }) =>
+      _service.addLog(
+        sessionId: sessionId,
+        actionType: actionType,
+        itemId: itemId,
+        itemName: itemName,
+        metadata: metadata,
+      );
+
+  @override
+  Future<List<SessionActionLog>> getActionLogs(
+    String sessionId, {
+    int limit = 50,
+  }) =>
+      _service.getActionLogs(sessionId, limit: limit);
 }

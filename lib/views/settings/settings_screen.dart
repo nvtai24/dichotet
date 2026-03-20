@@ -9,6 +9,7 @@ import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
 import '../auth/login_screen.dart';
 import '../auth/reset_password_screen.dart';
+import '../session/action_log_screen.dart';
 import '../session/session_list_screen.dart';
 import 'edit_profile_screen.dart';
 
@@ -153,6 +154,17 @@ class SettingsScreen extends StatelessWidget {
                       subtitle: 'Xem danh sách người tham gia phiên',
                       onTap: () => _showMembersSheet(
                           context, sessionVM, session.id, isOwner),
+                    ),
+                    _SettingsTile(
+                      icon: Icons.history_rounded,
+                      label: 'Nhật ký hoạt động',
+                      subtitle: 'Xem ai đã làm gì trong phiên này',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ActionLogScreen(),
+                        ),
+                      ),
                     ),
                     _SettingsTile(
                       icon: isOwner

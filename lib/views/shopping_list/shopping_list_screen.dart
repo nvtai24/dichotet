@@ -5,6 +5,7 @@ import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import 'item_detail_screen.dart';
+import '../session/action_log_screen.dart';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -133,6 +134,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             onPressed: () {},
           ),
         ),
+        IconButton(
+          icon: const Icon(
+            Icons.history_rounded,
+            size: 22,
+            color: AppColors.primary,
+          ),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ActionLogScreen()),
+          ),
+        ),
+        const SizedBox(width: 4),
       ],
     );
   }

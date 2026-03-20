@@ -120,4 +120,7 @@ class SessionViewModel extends ChangeNotifier {
 
   Future<void> removeMember(String sessionId, String userId) =>
       _repository.removeMember(sessionId, userId);
+
+  Future<List<SessionActionLog>> getActionLogs(String sessionId) =>
+      _repository.getActionLogs(sessionId);
 }

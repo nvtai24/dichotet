@@ -65,7 +65,10 @@ class _DichotetAppState extends State<DichotetApp> {
           create: (_) => SessionViewModel(sessionRepository),
         ),
         ChangeNotifierProvider(
-          create: (_) => ShoppingListViewModel(shoppingRepository),
+          create: (_) => ShoppingListViewModel(
+            shoppingRepository,
+            sessionRepository: sessionRepository,
+          ),
         ),
         ChangeNotifierProxyProvider2<
           ShoppingListViewModel,

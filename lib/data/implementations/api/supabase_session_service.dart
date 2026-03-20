@@ -203,4 +203,67 @@ class SupabaseSessionService implements ISessionService {
         .eq('session_id', sessionId)
         .eq('user_id', userId);
   }
+
+  @override
+  Future<void> addLog({
+    required String sessionId,
+    required String actionType,
+    int? itemId,
+    String? itemName,
+    Map<String, dynamic>? metadata,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return;
+    await _client.from('session_action_logs').insert({
+      'session_id': sessionId,
+      'user_id': userId,
+      'action_type': actionType,
+      'item_id': itemId,
+      'item_name': itemName,
+      'metadata': metadata ?? {},
+    });
+  }
+
+  @override
+  Future<List<SessionActionLog>> getActionLogs(
+    String sessionId, {
+    int limit = 50,
+  }) async {
+    final rows = await _client
+        .from('session_action_logs')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    final userIds = rows.map((r) => r['user_id'] as String).toSet().toList();
+    final Map<String, String> nameMap = {};
+    if (userIds.isNotEmpty) {
+      final profiles = await _client
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .inFilter('id', userIds);
+      for (final p in profiles) {
+        final fn = p['first_name'] as String? ?? '';
+        final ln = p['last_name'] as String? ?? '';
+        final name = '$fn $ln'.trim();
+        nameMap[p['id'] as String] = name.isEmpty ? '' : name;
+      }
+    }
+
+    return rows.map((r) {
+      final uid = r['user_id'] as String;
+      return SessionActionLog(
+        id: r['id'] as String,
+        sessionId: r['session_id'] as String,
+        userId: uid,
+        actionType: r['action_type'] as String,
+        itemName: r['item_name'] as String?,
+        itemId: r['item_id'] as int?,
+        metadata: (r['metadata'] as Map<String, dynamic>?) ?? {},
+        createdAt: DateTime.parse(r['created_at'] as String),
+        userDisplayName: nameMap[uid]?.isEmpty == true ? null : nameMap[uid],
+      );
+    }).toList();
+  }
 }
