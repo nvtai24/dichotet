@@ -459,12 +459,6 @@ class SettingsScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               await sessionVM.deleteSession(session.id);
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SessionListScreen()),
-                );
-              }
             },
             child: const Text('Xóa'),
           ),

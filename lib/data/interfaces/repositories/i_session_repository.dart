@@ -2,6 +2,7 @@ import '../../../models/shopping_models.dart';
 
 abstract class ISessionRepository {
   Future<List<ShoppingSession>> getSessions();
+  void invalidateSessions();
   Future<ShoppingSession> createSession(String name, double budget);
   Future<ShoppingSession> updateSession(
     String sessionId,

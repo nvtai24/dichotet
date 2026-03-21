@@ -27,6 +27,9 @@ class SessionRepositoryImpl implements ISessionRepository {
   }
 
   @override
+  void invalidateSessions() => _cache.invalidateSessions();
+
+  @override
   Future<ShoppingSession> createSession(String name, double budget) async {
     final session = await _service.createSession(name, budget);
     _cache.invalidateSessions();

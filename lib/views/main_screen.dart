@@ -20,41 +20,26 @@ class MainScreen extends StatefulWidget {
 class MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SessionViewModel>().addListener(_onSessionChanged);
-    });
-  }
-
-  @override
-  void dispose() {
-    context.read<SessionViewModel>().removeListener(_onSessionChanged);
-    super.dispose();
-  }
-
-  void _onSessionChanged() {
+  void _handleKick(BuildContext context) {
     final sessionVM = context.read<SessionViewModel>();
-    if (sessionVM.kickedFromSessionId != null) {
-      final wasDeleted = sessionVM.sessionWasDeleted;
-      sessionVM.clearKicked();
-      context.read<ShoppingListViewModel>().reset();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            wasDeleted
-                ? 'Phiên mua sắm đã bị xóa'
-                : 'Bạn đã bị xóa khỏi phiên mua sắm',
-          ),
+    if (sessionVM.kickedFromSessionId == null) return;
+    final wasDeleted = sessionVM.sessionWasDeleted;
+    sessionVM.clearKicked();
+    context.read<ShoppingListViewModel>().reset();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          wasDeleted
+              ? 'Phiên mua sắm đã bị xóa'
+              : 'Bạn đã bị xóa khỏi phiên mua sắm',
         ),
-      );
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const SessionListScreen()),
-        (route) => false,
-      );
-    }
+      ),
+    );
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const SessionListScreen()),
+      (route) => false,
+    );
   }
 
   void switchToTab(int index) {
@@ -70,6 +55,15 @@ class MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final kickedId = context.select<SessionViewModel, String?>(
+      (vm) => vm.kickedFromSessionId,
+    );
+    if (kickedId != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _handleKick(context),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       floatingActionButton: FloatingActionButton(

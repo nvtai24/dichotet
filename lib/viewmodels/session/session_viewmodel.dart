@@ -58,15 +58,26 @@ class SessionViewModel extends ChangeNotifier {
             notifyListeners();
           },
         )
-        .onBroadcast(
-          event: 'session_deleted',
+        // Use Postgres Changes (server-side DELETE event) instead of broadcast
+        // so ALL members reliably receive notification when a session is deleted.
+        .onPostgresChanges(
+          event: PostgresChangeEvent.delete,
+          schema: 'public',
+          table: 'shopping_sessions',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: sessionId,
+          ),
           callback: (_) {
+            _repository.invalidateSessions();
             _sessions.removeWhere((s) => s.id == sessionId);
             if (_selectedSession?.id == sessionId) {
               _selectedSession = null;
               _kickedFromSessionId = sessionId;
               _sessionWasDeleted = true;
             }
+            unsubscribeFromSession(sessionId);
             notifyListeners();
           },
         )
@@ -113,6 +124,9 @@ class SessionViewModel extends ChangeNotifier {
   }
 
   void reset() {
+    for (final id in _sessionChannels.keys.toList()) {
+      unsubscribeFromSession(id);
+    }
     _sessions = [];
     _selectedSession = null;
     _error = null;
@@ -151,12 +165,17 @@ class SessionViewModel extends ChangeNotifier {
   }
 
   Future<void> deleteSession(String sessionId) async {
-    _logAction(sessionId, 'delete_session');
-    _broadcastSession(sessionId, 'session_deleted');
     await _repository.deleteSession(sessionId);
-    _sessions.removeWhere((s) => s.id == sessionId);
-    if (_selectedSession?.id == sessionId) _selectedSession = null;
+    await _logAction(sessionId, 'delete_session');
+    // Unsubscribe first so the owner doesn't also receive the Postgres Changes
+    // DELETE event that is about to arrive (members handle it via their callback).
     unsubscribeFromSession(sessionId);
+    _sessions.removeWhere((s) => s.id == sessionId);
+    if (_selectedSession?.id == sessionId) {
+      _selectedSession = null;
+      _kickedFromSessionId = sessionId;
+      _sessionWasDeleted = true;
+    }
     notifyListeners();
   }
 
@@ -183,12 +202,12 @@ class SessionViewModel extends ChangeNotifier {
     return code;
   }
 
-  void _logAction(
+  Future<void> _logAction(
     String sessionId,
     String actionType, {
     Map<String, dynamic>? metadata,
   }) {
-    _repository
+    return _repository
         .addLog(
           sessionId: sessionId,
           actionType: actionType,
