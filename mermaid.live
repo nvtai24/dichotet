@@ -1,0 +1,41 @@
+flowchart TD
+    Splash([SplashScreen]) -->|not logged in| Login
+    Splash -->|logged in| SessionList
+
+    Login[LoginScreen] --> SignUp[SignUpScreen]
+    Login --> ForgotPw[ForgotPasswordScreen]
+    Login -->|success| SessionList
+
+    SessionList[SessionListScreen] -->|select / create / join| Main
+    SessionList -->|logout| Login
+
+    Main[MainScreen\nbottom nav] --> Dashboard[DashboardScreen]
+    Main --> ShoppingList[ShoppingListScreen]
+    Main --> Budget[BudgetScreen]
+    Main --> Settings[SettingsScreen]
+    Main -->|FAB| AddItem[AddItemScreen]
+    Main -->|kicked / session deleted| SessionList
+
+    ShoppingList --> ItemDetail[ItemDetailScreen]
+    ShoppingList --> DeleteDialog>Delete dialog]
+
+    ItemDetail --> EditItem[EditItemScreen]
+    EditItem --> LocationPicker[LocationPickerScreen]
+    EditItem --> EditPurchases[EditPurchasesScreen]
+
+    Budget --> BudgetDialog>Edit budget dialog]
+
+    Settings --> EditProfile[EditProfileScreen]
+    Settings --> ResetPw[ResetPasswordScreen]
+    Settings --> MembersSheet>Members bottom sheet]
+    Settings --> ShareDialog>Share / join code popup]
+    Settings --> ActionLog[ActionLogScreen]
+    Settings -->|switch session| SessionList
+    Settings -->|delete / leave| SessionList
+    Settings -->|logout| Login
+
+    Dashboard --> AddItem
+    Dashboard --> ItemDetail
+
+    SessionList --> CreateDialog>Create session dialog]
+    SessionList --> JoinDialog>Join session dialog]
