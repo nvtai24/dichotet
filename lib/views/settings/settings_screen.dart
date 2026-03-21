@@ -157,6 +157,13 @@ class SettingsScreen extends StatelessWidget {
                           context, sessionVM, session.id, isOwner),
                     ),
                     _SettingsTile(
+                      icon: Icons.share_outlined,
+                      label: 'Chia sẻ phiên',
+                      subtitle: 'Mời người khác tham gia bằng mã',
+                      onTap: () =>
+                          _showJoinCodeDialog(context, sessionVM, session),
+                    ),
+                    _SettingsTile(
                       icon: Icons.history_rounded,
                       label: 'Nhật ký hoạt động',
                       subtitle: 'Xem ai đã làm gì trong phiên này',
@@ -440,6 +447,117 @@ class SettingsScreen extends StatelessWidget {
                 ),
               );
             },
+          );
+        },
+      ),
+    );
+  }
+
+  void _showJoinCodeDialog(
+      BuildContext context, SessionViewModel sessionVM, ShoppingSession session) {
+    String? code = session.joinCode;
+    bool isLoading = code == null;
+
+    showDialog(
+      context: context,
+      barrierDismissible: !isLoading,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) {
+          if (isLoading) {
+            Future.microtask(() async {
+              try {
+                final newCode =
+                    await sessionVM.generateJoinCode(session.id);
+                if (!ctx.mounted) return;
+                setState(() {
+                  code = newCode;
+                  isLoading = false;
+                });
+              } catch (e) {
+                if (!ctx.mounted) return;
+                setState(() => isLoading = false);
+              }
+            });
+          }
+
+          return AlertDialog(
+            title: const Text('Mã mời tham gia phiên'),
+            content: isLoading
+                ? const SizedBox(
+                    height: 60,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : code == null
+                    ? const Text('Không thể tạo mã mời. Thử lại sau.')
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Chia sẻ mã này để mời người khác tham gia phiên',
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: code!));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Đã sao chép mã mời'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    code!,
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 6,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Icon(Icons.copy_rounded,
+                                      size: 20, color: AppColors.primary),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Nhấn để sao chép',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textHint),
+                          ),
+                        ],
+                      ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Đóng'),
+              ),
+            ],
           );
         },
       ),
