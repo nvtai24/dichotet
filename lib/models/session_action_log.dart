@@ -4,7 +4,6 @@ class SessionActionLog {
   final String userId;
   final String actionType;
   final String? itemName;
-  final int? itemId;
   final Map<String, dynamic> metadata;
   final DateTime createdAt;
   final String? userDisplayName;
@@ -16,7 +15,6 @@ class SessionActionLog {
     required this.userId,
     required this.actionType,
     this.itemName,
-    this.itemId,
     required this.metadata,
     required this.createdAt,
     this.userDisplayName,

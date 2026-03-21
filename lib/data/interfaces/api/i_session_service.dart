@@ -18,7 +18,6 @@ abstract class ISessionService {
   Future<void> addLog({
     required String sessionId,
     required String actionType,
-    int? itemId,
     String? itemName,
     Map<String, dynamic>? metadata,
   });

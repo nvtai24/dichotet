@@ -173,7 +173,6 @@ class SupabaseSessionService implements ISessionService {
   Future<void> addLog({
     required String sessionId,
     required String actionType,
-    int? itemId,
     String? itemName,
     Map<String, dynamic>? metadata,
   }) async {
@@ -198,7 +197,6 @@ class SupabaseSessionService implements ISessionService {
       'session_id': sessionId,
       'user_id': userId,
       'action_type': actionType,
-      'item_id': itemId,
       'item_name': itemName,
       'metadata': enriched,
     });
@@ -232,7 +230,6 @@ class SupabaseSessionService implements ISessionService {
         userId: uid,
         actionType: r['action_type'] as String,
         itemName: r['item_name'] as String?,
-        itemId: r['item_id'] as int?,
         metadata: meta,
         createdAt: DateTime.parse(r['created_at'] as String),
         userDisplayName: actor,

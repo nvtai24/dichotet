@@ -14,7 +14,6 @@ class ShoppingListViewModel extends ChangeNotifier {
   // Fire-and-forget: log an action without breaking the main flow
   void _logAction(
     String actionType, {
-    int? itemId,
     String? itemName,
     Map<String, dynamic>? metadata,
   }) {
@@ -25,7 +24,6 @@ class ShoppingListViewModel extends ChangeNotifier {
         .addLog(
           sessionId: sid,
           actionType: actionType,
-          itemId: itemId,
           itemName: itemName,
           metadata: metadata,
         )

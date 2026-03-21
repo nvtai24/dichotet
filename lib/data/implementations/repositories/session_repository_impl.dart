@@ -82,14 +82,12 @@ class SessionRepositoryImpl implements ISessionRepository {
   Future<void> addLog({
     required String sessionId,
     required String actionType,
-    int? itemId,
     String? itemName,
     Map<String, dynamic>? metadata,
   }) =>
       _service.addLog(
         sessionId: sessionId,
         actionType: actionType,
-        itemId: itemId,
         itemName: itemName,
         metadata: metadata,
       );
