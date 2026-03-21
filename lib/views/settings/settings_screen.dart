@@ -7,6 +7,7 @@ import '../../models/shopping_models.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/settings/settings_viewmodel.dart';
+import '../../core/utils/snackbar_utils.dart';
 import '../auth/login_screen.dart';
 import '../auth/reset_password_screen.dart';
 import '../session/action_log_screen.dart';
@@ -394,6 +395,7 @@ class SettingsScreen extends StatelessWidget {
                                       color: AppColors.error),
                                   onPressed: () async {
                                     final name = m.displayName ?? 'thành viên này';
+                                    final messenger = ScaffoldMessenger.of(ctx);
                                     final confirmed = await showDialog<bool>(
                                       context: ctx,
                                       builder: (dCtx) => AlertDialog(
@@ -418,13 +420,17 @@ class SettingsScreen extends StatelessWidget {
                                       ),
                                     );
                                     if (confirmed != true) return;
-                                    await sessionVM.removeMember(
-                                        sessionId, m.userId,
-                                        displayName: m.displayName);
-                                    if (!ctx.mounted) return;
-                                    Navigator.pop(ctx);
-                                    _showMembersSheet(context, sessionVM,
-                                        sessionId, currentIsOwner);
+                                    try {
+                                      await sessionVM.removeMember(
+                                          sessionId, m.userId,
+                                          displayName: m.displayName);
+                                      if (!ctx.mounted) return;
+                                      Navigator.pop(ctx);
+                                      _showMembersSheet(context, sessionVM,
+                                          sessionId, currentIsOwner);
+                                    } catch (e) {
+                                      showErrorSnackBar(messenger, e);
+                                    }
                                   },
                                 )
                               : null,
@@ -457,8 +463,13 @@ class SettingsScreen extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
-              await sessionVM.deleteSession(session.id);
+              try {
+                await sessionVM.deleteSession(session.id);
+              } catch (e) {
+                showErrorSnackBar(messenger, e);
+              }
             },
             child: const Text('Xóa'),
           ),
@@ -484,13 +495,19 @@ class SettingsScreen extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
-              await sessionVM.leaveSession(session.id);
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SessionListScreen()),
-                );
+              try {
+                await sessionVM.leaveSession(session.id);
+                if (context.mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const SessionListScreen()),
+                  );
+                }
+              } catch (e) {
+                showErrorSnackBar(messenger, e);
               }
             },
             child: const Text('Rời phiên'),

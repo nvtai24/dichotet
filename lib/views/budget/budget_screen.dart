@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/widgets/session_app_bar.dart';
 import '../../viewmodels/budget/budget_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
+import '../../core/utils/snackbar_utils.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -53,10 +54,15 @@ class _BudgetScreenState extends State<BudgetScreen> {
           FilledButton(
             onPressed: () async {
               final budget = double.tryParse(controller.text.trim()) ?? 0;
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
-              await sessionVM.updateSession(session.id, session.name, budget);
-              if (!mounted) return;
-              context.read<BudgetViewModel>().loadBudget(session.id);
+              try {
+                await sessionVM.updateSession(session.id, session.name, budget);
+                if (!mounted) return;
+                context.read<BudgetViewModel>().loadBudget(session.id);
+              } catch (e) {
+                showErrorSnackBar(messenger, e);
+              }
             },
             child: const Text('Lưu'),
           ),

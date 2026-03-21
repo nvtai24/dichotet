@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/widgets/app_network_image.dart';
 import '../../models/shopping_models.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
+import '../../core/utils/snackbar_utils.dart';
 import 'item_detail_screen.dart';
 import '../../core/widgets/session_app_bar.dart';
 
@@ -58,6 +59,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     ),
                   ),
                   onDeleteItem: (item) async {
+                    final messenger = ScaffoldMessenger.of(context);
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -80,15 +82,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                     );
                     if (confirm == true) {
                       final name = item.name;
-                      await vm.deleteItem(item);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Đã xóa "$name" thành công'),
-                          duration: const Duration(seconds: 2),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                      try {
+                        await vm.deleteItem(item);
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text('Đã xóa "$name" thành công'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      } catch (e) {
+                        showErrorSnackBar(messenger, e);
+                      }
                     }
                   },
                 );

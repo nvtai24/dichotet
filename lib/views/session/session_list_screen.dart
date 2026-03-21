@@ -8,6 +8,7 @@ import '../../viewmodels/auth/auth_viewmodel.dart';
 import '../../viewmodels/budget/budget_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
+import '../../core/utils/snackbar_utils.dart';
 import '../auth/login_screen.dart';
 import '../main_screen.dart';
 
@@ -84,8 +85,13 @@ class _SessionListScreenState extends State<SessionListScreen> {
               if (name.isEmpty) return;
 
               final sessionVM = context.read<SessionViewModel>();
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
-              await sessionVM.createSession(name, budget);
+              try {
+                await sessionVM.createSession(name, budget);
+              } catch (e) {
+                showErrorSnackBar(messenger, e);
+              }
             },
             child: const Text('Tạo'),
           ),
@@ -264,15 +270,20 @@ class _SessionListScreenState extends State<SessionListScreen> {
                             !currentIsOwner || m.isOwner
                             ? null
                             : () async {
-                                await sessionVM.removeMember(
-                                  session.id,
-                                  m.userId,
-                                  displayName: m.displayName,
-                                );
-                                final updated = await sessionVM
-                                    .getSessionMembers(session.id);
-                                if (!ctx.mounted) return;
-                                setDialogState(() => members = updated);
+                                final messenger = ScaffoldMessenger.of(ctx);
+                                try {
+                                  await sessionVM.removeMember(
+                                    session.id,
+                                    m.userId,
+                                    displayName: m.displayName,
+                                  );
+                                  final updated = await sessionVM
+                                      .getSessionMembers(session.id);
+                                  if (!ctx.mounted) return;
+                                  setDialogState(() => members = updated);
+                                } catch (e) {
+                                  showErrorSnackBar(messenger, e);
+                                }
                               },
                       ),
                     ),
@@ -328,12 +339,17 @@ class _SessionListScreenState extends State<SessionListScreen> {
               final budget = double.tryParse(budgetController.text.trim()) ?? 0;
               if (name.isEmpty) return;
 
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
-              await context.read<SessionViewModel>().updateSession(
-                session.id,
-                name,
-                budget,
-              );
+              try {
+                await context.read<SessionViewModel>().updateSession(
+                  session.id,
+                  name,
+                  budget,
+                );
+              } catch (e) {
+                showErrorSnackBar(messenger, e);
+              }
             },
             child: const Text('Lưu'),
           ),
