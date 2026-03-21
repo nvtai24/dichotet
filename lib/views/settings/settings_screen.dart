@@ -47,6 +47,7 @@ class SettingsScreen extends StatelessWidget {
 
           // ── Tài khoản ─────────────────────────────────────────────
           _SectionHeader(label: 'Tài khoản'),
+          // ── Tài khoản ─────────────────────────────────────────────
           _SettingsGroup(
             children: [
               _SettingsTile(
@@ -69,68 +70,6 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              _SettingsTile(
-                icon: Icons.notifications_outlined,
-                label: 'Thông báo',
-                subtitle: 'Nhắc nhở mua sắm, cảnh báo ngân sách',
-                onTap: () {},
-              ),
-            ],
-          ),
-
-          // ── Dữ liệu ───────────────────────────────────────────────
-          // _SectionHeader(label: 'Dữ liệu'),
-          // _SettingsGroup(
-          //   children: [
-          //     _SettingsTile(
-          //       icon: Icons.download_outlined,
-          //       label: 'Xuất danh sách',
-          //       subtitle: 'Export sang PDF hoặc Excel',
-          //       onTap: () {},
-          //     ),
-          //     _SettingsTile(
-          //       icon: Icons.group_outlined,
-          //       label: 'Chia sẻ gia đình',
-          //       subtitle: 'Đồng bộ danh sách với thành viên',
-          //       trailing: const _ComingSoonBadge(),
-          //       onTap: () {},
-          //     ),
-          //     _SettingsTile(
-          //       icon: Icons.delete_outline,
-          //       label: 'Xóa tất cả dữ liệu',
-          //       subtitle: 'Xóa danh sách và lịch sử chi tiêu',
-          //       iconColor: AppColors.error,
-          //       labelColor: AppColors.error,
-          //       onTap: () => _confirmDeleteData(context),
-          //     ),
-          //   ],
-          // ),
-
-          // ── Ứng dụng ──────────────────────────────────────────────
-          _SectionHeader(label: 'Ứng dụng'),
-          _SettingsGroup(
-            children: [
-              _SettingsTile(
-                icon: Icons.swap_horiz_outlined,
-                label: 'Chọn phiên khác',
-                subtitle: 'Chuyển sang phiên mua sắm khác',
-                onTap: () => Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SessionListScreen()),
-                ),
-              ),
-              _SettingsTile(
-                icon: Icons.language_outlined,
-                label: 'Ngôn ngữ',
-                subtitle: 'Tiếng Việt',
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: Icons.info_outline,
-                label: 'Về ứng dụng',
-                subtitle: 'Phiên bản 1.0.0',
-                onTap: () {},
-              ),
             ],
           ),
 
@@ -140,8 +79,7 @@ class SettingsScreen extends StatelessWidget {
             final session = sessionVM.selectedSession;
             if (session == null) return const SizedBox.shrink();
 
-            final isOwner =
-                session.isOwnedBy(sessionVM.currentUserId ?? '');
+            final isOwner = session.isOwnedBy(sessionVM.currentUserId ?? '');
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,6 +113,16 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     _SettingsTile(
+                      icon: Icons.swap_horiz_outlined,
+                      label: 'Chọn phiên khác',
+                      subtitle: 'Chuyển sang phiên mua sắm khác',
+                      onTap: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SessionListScreen()),
+                      ),
+                    ),
+                    _SettingsTile(
                       icon: isOwner
                           ? Icons.delete_outline
                           : Icons.exit_to_app_rounded,
@@ -193,6 +141,34 @@ class SettingsScreen extends StatelessWidget {
               ],
             );
           }),
+
+          // ── Ứng dụng ──────────────────────────────────────────────
+          _SectionHeader(label: 'Ứng dụng'),
+          _SettingsGroup(
+            children: [
+              _SettingsTile(
+                icon: Icons.notifications_outlined,
+                label: 'Thông báo',
+                subtitle: 'Nhắc nhở mua sắm, cảnh báo ngân sách',
+                onTap: () {},
+                disabled: true,
+              ),
+              _SettingsTile(
+                icon: Icons.language_outlined,
+                label: 'Ngôn ngữ',
+                subtitle: 'Tiếng Việt',
+                onTap: () {},
+                disabled: true,
+              ),
+              _SettingsTile(
+                icon: Icons.info_outline,
+                label: 'Về ứng dụng',
+                subtitle: 'Phiên bản 1.0.0',
+                onTap: () {},
+                disabled: true,
+              ),
+            ],
+          ),
 
           // ── Logout ────────────────────────────────────────────────
           const SizedBox(height: 8),
@@ -744,6 +720,7 @@ class _SettingsTile extends StatelessWidget {
   final Color? iconColor;
   final Color? labelColor;
   final VoidCallback onTap;
+  final bool disabled;
 
   const _SettingsTile({
     required this.icon,
@@ -752,13 +729,16 @@ class _SettingsTile extends StatelessWidget {
     this.iconColor,
     this.labelColor,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = iconColor ?? AppColors.primary;
-    return InkWell(
-      onTap: onTap,
+    final color = disabled
+        ? AppColors.textHint
+        : (iconColor ?? AppColors.primary);
+    final widget = InkWell(
+      onTap: disabled ? null : onTap,
       borderRadius: BorderRadius.circular(14),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -782,29 +762,35 @@ class _SettingsTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: labelColor ?? AppColors.textPrimary,
+                      color: disabled
+                          ? AppColors.textHint
+                          : (labelColor ?? AppColors.textPrimary),
                     ),
                   ),
                   const SizedBox(height: 1),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: disabled
+                          ? AppColors.textHint
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right,
               size: 18,
-              color: AppColors.textHint,
+              color: disabled ? AppColors.textHint.withValues(alpha: 0.4) : AppColors.textHint,
             ),
           ],
         ),
       ),
     );
+    if (disabled) return Opacity(opacity: 0.45, child: widget);
+    return widget;
   }
 }
 
