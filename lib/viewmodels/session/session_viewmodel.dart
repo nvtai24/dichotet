@@ -20,13 +20,18 @@ class SessionViewModel extends ChangeNotifier {
   ShoppingSession? _selectedSession;
   ShoppingSession? get selectedSession => _selectedSession;
 
-  /// Non-null when the current user was removed from a session.
+  /// Non-null when the current user was forced out of a session (kicked or session deleted).
   /// UI should react by navigating to SessionListScreen, then call [clearKicked].
   String? _kickedFromSessionId;
   String? get kickedFromSessionId => _kickedFromSessionId;
 
+  /// True when kicked because session was deleted (vs being removed by owner).
+  bool _sessionWasDeleted = false;
+  bool get sessionWasDeleted => _sessionWasDeleted;
+
   void clearKicked() {
     _kickedFromSessionId = null;
+    _sessionWasDeleted = false;
   }
 
   String? get currentUserId => Supabase.instance.client.auth.currentUser?.id;
@@ -57,7 +62,11 @@ class SessionViewModel extends ChangeNotifier {
           event: 'session_deleted',
           callback: (_) {
             _sessions.removeWhere((s) => s.id == sessionId);
-            if (_selectedSession?.id == sessionId) _selectedSession = null;
+            if (_selectedSession?.id == sessionId) {
+              _selectedSession = null;
+              _kickedFromSessionId = sessionId;
+              _sessionWasDeleted = true;
+            }
             notifyListeners();
           },
         )
@@ -142,6 +151,7 @@ class SessionViewModel extends ChangeNotifier {
   }
 
   Future<void> deleteSession(String sessionId) async {
+    _logAction(sessionId, 'delete_session');
     _broadcastSession(sessionId, 'session_deleted');
     await _repository.deleteSession(sessionId);
     _sessions.removeWhere((s) => s.id == sessionId);

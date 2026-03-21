@@ -58,6 +58,8 @@ class SessionActionLog {
       case 'remove_member':
         final name = metadata['removed_name'] as String?;
         return '$actor đã xóa${name != null ? ' $name' : ' thành viên'} khỏi phiên';
+      case 'delete_session':
+        return '$actor đã xóa phiên mua sắm';
       default:
         return '$actor thực hiện thao tác';
     }

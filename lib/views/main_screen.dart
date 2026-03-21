@@ -37,11 +37,18 @@ class MainScreenState extends State<MainScreen> {
   void _onSessionChanged() {
     final sessionVM = context.read<SessionViewModel>();
     if (sessionVM.kickedFromSessionId != null) {
+      final wasDeleted = sessionVM.sessionWasDeleted;
       sessionVM.clearKicked();
       context.read<ShoppingListViewModel>().reset();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bạn đã bị xóa khỏi phiên mua sắm')),
+        SnackBar(
+          content: Text(
+            wasDeleted
+                ? 'Phiên mua sắm đã bị xóa'
+                : 'Bạn đã bị xóa khỏi phiên mua sắm',
+          ),
+        ),
       );
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const SessionListScreen()),
