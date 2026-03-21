@@ -217,14 +217,31 @@ class SessionViewModel extends ChangeNotifier {
   }
 
   Future<ShoppingSession> joinByCode(String code) async {
-    final session = await _repository.joinByCode(code);
-    if (!_sessions.any((s) => s.id == session.id)) {
+    final normalized = code.toUpperCase().trim();
+    try {
+      final session = await _repository.joinByCode(normalized);
+      // If session is already in the list, the user was already a member
+      if (_sessions.any((s) => s.id == session.id)) {
+        throw Exception('Ban da la thanh vien cua phien nay');
+      }
       _sessions.insert(0, session);
       notifyListeners();
+      _logAction(session.id, 'join_session');
+      _broadcastSession(session.id, 'session_changed');
+      return session;
+    } on Exception catch (e) {
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('da la thanh vien')) {
+        throw Exception('Bạn đã là thành viên của phiên này');
+      }
+      if (msg.contains('not found') ||
+          msg.contains('no rows') ||
+          msg.contains('invalid') ||
+          msg.contains('null')) {
+        throw Exception('Mã tham gia không hợp lệ hoặc phiên không tồn tại');
+      }
+      rethrow;
     }
-    _logAction(session.id, 'join_session');
-    _broadcastSession(session.id, 'session_changed');
-    return session;
   }
 
   Future<void> leaveSession(String sessionId) async {
