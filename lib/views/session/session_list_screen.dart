@@ -9,6 +9,7 @@ import '../../viewmodels/budget/budget_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
 import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 import '../../core/utils/snackbar_utils.dart';
+import '../../core/utils/currency_formatter.dart';
 import '../auth/login_screen.dart';
 import '../main_screen.dart';
 
@@ -67,9 +68,10 @@ class _SessionListScreenState extends State<SessionListScreen> {
               controller: budgetController,
               decoration: const InputDecoration(
                 labelText: 'Ngân sách dự trù (VNĐ)',
-                hintText: 'VD: 5000000',
+                hintText: 'VD: 5,000,000',
               ),
               keyboardType: TextInputType.number,
+              inputFormatters: [CurrencyInputFormatter()],
             ),
           ],
         ),
@@ -81,7 +83,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
           FilledButton(
             onPressed: () async {
               final name = nameController.text.trim();
-              final budget = double.tryParse(budgetController.text.trim()) ?? 0;
+              final budget = parseCurrency(budgetController.text);
               if (name.isEmpty) return;
 
               final sessionVM = context.read<SessionViewModel>();
@@ -266,8 +268,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
                       (m) => _MemberTile(
                         member: m,
                         currentUserId: sessionVM.currentUserId,
-                        onRemove:
-                            !currentIsOwner || m.isOwner
+                        onRemove: !currentIsOwner || m.isOwner
                             ? null
                             : () async {
                                 final messenger = ScaffoldMessenger.of(ctx);
@@ -306,7 +307,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
   void _showEditDialog(ShoppingSession session) {
     final nameController = TextEditingController(text: session.name);
     final budgetController = TextEditingController(
-      text: session.budget.toInt().toString(),
+      text: formatCurrencyInitial(session.budget),
     );
 
     showDialog(
@@ -325,6 +326,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
               controller: budgetController,
               decoration: const InputDecoration(labelText: 'Ngân sách (VNĐ)'),
               keyboardType: TextInputType.number,
+              inputFormatters: [CurrencyInputFormatter()],
             ),
           ],
         ),
@@ -336,7 +338,7 @@ class _SessionListScreenState extends State<SessionListScreen> {
           FilledButton(
             onPressed: () async {
               final name = nameController.text.trim();
-              final budget = double.tryParse(budgetController.text.trim()) ?? 0;
+              final budget = parseCurrency(budgetController.text);
               if (name.isEmpty) return;
 
               final messenger = ScaffoldMessenger.of(context);
@@ -862,8 +864,11 @@ class _SessionCard extends StatelessWidget {
                       value: 'share',
                       child: Row(
                         children: [
-                          Icon(Icons.share_outlined,
-                              size: 18, color: AppColors.primary),
+                          Icon(
+                            Icons.share_outlined,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
                           SizedBox(width: 10),
                           Text('Chia sẻ'),
                         ],
@@ -873,8 +878,11 @@ class _SessionCard extends StatelessWidget {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(Icons.edit_outlined,
-                              size: 18, color: AppColors.textSecondary),
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: AppColors.textSecondary,
+                          ),
                           SizedBox(width: 10),
                           Text('Chỉnh sửa'),
                         ],

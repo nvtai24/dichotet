@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/utils/currency_formatter.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -136,7 +137,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
 
     final unit = _unitController.text.trim();
-    final price = int.tryParse(_priceController.text.trim()) ?? 0;
+    final price = parseCurrency(_priceController.text).toInt();
     final note = _noteController.text.trim();
 
     // Validate tên cửa hàng không trùng nhau
@@ -156,7 +157,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
     final storePrices = <StorePrice>[];
     for (final entry in _storePriceEntries) {
       final storeName = entry.storeName;
-      final storePrice = int.tryParse(entry.priceController.text.trim()) ?? 0;
+      final storePrice = parseCurrency(entry.priceController.text).toInt();
       if (storeName.isNotEmpty && storePrice > 0) {
         storePrices.add(
           StorePrice(
@@ -358,7 +359,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   TextField(
                     controller: _priceController,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [CurrencyInputFormatter()],
                     decoration: const InputDecoration(
                       hintText: '0',
                       suffixIcon: Padding(
@@ -831,7 +832,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           TextField(
             controller: entry.priceController,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [CurrencyInputFormatter()],
             decoration: const InputDecoration(
               hintText: 'Giá / đơn vị',
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/utils/currency_formatter.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/shopping_models.dart';
@@ -76,7 +77,7 @@ class _EditPurchasesScreenState extends State<EditPurchasesScreen> {
       for (final pe in _purchaseEntries) {
         if (pe.purchaseId == null) continue;
         final newQty = int.tryParse(pe.quantityController.text.trim()) ?? 0;
-        final newPrice = int.tryParse(pe.priceController.text.trim()) ?? 0;
+        final newPrice = parseCurrency(pe.priceController.text).toInt();
         if (newQty != pe.originalQuantity || newPrice != pe.originalPrice) {
           await vm.updatePurchase(
             pe.purchaseId!,
@@ -223,7 +224,7 @@ class _EditPurchasesScreenState extends State<EditPurchasesScreen> {
     int totalSpent = 0;
     for (final pe in _purchaseEntries) {
       final qty = int.tryParse(pe.quantityController.text.trim()) ?? 0;
-      final price = int.tryParse(pe.priceController.text.trim()) ?? 0;
+      final price = parseCurrency(pe.priceController.text).toInt();
       totalQty += qty;
       totalSpent += qty * price;
     }
@@ -427,7 +428,7 @@ class _EditPurchasesScreenState extends State<EditPurchasesScreen> {
                 child: TextField(
                   controller: entry.priceController,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [CurrencyInputFormatter()],
                   decoration: const InputDecoration(
                     labelText: 'Giá/đơn vị',
                     contentPadding: EdgeInsets.symmetric(
@@ -478,7 +479,7 @@ class _PurchaseEntry {
   }) : quantityController = TextEditingController(
          text: originalQuantity.toString(),
        ),
-       priceController = TextEditingController(text: originalPrice.toString());
+       priceController = TextEditingController(text: formatCurrencyInitial(originalPrice));
 
   factory _PurchaseEntry.fromRecord(PurchaseRecord record) {
     return _PurchaseEntry(

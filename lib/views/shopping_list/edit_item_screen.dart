@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/utils/currency_formatter.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -43,7 +44,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     _nameController = TextEditingController(text: item.name);
     _unitController = TextEditingController(text: item.unit);
     _priceController = TextEditingController(
-      text: item.estimatedPrice > 0 ? item.estimatedPrice.toString() : '',
+      text: item.estimatedPrice > 0 ? formatCurrencyInitial(item.estimatedPrice) : '',
     );
     _noteController = TextEditingController(text: item.note ?? '');
     _selectedCategory = item.categoryName;
@@ -60,7 +61,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
       final entry = _StorePriceEntry();
       entry.storeName = sp.storeName;
       entry.nameController.text = sp.storeName;
-      entry.priceController.text = sp.pricePerUnit.toString();
+      entry.priceController.text = formatCurrencyInitial(sp.pricePerUnit);
       entry.lat = sp.lat;
       entry.lon = sp.lon;
       _storePriceEntries.add(entry);
@@ -177,7 +178,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     }
 
     final unit = _unitController.text.trim();
-    final price = int.tryParse(_priceController.text.trim()) ?? 0;
+    final price = parseCurrency(_priceController.text).toInt();
     final note = _noteController.text.trim();
 
     // Validate tên cửa hàng không trùng nhau
@@ -195,7 +196,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     final storePrices = <StorePrice>[];
     for (final entry in _storePriceEntries) {
       final storeName = entry.storeName;
-      final storePrice = int.tryParse(entry.priceController.text.trim()) ?? 0;
+      final storePrice = parseCurrency(entry.priceController.text).toInt();
       if (storeName.isNotEmpty && storePrice > 0) {
         storePrices.add(
           StorePrice(
@@ -405,7 +406,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   TextField(
                     controller: _priceController,
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [CurrencyInputFormatter()],
                     decoration: const InputDecoration(
                       hintText: '0',
                       suffixIcon: Padding(
@@ -953,7 +954,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           TextField(
             controller: entry.priceController,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [CurrencyInputFormatter()],
             decoration: const InputDecoration(
               hintText: 'Giá / đơn vị',
               contentPadding: EdgeInsets.symmetric(

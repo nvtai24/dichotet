@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/utils/currency_formatter.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1207,7 +1208,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
     widget.onAdd(
       StorePrice(
         storeName: name,
-        pricePerUnit: int.tryParse(_priceController.text.trim()) ?? 0,
+        pricePerUnit: parseCurrency(_priceController.text).toInt(),
         lastUpdated: 'Vừa xong',
         lat: _lat,
         lon: _lon,
@@ -1375,7 +1376,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
           TextField(
             controller: _priceController,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [CurrencyInputFormatter()],
             decoration: const InputDecoration(
               labelText: 'Giá / đơn vị (VND)',
               hintText: '0',
@@ -1500,8 +1501,8 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
 
   void _onConfirm() async {
     final qty = int.tryParse(_qtyController.text.trim());
-    final price = int.tryParse(_priceController.text.trim());
-    if (qty == null || qty <= 0 || price == null || price < 0) return;
+    final price = parseCurrency(_priceController.text).toInt();
+    if (qty == null || qty <= 0 || price < 0) return;
     if (_locationName.trim().isEmpty) return;
 
     await widget.onConfirm(qty, price, _locationName.trim(), _locationLat, _locationLon);
@@ -1730,7 +1731,7 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
                     TextField(
                       controller: _priceController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      inputFormatters: [CurrencyInputFormatter()],
                       decoration: const InputDecoration(
                         hintText: '0',
                         contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),

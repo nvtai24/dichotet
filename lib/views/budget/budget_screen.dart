@@ -5,6 +5,7 @@ import '../../core/widgets/session_app_bar.dart';
 import '../../viewmodels/budget/budget_viewmodel.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
 import '../../core/utils/snackbar_utils.dart';
+import '../../core/utils/currency_formatter.dart';
 
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
@@ -33,7 +34,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     if (session == null) return;
 
     final controller = TextEditingController(
-      text: session.budget.toInt().toString(),
+      text: formatCurrencyInitial(session.budget),
     );
 
     showDialog(
@@ -44,6 +45,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
           controller: controller,
           decoration: const InputDecoration(labelText: 'Ngân sách (VNĐ)'),
           keyboardType: TextInputType.number,
+          inputFormatters: [CurrencyInputFormatter()],
           autofocus: true,
         ),
         actions: [
@@ -53,7 +55,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
           ),
           FilledButton(
             onPressed: () async {
-              final budget = double.tryParse(controller.text.trim()) ?? 0;
+              final budget = parseCurrency(controller.text);
               final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
               try {
