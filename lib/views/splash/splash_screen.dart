@@ -213,7 +213,7 @@ class _TitleWidget extends StatelessWidget {
     return Column(
       children: [
         const Text(
-          'MUA SẮM TẾT',
+          'ĐI CHỢ TẾT',
           style: TextStyle(
             color: AppColors.gold,
             fontSize: 28,

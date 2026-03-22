@@ -29,7 +29,7 @@ class DashboardScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F5F9),
         appBar: const SessionAppBar(
-          title: 'Mua Sắm Tết',
+          title: 'Đi Chợ Tết',
           backgroundColor: Color(0xFFF4F5F9),
         ),
         body: SingleChildScrollView(

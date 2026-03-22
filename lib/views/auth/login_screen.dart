@@ -283,7 +283,7 @@ class _WelcomeHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Chào mừng đến\nMua Sắm Tết',
+                  'Chào mừng đến\nĐi Chợ Tết',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,

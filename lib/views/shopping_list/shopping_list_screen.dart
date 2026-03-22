@@ -34,7 +34,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const SessionAppBar(title: 'Danh Sách Mua Sắm Tết', backgroundColor: Colors.white),
+      appBar: const SessionAppBar(
+        title: 'Danh Sách Đồ Cần Mua',
+        backgroundColor: Colors.white,
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -104,7 +107,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       ),
     );
   }
-
 
   Widget _buildSearchBar() {
     final vm = context.read<ShoppingListViewModel>();
@@ -344,8 +346,10 @@ class _ItemTile extends StatelessWidget {
         ? AppColors.error
         : AppColors.textPrimary;
 
-    final purchasedQty =
-        item.purchases.fold<int>(0, (sum, p) => sum + p.quantity);
+    final purchasedQty = item.purchases.fold<int>(
+      0,
+      (sum, p) => sum + p.quantity,
+    );
     final hasPurchase = purchasedQty > 0;
     return InkWell(
       onTap: onTap,
@@ -402,8 +406,12 @@ class _ItemTile extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: item.isChecked
-                                ? const Color(0xFF4CAF50).withValues(alpha: 0.12)
-                                : const Color(0xFFFF9800).withValues(alpha: 0.12),
+                                ? const Color(
+                                    0xFF4CAF50,
+                                  ).withValues(alpha: 0.12)
+                                : const Color(
+                                    0xFFFF9800,
+                                  ).withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
