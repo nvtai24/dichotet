@@ -14,6 +14,7 @@ import '../../core/widgets/session_app_bar.dart';
 import '../main_screen.dart';
 import '../shopping_list/add_item_screen.dart';
 import '../shopping_list/item_detail_screen.dart';
+import 'all_stores_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -1623,8 +1624,31 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
         _SectionHeader(
           emoji: '📍',
           title: 'Cửa hàng gần đây',
-          trailing: _loading
-              ? const SizedBox(
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChangeNotifierProvider.value(
+                      value: context.read<ShoppingListViewModel>(),
+                      child: const AllStoresScreen(),
+                    ),
+                  ),
+                ),
+                child: const Text(
+                  'Xem tất cả',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              if (_loading)
+                const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
@@ -1632,7 +1656,8 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
                     color: AppColors.primary,
                   ),
                 )
-              : GestureDetector(
+              else
+                GestureDetector(
                   onTap: _load,
                   child: const Icon(
                     Icons.refresh_rounded,
@@ -1640,6 +1665,8 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
                     color: AppColors.primary,
                   ),
                 ),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         if (_error != null)
