@@ -1609,12 +1609,18 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
                   },
                   onSelected: (value) {
                     final store = context.read<ShoppingListViewModel>().findStore(value);
+                    final refPrice = widget.item.storePrices
+                        .where((s) => s.storeName == value)
+                        .firstOrNull;
                     setState(() {
                       _locationName = value;
                       _locationLat = store?.lat;
                       _locationLon = store?.lon;
                       _locationError = null;
                     });
+                    if (refPrice != null && refPrice.pricePerUnit > 0) {
+                      _priceController.text = formatCurrencyInitial(refPrice.pricePerUnit);
+                    }
                   },
                   fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
                     return TextField(
