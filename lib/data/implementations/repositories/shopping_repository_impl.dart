@@ -92,7 +92,6 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   @override
   Future<void> updateItemPurchaseStatus(
     ShoppingItem item, {
-    required bool isPurchased,
     int? actualQuantity,
     int? actualPrice,
     String? locationName,
@@ -101,7 +100,6 @@ class ShoppingRepositoryImpl implements IShoppingRepository {
   }) =>
       _service.updateItemPurchaseStatus(
         item,
-        isPurchased: isPurchased,
         actualQuantity: actualQuantity,
         actualPrice: actualPrice,
         locationName: locationName,

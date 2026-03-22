@@ -193,6 +193,21 @@ class _EditItemScreenState extends State<EditItemScreen> {
       return;
     }
 
+    // Validate giá bắt buộc khi đã nhập tên cửa hàng
+    for (final entry in _storePriceEntries) {
+      if (entry.storeName.trim().isNotEmpty &&
+          parseCurrency(entry.priceController.text).toInt() <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Vui lòng nhập giá cho cửa hàng "${entry.storeName.trim()}"',
+            ),
+          ),
+        );
+        return;
+      }
+    }
+
     final storePrices = <StorePrice>[];
     for (final entry in _storePriceEntries) {
       final storeName = entry.storeName;

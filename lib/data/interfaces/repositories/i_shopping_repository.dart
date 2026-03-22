@@ -18,7 +18,6 @@ abstract class IShoppingRepository {
   );
   Future<void> updateItemPurchaseStatus(
     ShoppingItem item, {
-    required bool isPurchased,
     int? actualQuantity,
     int? actualPrice,
     String? locationName,

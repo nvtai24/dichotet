@@ -300,7 +300,6 @@ class ShoppingListViewModel extends ChangeNotifier {
   }) async {
     await _repository.updateItemPurchaseStatus(
       item,
-      isPurchased: true,
       actualQuantity: quantity,
       actualPrice: price,
       locationName: locationName,
@@ -308,13 +307,6 @@ class ShoppingListViewModel extends ChangeNotifier {
       locationLon: locationLon,
     );
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
-    _broadcastChange();
-    _logAction('check_item', itemName: item.name, metadata: {
-      if (locationName != null) 'store': locationName,
-      'price': price,
-      'quantity': quantity,
-      'unit': item.unit,
-    });
     if (locationName != null && locationLat != null && locationLon != null) {
       _syncStorePrices([StorePrice(
         storeName: locationName,
@@ -379,12 +371,7 @@ class ShoppingListViewModel extends ChangeNotifier {
   }
 
   Future<void> deletePurchase(int purchaseId, {bool reload = true}) async {
-    // Capture item name before optimistic remove
     final item = _findItemByPurchaseId(purchaseId);
-    final itemName = item?.name;
-    final purchase = item?.purchases.firstWhere((p) => p.id == purchaseId,
-        orElse: () => item.purchases.first);
-
     item?.purchases.removeWhere((p) => p.id == purchaseId);
     if (item != null) _recalcIsChecked(item);
     notifyListeners();
@@ -392,10 +379,6 @@ class ShoppingListViewModel extends ChangeNotifier {
     await _repository.deletePurchase(purchaseId);
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
-    _logAction('uncheck_item', itemName: itemName, metadata: {
-      'store': purchase?.locationName,
-      'unit': item?.unit,
-    });
   }
 
   Future<void> recalculatePurchaseStatus(ShoppingItem item) async {

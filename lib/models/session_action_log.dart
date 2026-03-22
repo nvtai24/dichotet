@@ -34,10 +34,6 @@ class SessionActionLog {
         return '$actor đã sửa "${itemName ?? 'sản phẩm'}"';
       case 'delete_item':
         return '$actor đã xóa "${itemName ?? 'sản phẩm'}"';
-      case 'check_item':
-        return '$actor đã mua "${itemName ?? 'sản phẩm'}"';
-      case 'uncheck_item':
-        return '$actor bỏ đánh dấu "${itemName ?? 'sản phẩm'}"';
       case 'add_price':
         return '$actor thêm giá cho "${itemName ?? 'sản phẩm'}"';
       case 'update_purchase':
@@ -107,21 +103,6 @@ class SessionActionLog {
         if (cat != null) parts.add(cat);
         if (qty != null) parts.add('$qty ${unit ?? 'cái'}');
         return parts.isEmpty ? null : parts.join(' · ');
-
-      case 'check_item':
-        final parts = <String>[];
-        final store = metadata['store'] as String?;
-        final qty = metadata['quantity'] as int?;
-        final unit = metadata['unit'] as String?;
-        final price = metadata['price'] as int?;
-        if (store != null) parts.add(store);
-        if (qty != null) parts.add('$qty ${unit ?? 'cái'}');
-        if (price != null) parts.add('${_fmt(price)}đ/${unit ?? 'đv'}');
-        return parts.isEmpty ? null : parts.join(' · ');
-
-      case 'uncheck_item':
-        final store = metadata['store'] as String?;
-        return store != null ? 'Tại $store' : null;
 
       case 'add_price':
         final store = metadata['store'] as String?;

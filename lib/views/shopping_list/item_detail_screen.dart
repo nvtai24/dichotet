@@ -1169,6 +1169,7 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
   double? _lat;
   double? _lon;
   String? _storeError;
+  String? _priceError;
 
   @override
   void dispose() {
@@ -1196,7 +1197,11 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
 
   void _onAdd() {
     final name = _storeName.trim();
-    if (name.isEmpty || _priceController.text.trim().isEmpty) return;
+    if (name.isEmpty) return;
+    if (parseCurrency(_priceController.text).toInt() <= 0) {
+      setState(() => _priceError = 'Vui lòng nhập giá');
+      return;
+    }
 
     if (widget.existingNames.any(
       (e) => e.toLowerCase() == name.toLowerCase(),
@@ -1377,11 +1382,15 @@ class _AddPriceSheetState extends State<_AddPriceSheet> {
             controller: _priceController,
             keyboardType: TextInputType.number,
             inputFormatters: [CurrencyInputFormatter()],
-            decoration: const InputDecoration(
+            onChanged: (_) {
+              if (_priceError != null) setState(() => _priceError = null);
+            },
+            decoration: InputDecoration(
               labelText: 'Giá / đơn vị (VND)',
               hintText: '0',
-              prefixIcon: Icon(Icons.sell_outlined, size: 20),
+              prefixIcon: const Icon(Icons.sell_outlined, size: 20),
               suffixText: '₫',
+              errorText: _priceError,
             ),
           ),
           const SizedBox(height: 20),
@@ -1464,6 +1473,7 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   double? _locationLat;
   double? _locationLon;
   String? _locationError;
+  String? _priceError;
 
   @override
   void initState() {
@@ -1502,7 +1512,11 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
   void _onConfirm() async {
     final qty = int.tryParse(_qtyController.text.trim());
     final price = parseCurrency(_priceController.text).toInt();
-    if (qty == null || qty <= 0 || price < 0) return;
+    if (qty == null || qty <= 0) return;
+    if (price <= 0) {
+      setState(() => _priceError = 'Vui lòng nhập giá tiền');
+      return;
+    }
     if (_locationName.trim().isEmpty) return;
 
     await widget.onConfirm(qty, price, _locationName.trim(), _locationLat, _locationLon);
@@ -1732,14 +1746,18 @@ class _ConfirmPurchaseSheetState extends State<_ConfirmPurchaseSheet> {
                       controller: _priceController,
                       keyboardType: TextInputType.number,
                       inputFormatters: [CurrencyInputFormatter()],
-                      decoration: const InputDecoration(
+                      onChanged: (_) {
+                        if (_priceError != null) setState(() => _priceError = null);
+                      },
+                      decoration: InputDecoration(
                         hintText: '0',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                        suffixIcon: Padding(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        suffixIcon: const Padding(
                           padding: EdgeInsets.only(right: 10),
                           child: Text('₫', style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                         ),
-                        suffixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                        suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                        errorText: _priceError,
                       ),
                     ),
                   ],
