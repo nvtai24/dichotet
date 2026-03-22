@@ -8,34 +8,14 @@ class SupabaseBudgetService implements IBudgetService {
   SupabaseBudgetService(this._client);
 
   @override
-  Future<BudgetData> getBudgetData(String sessionId) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) {
-      return const BudgetData(
-        sessionBudget: 0,
-        totalEstimated: 0,
-        totalSpent: 0,
-        categories: [],
-      );
-    }
-
-    // 1. Lấy budget của session
-    final sessionRow = await _client
-        .from('shopping_sessions')
-        .select('budget')
-        .eq('id', sessionId)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-    final sessionBudget = (sessionRow?['budget'] as num?)?.toDouble() ?? 0;
-
-    // 2. Lấy tất cả items của session kèm category name và purchases
+  Future<BudgetData> getBudgetData(String sessionId, {double sessionBudget = 0}) async {
+    // 1. Lấy tất cả items của session kèm category name và purchases
+    // Không filter user_id để tất cả thành viên thấy cùng dữ liệu
     final itemRows = await _client
         .from('shopping_items')
         .select(
           'quantity, est_price_per_unit, category_id, categories(category_name), purchases(quantity, price_per_unit)',
         )
-        .eq('user_id', userId)
         .eq('session_id', sessionId);
 
     // 3. Tính tổng dự tính và đã chi, nhóm theo category

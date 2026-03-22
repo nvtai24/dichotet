@@ -60,7 +60,8 @@ class BudgetViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _data = await _repository.getBudgetData(sessionId);
+      final budget = _sessionVM.selectedSession?.budget ?? 0;
+      _data = await _repository.getBudgetData(sessionId, sessionBudget: budget);
     } catch (e) {
       _error = e.toString();
     } finally {

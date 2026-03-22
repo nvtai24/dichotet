@@ -8,6 +8,6 @@ class BudgetRepositoryImpl implements IBudgetRepository {
   BudgetRepositoryImpl(this._service);
 
   @override
-  Future<BudgetData> getBudgetData(String sessionId) =>
-      _service.getBudgetData(sessionId);
+  Future<BudgetData> getBudgetData(String sessionId, {double sessionBudget = 0}) =>
+      _service.getBudgetData(sessionId, sessionBudget: sessionBudget);
 }

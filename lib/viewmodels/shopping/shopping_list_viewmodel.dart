@@ -307,6 +307,7 @@ class ShoppingListViewModel extends ChangeNotifier {
       locationLon: locationLon,
     );
     if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
+    _broadcastChange();
     if (locationName != null && locationLat != null && locationLon != null) {
       _syncStorePrices([StorePrice(
         storeName: locationName,
