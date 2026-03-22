@@ -269,7 +269,6 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await _repository.updateItem(oldItem, newItem, categoryName);
-    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     final changes = <String, dynamic>{};
     if (oldItem.name != newItem.name) changes['old_name'] = oldItem.name;
     if (oldItem.quantity != newItem.quantity) {
@@ -306,7 +305,6 @@ class ShoppingListViewModel extends ChangeNotifier {
       locationLat: locationLat,
       locationLon: locationLon,
     );
-    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
     if (locationName != null && locationLat != null && locationLon != null) {
       _syncStorePrices([StorePrice(
@@ -322,7 +320,6 @@ class ShoppingListViewModel extends ChangeNotifier {
 
   Future<void> addStorePrice(ShoppingItem item, StorePrice storePrice) async {
     await _repository.addStorePrice(item, storePrice);
-    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _syncStorePrices([storePrice]);
     _broadcastChange();
     _logAction('add_price', itemName: item.name, metadata: {
@@ -357,7 +354,6 @@ class ShoppingListViewModel extends ChangeNotifier {
     }
 
     await _repository.updatePurchase(purchaseId, quantity, pricePerUnit);
-    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
     if (item != null) {
       final purchase = item.purchases.firstWhere((p) => p.id == purchaseId,
@@ -378,7 +374,6 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await _repository.deletePurchase(purchaseId);
-    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
   }
 
@@ -400,7 +395,6 @@ class ShoppingListViewModel extends ChangeNotifier {
     notifyListeners();
 
     await _repository.deleteItem(item);
-    if (_sessionId != null) _repository.invalidateSessionCache(_sessionId!);
     _broadcastChange();
     _logAction('delete_item', itemName: item.name, metadata: {
       'category': item.categoryName,
