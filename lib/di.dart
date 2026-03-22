@@ -5,6 +5,7 @@ import 'data/implementations/api/supabase_profile_service.dart';
 import 'data/implementations/api/supabase_auth_service.dart';
 import 'data/implementations/api/supabase_session_service.dart';
 import 'data/implementations/api/supabase_budget_service.dart';
+import 'data/implementations/api/openai_service.dart';
 import 'data/implementations/repositories/shopping_repository_impl.dart';
 import 'data/implementations/repositories/profile_repository_impl.dart';
 import 'data/implementations/repositories/auth_repository_impl.dart';
@@ -48,3 +49,4 @@ final ISessionRepository sessionRepository = SessionRepositoryImpl(
   localCacheService,
 );
 final IBudgetRepository budgetRepository = BudgetRepositoryImpl(budgetService);
+final OpenAIService openAIService = OpenAIService();

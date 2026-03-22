@@ -89,11 +89,12 @@ class _DichotetAppState extends State<DichotetApp> {
         >(
           create: (ctx) => BudgetViewModel(
             budgetRepository,
+            openAIService,
             ctx.read<SessionViewModel>(),
             ctx.read<ShoppingListViewModel>(),
           ),
           update: (_, sessionVM, shoppingVM, prev) =>
-              prev ?? BudgetViewModel(budgetRepository, sessionVM, shoppingVM),
+              prev ?? BudgetViewModel(budgetRepository, openAIService, sessionVM, shoppingVM),
         ),
         ChangeNotifierProvider(
           create: (_) => SettingsViewModel(profileRepository)..loadProfile(),

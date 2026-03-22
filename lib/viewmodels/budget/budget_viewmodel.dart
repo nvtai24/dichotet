@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/dtos/budget_dto.dart';
+import '../../data/implementations/api/openai_service.dart';
 import '../../data/interfaces/repositories/i_budget_repository.dart';
 import '../../models/budget_models.dart';
 import '../../viewmodels/session/session_viewmodel.dart';
@@ -7,10 +8,11 @@ import '../../viewmodels/shopping/shopping_list_viewmodel.dart';
 
 class BudgetViewModel extends ChangeNotifier {
   final IBudgetRepository _repository;
+  final OpenAIService _openAI;
   final SessionViewModel _sessionVM;
   final ShoppingListViewModel _shoppingVM;
 
-  BudgetViewModel(this._repository, this._sessionVM, this._shoppingVM) {
+  BudgetViewModel(this._repository, this._openAI, this._sessionVM, this._shoppingVM) {
     _sessionVM.addListener(_onSessionChanged);
     _shoppingVM.addListener(_onShoppingChanged);
   }
@@ -52,6 +54,36 @@ class BudgetViewModel extends ChangeNotifier {
           ),
         )
         .toList();
+  }
+
+  // ── AI advice ───────────────────────────────────────────────────────
+  String? _aiAdvice;
+  bool _isLoadingAI = false;
+
+  String? get aiAdvice => _aiAdvice;
+  bool get isLoadingAI => _isLoadingAI;
+
+  Future<void> loadAIAdvice() async {
+    if (_data == null) return;
+    _isLoadingAI = true;
+    _aiAdvice = null;
+    notifyListeners();
+    try {
+      _aiAdvice = await _openAI.getBudgetAdvice(
+        totalBudget: totalBudget,
+        totalEstimated: totalEstimated,
+        totalSpent: totalSpent,
+        remaining: remaining,
+        categories: categoryBudgets
+            .map((c) => {'label': c.label, 'estimated': c.estimated, 'spent': c.spent})
+            .toList(),
+      );
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoadingAI = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadBudget(String sessionId) async {

@@ -28,6 +28,22 @@ class _BudgetScreenState extends State<BudgetScreen> {
     });
   }
 
+  void _showAISheet(BuildContext context, BudgetViewModel vm) {
+    final messenger = ScaffoldMessenger.of(context);
+    if (vm.aiAdvice == null && !vm.isLoadingAI) {
+      vm.loadAIAdvice().catchError((e) => showErrorSnackBar(messenger, e));
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ChangeNotifierProvider.value(
+        value: vm,
+        child: const _AIAdviceSheet(),
+      ),
+    );
+  }
+
   void _showEditBudgetDialog() {
     final sessionVM = context.read<SessionViewModel>();
     final session = sessionVM.selectedSession;
@@ -109,8 +125,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
               remaining: vm.remaining,
               progress: vm.progress,
               onEdit: _showEditBudgetDialog,
+              onAnalyze: () => _showAISheet(context, vm),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text(
               'Theo danh mục',
               style: Theme.of(context).textTheme.titleLarge,
@@ -158,6 +175,7 @@ class _BudgetSummaryCard extends StatelessWidget {
   final int remaining;
   final double progress;
   final VoidCallback? onEdit;
+  final VoidCallback? onAnalyze;
 
   const _BudgetSummaryCard({
     required this.totalBudget,
@@ -166,6 +184,7 @@ class _BudgetSummaryCard extends StatelessWidget {
     required this.remaining,
     required this.progress,
     this.onEdit,
+    this.onAnalyze,
   });
 
   @override
@@ -249,11 +268,40 @@ class _BudgetSummaryCard extends StatelessWidget {
                 child: _SummaryItem(
                   label: remaining < 0 ? 'Vượt' : 'Còn lại',
                   amount: _formatPrice(remaining.abs()),
-                  color: remaining < 0 ? const Color(0xFFFF6B6B) : AppColors.goldLight,
+                  color: remaining < 0
+                      ? const Color(0xFFFF6B6B)
+                      : AppColors.goldLight,
                 ),
               ),
             ],
           ),
+          if (onAnalyze != null) ...[
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white24, height: 1),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: onAnalyze,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(
+                    Icons.auto_awesome,
+                    size: 14,
+                    color: AppColors.goldLight,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Phân tích ngân sách',
+                    style: TextStyle(
+                      color: AppColors.goldLight,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -291,6 +339,265 @@ class _SummaryItem extends StatelessWidget {
             color: color,
             fontSize: 14,
             fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Banner button trên màn hình chính ───────────────────────────────────────
+
+// ── Bottom sheet popup ───────────────────────────────────────────────────────
+class _AIAdviceSheet extends StatelessWidget {
+  const _AIAdviceSheet();
+
+  static const _gradient = [AppColors.primaryDark, AppColors.primary];
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<BudgetViewModel>();
+    final messenger = ScaffoldMessenger.of(context);
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.4,
+      maxChildSize: 0.85,
+      expand: false,
+      builder: (_, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E0E0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Header
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: _gradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, size: 18, color: Colors.white),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'AI tư vấn ngân sách',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  if (vm.aiAdvice != null && !vm.isLoadingAI)
+                    GestureDetector(
+                      onTap: () => vm.loadAIAdvice().catchError(
+                        (e) => showErrorSnackBar(messenger, e),
+                      ),
+                      child: const Icon(
+                        Icons.refresh_rounded,
+                        size: 20,
+                        color: Colors.white70,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Content
+            Expanded(
+              child: vm.isLoadingAI
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: AppColors.primary),
+                          SizedBox(height: 14),
+                          Text(
+                            'Đang phân tích ngân sách...',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : vm.aiAdvice != null
+                  ? ListView(
+                      controller: scrollController,
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomPad),
+                      children: _parseAdvice(vm.aiAdvice!),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _parseAdvice(String text) {
+    final lines = text.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    final widgets = <Widget>[];
+
+    for (final line in lines) {
+      final trimmed = line.trim();
+
+      // Numbered item: "1.", "2.", ...
+      final numberedMatch = RegExp(r'^(\d+)\.\s+(.+)$').firstMatch(trimmed);
+      if (numberedMatch != null) {
+        widgets.add(
+          _NumberedItem(
+            number: numberedMatch.group(1)!,
+            text: numberedMatch.group(2)!,
+          ),
+        );
+        widgets.add(const SizedBox(height: 10));
+        continue;
+      }
+
+      // Bullet: "- " or "• "
+      if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+        final content = trimmed.replaceFirst(RegExp(r'^[-•]\s+'), '');
+        widgets.add(_BulletItem(text: content));
+        widgets.add(const SizedBox(height: 8));
+        continue;
+      }
+
+      // Bold heading: "**text**"
+      if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+        final content = trimmed.replaceAll('**', '');
+        widgets.add(
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        );
+        widgets.add(const SizedBox(height: 8));
+        continue;
+      }
+
+      // Plain paragraph
+      widgets.add(
+        Text(
+          trimmed.replaceAll('**', ''),
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+            height: 1.6,
+          ),
+        ),
+      );
+      widgets.add(const SizedBox(height: 8));
+    }
+
+    return widgets;
+  }
+}
+
+class _NumberedItem extends StatelessWidget {
+  final String number;
+  final String text;
+  const _NumberedItem({required this.number, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text.replaceAll('**', ''),
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textPrimary,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BulletItem extends StatelessWidget {
+  final String text;
+  const _BulletItem({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 7),
+          child: CircleAvatar(radius: 3, backgroundColor: AppColors.primary),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text.replaceAll('**', ''),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              height: 1.5,
+            ),
           ),
         ),
       ],
@@ -340,7 +647,9 @@ class _CategoryBudgetCard extends StatelessWidget {
                     value: progress.clamp(0.0, 1.0),
                     minHeight: 4,
                     backgroundColor: AppColors.divider,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
