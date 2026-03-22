@@ -5,9 +5,12 @@ flowchart TD
     Login[LoginScreen] --> SignUp[SignUpScreen]
     Login --> ForgotPw[ForgotPasswordScreen]
     Login -->|success| SessionList
+    ForgotPw --> ResetPw[ResetPasswordScreen]
 
     SessionList[SessionListScreen] -->|select / create / join| Main
     SessionList -->|logout| Login
+    SessionList --> CreateDialog>Create session dialog]
+    SessionList --> JoinDialog>Join session dialog]
 
     Main[MainScreen\nbottom nav] --> Dashboard[DashboardScreen]
     Main --> ShoppingList[ShoppingListScreen]
@@ -16,26 +19,28 @@ flowchart TD
     Main -->|FAB| AddItem[AddItemScreen]
     Main -->|kicked / session deleted| SessionList
 
-    ShoppingList --> ItemDetail[ItemDetailScreen]
-    ShoppingList --> DeleteDialog>Delete dialog]
+    Dashboard --> AddItem
+    Dashboard --> ItemDetail[ItemDetailScreen]
+
+    ShoppingList --> ItemDetail
+    ShoppingList --> DeleteDialog>Delete confirm dialog]
 
     ItemDetail --> EditItem[EditItemScreen]
-    EditItem --> LocationPicker[LocationPickerScreen]
+    ItemDetail --> ConfirmSheet>Confirm purchase sheet]
+    ConfirmSheet --> LocationPicker[LocationPickerScreen]
+
     EditItem --> EditPurchases[EditPurchasesScreen]
+    EditItem --> LocationPicker
+    EditPurchases --> LocationPicker
 
     Budget --> BudgetDialog>Edit budget dialog]
+    Budget --> AISheet>AI analysis bottom sheet]
 
     Settings --> EditProfile[EditProfileScreen]
-    Settings --> ResetPw[ResetPasswordScreen]
+    Settings --> ResetPw
     Settings --> MembersSheet>Members bottom sheet]
     Settings --> ShareDialog>Share / join code popup]
     Settings --> ActionLog[ActionLogScreen]
     Settings -->|switch session| SessionList
     Settings -->|delete / leave| SessionList
     Settings -->|logout| Login
-
-    Dashboard --> AddItem
-    Dashboard --> ItemDetail
-
-    SessionList --> CreateDialog>Create session dialog]
-    SessionList --> JoinDialog>Join session dialog]
