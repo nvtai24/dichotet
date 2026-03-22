@@ -1587,6 +1587,7 @@ class _NearbyStoresSectionState extends State<_NearbyStoresSection> {
                   ),
             )
             .toList();
+        if (pendingItems.isEmpty) continue;
         result.add(
           _NearbyStoreData(
             store: store,
